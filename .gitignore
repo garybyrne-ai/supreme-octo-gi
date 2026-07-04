@@ -1,0 +1,24 @@
+# Runtime / generated
+/config/installed.php
+/storage/logs/*
+/storage/cache/*
+/storage/backups/*
+/storage/uploads/*
+/public/uploads/media/*
+/public/uploads/theme/*
+/uploads/*
+storage/data/paypal-settings.json
+
+# Keep directory placeholders
+!**/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Dependencies
+/vendor/
+node_modules/

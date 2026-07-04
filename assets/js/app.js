@@ -1,0 +1,804 @@
+const navToggle = document.querySelector('.nav-toggle');
+const nav = document.querySelector('#siteNav');
+
+if (navToggle && nav) {
+    const icon = navToggle.querySelector('i');
+    const closeNav = () => {
+        nav.classList.remove('is-open');
+        document.body.classList.remove('nav-open');
+        navToggle.setAttribute('aria-expanded', 'false');
+        if (icon) icon.className = 'fa-solid fa-bars';
+    };
+
+    navToggle.addEventListener('click', () => {
+        const open = nav.classList.toggle('is-open');
+        document.body.classList.toggle('nav-open', open);
+        navToggle.setAttribute('aria-expanded', String(open));
+        if (icon) icon.className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+    });
+
+    nav.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', closeNav);
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeNav();
+    });
+}
+
+const glow = document.querySelector('.cursor-glow');
+const progress = document.querySelector('.scroll-progress');
+if (glow) {
+    window.addEventListener('pointermove', (event) => {
+        glow.style.left = `${event.clientX}px`;
+        glow.style.top = `${event.clientY}px`;
+    }, { passive: true });
+}
+
+function updateProgress() {
+    if (!progress) return;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const amount = max > 0 ? (window.scrollY / max) * 100 : 0;
+    progress.style.width = `${amount}%`;
+}
+
+window.addEventListener('scroll', updateProgress, { passive: true });
+updateProgress();
+
+const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            revealObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal').forEach((element, index) => {
+    element.style.transitionDelay = `${Math.min(index * 45, 220)}ms`;
+    revealObserver.observe(element);
+});
+
+const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const target = entry.target;
+        const raw = Number(target.dataset.count || 0);
+        if (!raw || target.dataset.counted) return;
+        target.dataset.counted = 'true';
+        const suffix = target.dataset.suffix || '';
+        const decimals = String(target.dataset.count).includes('.') ? 1 : 0;
+        const start = performance.now();
+        const duration = 900;
+        function tick(now) {
+            const progressAmount = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progressAmount, 3);
+            const value = raw * eased;
+            target.textContent = `${decimals ? value.toFixed(decimals) : Math.round(value)}${suffix}`;
+            if (progressAmount < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        counterObserver.unobserve(target);
+    });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('[data-count]').forEach((element) => counterObserver.observe(element));
+
+if (window.matchMedia('(pointer: fine)').matches) {
+    document.querySelectorAll('.pill-button, .icon-button, .cyber-card, .portfolio-card').forEach((element) => {
+        element.addEventListener('pointermove', (event) => {
+            const rect = element.getBoundingClientRect();
+            const x = event.clientX - rect.left - rect.width / 2;
+            const y = event.clientY - rect.top - rect.height / 2;
+            element.style.transform = `translate(${x * 0.015}px, ${y * 0.015}px)`;
+        });
+        element.addEventListener('pointerleave', () => {
+            element.style.transform = '';
+        });
+    });
+}
+
+const heroPanels = document.querySelector('.hero-panels');
+if (heroPanels) {
+    window.addEventListener('pointermove', (event) => {
+        const x = (event.clientX / window.innerWidth - 0.5) * 18;
+        const y = (event.clientY / window.innerHeight - 0.5) * 18;
+        heroPanels.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }, { passive: true });
+}
+
+document.querySelectorAll('[data-account-widget]').forEach((widget) => {
+    const trigger = widget.querySelector('.account-trigger');
+    const popover = widget.querySelector('.account-popover');
+    const message = widget.querySelector('.account-message');
+    const endpoint = widget.dataset.formsEndpoint || '/account/forms';
+    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    let loaded = false;
+    let hoverTimer = null;
+
+    const setMessage = (text, isError = false) => {
+        if (!message) return;
+        message.textContent = text;
+        message.classList.toggle('is-error', isError);
+    };
+
+    const loadForms = async (force = false) => {
+        if (loaded && !force) return;
+        try {
+            const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+            const payload = await response.json();
+            widget.querySelectorAll('input[name="_csrf"]').forEach((input) => {
+                input.value = payload.csrf || '';
+            });
+            const loginCaptcha = widget.querySelector('[data-captcha="login"]');
+            const registerCaptcha = widget.querySelector('[data-captcha="register"]');
+            if (loginCaptcha) loginCaptcha.textContent = `${payload.loginCaptcha || ''} = ?`;
+            if (registerCaptcha) registerCaptcha.textContent = `${payload.registerCaptcha || ''} = ?`;
+            loaded = true;
+            setMessage('');
+        } catch (error) {
+            setMessage('Could not load captcha. Please try again.', true);
+        }
+    };
+
+    const openAccount = async () => {
+        if (!popover) return;
+        popover.hidden = false;
+        widget.classList.add('is-open');
+        document.body.classList.add('account-open');
+        trigger?.setAttribute('aria-expanded', 'true');
+        await loadForms();
+        if (canHover) {
+            widget.querySelector('.account-form.is-active input:not([type="hidden"])')?.focus();
+        }
+    };
+
+    const closeAccount = () => {
+        widget.classList.remove('is-open');
+        document.body.classList.remove('account-open');
+        if (popover) popover.hidden = true;
+        trigger?.setAttribute('aria-expanded', 'false');
+    };
+
+    widget.addEventListener('account:open', () => {
+        openAccount();
+    });
+
+    trigger?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (widget.classList.contains('is-open')) {
+            closeAccount();
+            return;
+        }
+        openAccount();
+    });
+
+    if (canHover) {
+        widget.addEventListener('mouseenter', () => {
+            window.clearTimeout(hoverTimer);
+            hoverTimer = window.setTimeout(openAccount, 120);
+        });
+        widget.addEventListener('mouseleave', () => {
+            window.clearTimeout(hoverTimer);
+            hoverTimer = window.setTimeout(closeAccount, 220);
+        });
+    }
+
+    widget.querySelectorAll('[data-account-tab]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const tab = button.dataset.accountTab;
+            widget.querySelectorAll('[data-account-tab]').forEach((item) => item.classList.toggle('is-active', item === button));
+            widget.querySelectorAll('[data-account-form]').forEach((form) => form.classList.toggle('is-active', form.dataset.accountForm === tab));
+            setMessage('');
+            loadForms();
+        });
+    });
+
+    widget.querySelectorAll('[data-account-form]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setMessage('Checking secure form...');
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { Accept: 'application/json' },
+                    body: new FormData(form),
+                });
+                const payload = await response.json();
+                setMessage(payload.message || (response.ok ? 'Done.' : 'Something went wrong.'), !response.ok || payload.ok === false);
+                if (payload.ok) {
+                    form.reset();
+                    document.querySelectorAll('[data-tools-locked="true"]').forEach((element) => {
+                        element.dataset.toolsLocked = 'false';
+                    });
+                } else {
+                    loaded = false;
+                    await loadForms(true);
+                }
+            } catch (error) {
+                setMessage('Request failed. Please try again.', true);
+            }
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!widget.contains(event.target)) closeAccount();
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeAccount();
+    });
+});
+
+document.querySelectorAll('[data-mobile-account-trigger]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (nav && navToggle) {
+            nav.classList.remove('is-open');
+            document.body.classList.remove('nav-open');
+            navToggle.setAttribute('aria-expanded', 'false');
+            const icon = navToggle.querySelector('i');
+            if (icon) icon.className = 'fa-solid fa-bars';
+        }
+        const widget = document.querySelector('[data-account-widget]');
+        if (!widget) return;
+        window.setTimeout(() => {
+            widget.dispatchEvent(new CustomEvent('account:open', { bubbles: false }));
+            if (!widget.classList.contains('is-open')) {
+                widget.querySelector('.account-trigger')?.click();
+            }
+        }, 0);
+        const firstTab = widget.querySelector('[data-account-tab="login"]');
+        if (firstTab && !firstTab.classList.contains('is-active')) {
+            firstTab.click();
+        }
+    });
+});
+
+document.querySelectorAll('[data-copy-value]').forEach((button) => {
+    button.addEventListener('click', async () => {
+        const value = button.dataset.copyValue || '';
+        try {
+            await navigator.clipboard.writeText(value);
+            button.classList.add('is-copied');
+            button.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+            window.setTimeout(() => {
+                button.classList.remove('is-copied');
+                button.innerHTML = '<i class="fa-solid fa-copy"></i> Copy URL';
+            }, 1600);
+        } catch (error) {
+            const input = button.parentElement?.querySelector('input');
+            input?.select();
+        }
+    });
+});
+
+document.querySelectorAll('[data-admin-action-target]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const panel = document.querySelector(button.dataset.adminActionTarget || '');
+        if (!panel) return;
+
+        document.querySelectorAll('[data-admin-action-target]').forEach((item) => {
+            item.classList.toggle('is-active', item === button);
+        });
+        document.querySelectorAll('.admin-action-panel').forEach((item) => {
+            item.classList.toggle('is-active', item === panel);
+        });
+
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.setTimeout(() => {
+            panel.querySelector('input:not([type="hidden"]), textarea, select')?.focus({ preventScroll: true });
+        }, 260);
+    });
+});
+
+function updateLocalTime() {
+    const target = document.querySelector('#localTime');
+    if (!target) return;
+
+    target.textContent = new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+    }).format(new Date());
+}
+
+updateLocalTime();
+setInterval(updateLocalTime, 30000);
+
+const passwordTool = document.querySelector('[data-password-tool]');
+if (passwordTool) {
+    const input = passwordTool.querySelector('input');
+    const meter = passwordTool.querySelector('.strength-meter span');
+    const output = passwordTool.querySelector('.tool-output');
+
+    input?.addEventListener('input', () => {
+        if (!toolsUnlocked()) {
+            meter.style.width = '0';
+            output.textContent = 'Register and verify your email to reveal tool results.';
+            return;
+        }
+        const value = input.value;
+        let score = 0;
+        if (value.length >= 12) score += 30;
+        if (value.length >= 16) score += 15;
+        if (/[a-z]/.test(value)) score += 10;
+        if (/[A-Z]/.test(value)) score += 10;
+        if (/\d/.test(value)) score += 15;
+        if (/[^a-zA-Z0-9]/.test(value)) score += 20;
+        if (/(.)\1{2,}/.test(value) || /password|admin|qwerty|1234/i.test(value)) score -= 25;
+
+        const finalScore = Math.max(0, Math.min(100, score));
+        meter.style.width = `${finalScore}%`;
+        output.textContent = finalScore >= 80
+            ? 'Strong: good length and character variety.'
+            : finalScore >= 55
+                ? 'Medium: add length and symbols for stronger protection.'
+                : 'Weak: use a longer unique passphrase.';
+    });
+}
+
+const hashTool = document.querySelector('[data-hash-tool]');
+function toolsUnlocked() {
+    return !document.querySelector('[data-tools-locked="true"]');
+}
+
+if (hashTool && window.crypto?.subtle) {
+    const textarea = hashTool.querySelector('textarea');
+    const button = hashTool.querySelector('button');
+    const output = hashTool.querySelector('output');
+
+    button?.addEventListener('click', async () => {
+        if (!toolsUnlocked()) {
+            output.textContent = 'Register and verify your email to reveal tool results.';
+            return;
+        }
+        const data = new TextEncoder().encode(textarea?.value || '');
+        const digest = await crypto.subtle.digest('SHA-256', data);
+        output.textContent = Array.from(new Uint8Array(digest))
+            .map((byte) => byte.toString(16).padStart(2, '0'))
+            .join('');
+    });
+}
+
+function decodeBase64Url(value) {
+    const padded = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+    return decodeURIComponent(Array.from(atob(padded), (char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`).join(''));
+}
+
+const jwtTool = document.querySelector('[data-jwt-tool]');
+if (jwtTool) {
+    const textarea = jwtTool.querySelector('textarea');
+    const button = jwtTool.querySelector('button');
+    const output = jwtTool.querySelector('output');
+
+    button?.addEventListener('click', () => {
+        if (!toolsUnlocked()) {
+            output.textContent = 'Register and verify your email to reveal tool results.';
+            return;
+        }
+        try {
+            const parts = (textarea?.value || '').trim().split('.');
+            if (parts.length < 2) throw new Error('JWT must contain header and payload.');
+            const decoded = {
+                header: JSON.parse(decodeBase64Url(parts[0])),
+                payload: JSON.parse(decodeBase64Url(parts[1])),
+                signaturePresent: Boolean(parts[2]),
+            };
+            output.textContent = JSON.stringify(decoded, null, 2);
+        } catch (error) {
+            output.textContent = `Could not decode token: ${error.message}`;
+        }
+    });
+}
+
+const codecTool = document.querySelector('[data-codec-tool]');
+if (codecTool) {
+    const textarea = codecTool.querySelector('textarea');
+    const output = codecTool.querySelector('output');
+
+    codecTool.querySelectorAll('[data-codec]').forEach((button) => {
+        button.addEventListener('click', () => {
+            if (!toolsUnlocked()) {
+                output.textContent = 'Register and verify your email to reveal tool results.';
+                return;
+            }
+            const value = textarea?.value || '';
+            try {
+                const mode = button.dataset.codec;
+                if (mode === 'url-encode') output.textContent = encodeURIComponent(value);
+                if (mode === 'url-decode') output.textContent = decodeURIComponent(value);
+                if (mode === 'base64-encode') output.textContent = btoa(unescape(encodeURIComponent(value)));
+                if (mode === 'base64-decode') output.textContent = decodeURIComponent(escape(atob(value)));
+            } catch (error) {
+                output.textContent = `Could not process input: ${error.message}`;
+            }
+        });
+    });
+}
+
+const cspBuilder = document.querySelector('[data-csp-builder]');
+if (cspBuilder) {
+    const input = cspBuilder.querySelector('input');
+    const output = cspBuilder.querySelector('output');
+    cspBuilder.querySelectorAll('[data-csp-mode]').forEach((button) => {
+        button.addEventListener('click', () => {
+            if (!toolsUnlocked()) {
+                output.textContent = 'Register and verify your email to reveal tool results.';
+                return;
+            }
+            const domains = (input?.value || '')
+                .split(',')
+                .map((item) => item.trim())
+                .filter(Boolean)
+                .map((item) => item.toLowerCase() === 'self' ? "'self'" : item.replace(/^https?:\/\//, 'https://'));
+            const allowed = Array.from(new Set(["'self'", ...domains])).join(' ');
+            const strict = button.dataset.cspMode === 'strict';
+            output.textContent = [
+                `default-src 'self'`,
+                `base-uri 'self'`,
+                `object-src 'none'`,
+                `frame-ancestors 'self'`,
+                `img-src ${allowed} data: blob:`,
+                `script-src ${allowed}${strict ? '' : " 'unsafe-inline'"}`,
+                `style-src ${allowed}${strict ? '' : " 'unsafe-inline'"}`,
+                `connect-src ${allowed}`,
+                `form-action 'self'`,
+                `upgrade-insecure-requests`,
+            ].join('; ');
+        });
+    });
+}
+
+const sriTool = document.querySelector('[data-sri-tool]');
+if (sriTool && window.crypto?.subtle) {
+    const textarea = sriTool.querySelector('textarea');
+    const button = sriTool.querySelector('button');
+    const output = sriTool.querySelector('output');
+    button?.addEventListener('click', async () => {
+        if (!toolsUnlocked()) {
+            output.textContent = 'Register and verify your email to reveal tool results.';
+            return;
+        }
+        const data = new TextEncoder().encode(textarea?.value || '');
+        const digest = await crypto.subtle.digest('SHA-384', data);
+        const binary = String.fromCharCode(...new Uint8Array(digest));
+        output.textContent = `sha384-${btoa(binary)}`;
+    });
+}
+
+const cookieAuditor = document.querySelector('[data-cookie-auditor]');
+if (cookieAuditor) {
+    const textarea = cookieAuditor.querySelector('textarea');
+    const button = cookieAuditor.querySelector('button');
+    const output = cookieAuditor.querySelector('output');
+    button?.addEventListener('click', () => {
+        if (!toolsUnlocked()) {
+            output.textContent = 'Register and verify your email to reveal tool results.';
+            return;
+        }
+        const value = (textarea?.value || '').toLowerCase();
+        const checks = [
+            ['Secure', value.includes('secure')],
+            ['HttpOnly', value.includes('httponly')],
+            ['SameSite', value.includes('samesite=lax') || value.includes('samesite=strict')],
+            ['Path scoped', value.includes('path=')],
+            ['No public domain wildcard', !/domain=\.[^;\s]+/.test(value)],
+        ];
+        const score = Math.round((checks.filter(([, ok]) => ok).length / checks.length) * 100);
+        output.textContent = `${score}/100\n${checks.map(([label, ok]) => `${ok ? 'PASS' : 'FIX'} - ${label}`).join('\n')}`;
+    });
+}
+
+const serpPreviewBuilder = document.querySelector('[data-serp-preview-builder]');
+if (serpPreviewBuilder) {
+    const button = serpPreviewBuilder.querySelector('button');
+    const output = serpPreviewBuilder.querySelector('output');
+    button?.addEventListener('click', () => {
+        if (!toolsUnlocked()) {
+            output.textContent = 'Register and verify your email to reveal tool results.';
+            return;
+        }
+        const title = serpPreviewBuilder.querySelector('[name="title"]')?.value || 'Missing page title';
+        const url = serpPreviewBuilder.querySelector('[name="url"]')?.value || 'https://example.com/page';
+        const description = serpPreviewBuilder.querySelector('[name="description"]')?.value || 'Missing meta description.';
+        const titleStatus = title.length <= 60 ? 'good' : 'trim title';
+        const descStatus = description.length >= 120 && description.length <= 160 ? 'good' : 'tune description';
+        output.innerHTML = `<div class="serp-preview"><span>${escapeHtml(url)}</span><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p></div><p>Title: ${title.length} chars (${titleStatus}). Description: ${description.length} chars (${descStatus}).</p>`;
+    });
+}
+
+const keywordDensity = document.querySelector('[data-keyword-density]');
+if (keywordDensity) {
+    const button = keywordDensity.querySelector('button');
+    const output = keywordDensity.querySelector('output');
+    button?.addEventListener('click', () => {
+        if (!toolsUnlocked()) {
+            output.textContent = 'Register and verify your email to reveal tool results.';
+            return;
+        }
+        const keyword = (keywordDensity.querySelector('[name="keyword"]')?.value || '').trim().toLowerCase();
+        const copy = keywordDensity.querySelector('[name="copy"]')?.value || '';
+        const words = copy.toLowerCase().match(/[a-z0-9]+/g) || [];
+        const phrase = keyword.split(/\s+/).filter(Boolean);
+        let hits = 0;
+        if (phrase.length) {
+            for (let index = 0; index <= words.length - phrase.length; index += 1) {
+                if (phrase.every((word, offset) => words[index + offset] === word)) hits += 1;
+            }
+        }
+        const density = words.length ? ((hits * Math.max(phrase.length, 1)) / words.length) * 100 : 0;
+        output.textContent = `${words.length} words\n${hits} exact keyword matches\n${density.toFixed(2)}% density\n${density > 3 ? 'Reduce repetition and use related terms.' : density > 0.4 ? 'Healthy range for focused copy.' : 'Add the keyword naturally in headings and body copy.'}`;
+    });
+}
+
+const schemaValidator = document.querySelector('[data-schema-validator]');
+if (schemaValidator) {
+    const textarea = schemaValidator.querySelector('textarea');
+    const button = schemaValidator.querySelector('button');
+    const output = schemaValidator.querySelector('output');
+    button?.addEventListener('click', () => {
+        if (!toolsUnlocked()) {
+            output.textContent = 'Register and verify your email to reveal tool results.';
+            return;
+        }
+        try {
+            const schema = JSON.parse(textarea?.value || '{}');
+            const warnings = [];
+            if (!schema['@context']) warnings.push('Add @context.');
+            if (!schema['@type']) warnings.push('Add @type.');
+            if (!schema.name && !schema.headline) warnings.push('Add name or headline.');
+            output.textContent = warnings.length ? `Valid JSON, but improve schema:\n${warnings.join('\n')}` : 'Valid JSON-LD with core schema fields present.';
+        } catch (error) {
+            output.textContent = `Invalid JSON: ${error.message}`;
+        }
+    });
+}
+
+const robotsBuilder = document.querySelector('[data-robots-builder]');
+if (robotsBuilder) {
+    const button = robotsBuilder.querySelector('button');
+    const output = robotsBuilder.querySelector('output');
+    button?.addEventListener('click', () => {
+        if (!toolsUnlocked()) {
+            output.textContent = 'Register and verify your email to reveal tool results.';
+            return;
+        }
+        const checked = (name) => robotsBuilder.querySelector(`[name="${name}"]`)?.checked;
+        const directives = [
+            checked('index') ? 'index' : 'noindex',
+            checked('follow') ? 'follow' : 'nofollow',
+        ];
+        if (checked('archive')) directives.push('noarchive');
+        if (checked('snippet')) directives.push('nosnippet');
+        output.textContent = `<meta name="robots" content="${directives.join(', ')}">`;
+    });
+}
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;',
+    }[char]));
+}
+
+const refreshTechTicker = () => {
+    const ticker = document.querySelector('.tech-news-ticker .ticker-lane');
+    if (!ticker) return;
+
+    fetch('/tech-news-feed', { headers: { Accept: 'application/json' } })
+        .then((response) => response.ok ? response.json() : null)
+        .then((payload) => {
+            const items = Array.isArray(payload?.items) ? payload.items : [];
+            if (!items.length) return;
+
+            ticker.innerHTML = [...items, ...items].map((item) => {
+                const url = String(item.url || '/blog');
+                const external = !url.startsWith('/');
+                const attrs = external ? ' target="_blank" rel="noopener"' : '';
+                return `<a href="${escapeHtml(url)}"${attrs}><span>${escapeHtml(item.source || 'Tech')}</span><strong>${escapeHtml(item.title || 'Latest technology update')}</strong><em>${escapeHtml(item.date || '')}</em></a>`;
+            }).join('');
+        })
+        .catch(() => {});
+};
+
+if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(refreshTechTicker, { timeout: 3500 });
+} else {
+    window.addEventListener('load', () => window.setTimeout(refreshTechTicker, 1200), { once: true });
+}
+
+document.querySelectorAll('[data-interactive-tool]').forEach((tool) => {
+    const form = tool.querySelector('.interactive-form');
+    const output = tool.querySelector('.result-output');
+    const resultCard = tool.querySelector('.interactive-result');
+    const mode = tool.dataset.interactiveTool;
+    const locked = tool.dataset.toolsLocked === 'true';
+
+    form?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (!output || !resultCard) return;
+        if (locked) {
+            output.innerHTML = '<div class="notice error">Register and verify your email above to reveal the full result.</div>';
+            return;
+        }
+
+        const data = Object.fromEntries(new FormData(form).entries());
+        const checked = (name) => Boolean(form.querySelector(`[name="${name}"]`)?.checked);
+        const text = (name, fallback) => escapeHtml(data[name] || fallback);
+        let html = '';
+
+        if (mode === 'growth-consultant') {
+            html = `<h3>Growth Plan</h3><ul class="check-list">
+                <li>Create dedicated SEO pages for ${text('region', 'your target region')} and your highest-value services.</li>
+                <li>Launch PPC to test which keywords create enquiries fastest.</li>
+                <li>Add AI lead qualification and CRM follow-up for ${text('business', 'your business')}.</li>
+                <li>Improve conversion around the main goal: ${text('goal', 'more qualified leads')}.</li>
+            </ul>`;
+        } else if (mode === 'quote-calculator') {
+            const pages = Number(data.pages || 1);
+            let base = pages * 180 + 900;
+            if (data.type?.includes('Ecommerce')) base += 1400;
+            if (data.type?.includes('App')) base += 3200;
+            if (checked('seo')) base += 650;
+            if (checked('ai')) base += 1500;
+            if (checked('ppc')) base += 700;
+            html = `<h3>Estimated Range</h3><strong class="big-result">EUR ${base.toLocaleString()} - EUR ${Math.round(base * 1.65).toLocaleString()}</strong><p>Final quote depends on content, integrations, design depth and launch speed.</p>`;
+        } else if (mode === 'security-badge') {
+            const score = Math.round((Number(data.headers || 0) + Number(data.tls || 0) + Number(data.dns || 0)) / 3);
+            html = `<div class="security-badge-preview"><span>SECURITY CHECKED</span><strong>${score}/100</strong><small>${text('site', 'your website')}</small></div><p>Use the full security tools to validate the score before publishing a badge.</p>`;
+        } else if (mode === 'client-portal') {
+            const focus = escapeHtml(data.focus || data.service || 'Growth');
+            html = `<div class="portal-preview"><h3>${text('client', 'Client')} Portal</h3><div><span>Open Tickets</span><strong>3</strong></div><div><span>Ranking Actions</span><strong>12</strong></div><div><span>Current Focus</span><strong>${focus}</strong></div><div><span>Next Milestone</span><strong>Friday</strong></div></div>`;
+        } else if (mode === 'ppc-roi') {
+            const budget = Number(data.budget || 0);
+            const cpc = Math.max(Number(data.cpc || 1), .01);
+            const clicks = Math.floor(budget / cpc);
+            const leads = Math.round(clicks * (Number(data.conversion || 0) / 100));
+            const revenue = leads * Number(data.value || 0);
+            const roas = budget ? (revenue / budget).toFixed(2) : '0.00';
+            html = `<h3>PPC Projection</h3><div class="result-metrics"><span><b>${clicks}</b> clicks</span><span><b>${leads}</b> leads</span><span><b>EUR ${revenue.toLocaleString()}</b> potential revenue</span><span><b>${roas}x</b> ROAS</span></div>`;
+        } else if (mode === 'speed-simulator') {
+            const current = Number(data.current || 0);
+            const target = Number(data.target || 0);
+            const visitors = Number(data.visitors || 0);
+            const conversion = Number(data.conversion || 0) / 100;
+            const lift = Math.max(0, target - current) / 100;
+            const extra = Math.round(visitors * conversion * lift);
+            html = `<h3>Before / After</h3><div class="speed-bars"><span style="--score:${current}%">Before ${current}</span><span style="--score:${target}%">After ${target}</span></div><p>Potential extra monthly leads from speed confidence: <strong>${extra}</strong>.</p>`;
+        } else {
+            const ideas = [];
+            if (checked('lead')) ideas.push('AI lead intake, qualification and routing.');
+            if (checked('support')) ideas.push('Support ticket summaries and reply drafts.');
+            if (checked('crm')) ideas.push('CRM updates, lead scoring and follow-up drafts.');
+            if (checked('reports')) ideas.push('Weekly report summaries and action lists.');
+            if (checked('booking')) ideas.push('Booking reminders, onboarding and status updates.');
+            html = `<h3>Automation Map</h3><ul class="check-list">${(ideas.length ? ideas : ['Select at least one workflow to map.']).map((item) => `<li>${item}</li>`).join('')}</ul>`;
+        }
+
+        output.innerHTML = html;
+        resultCard.classList.add('has-result');
+    });
+});
+
+document.querySelectorAll('[data-chatbot]').forEach((chatbot) => {
+    const toggle = chatbot.querySelector('.chatbot-toggle');
+    const panel = chatbot.querySelector('.chatbot-panel');
+    const close = chatbot.querySelector('.chatbot-head button');
+    const messages = chatbot.querySelector('.chatbot-messages');
+    const form = chatbot.querySelector('.chatbot-form');
+    const input = form?.querySelector('input[name="message"]');
+    const state = { name: '', email: '', interest: '', askedLead: false };
+
+    const addMessage = (role, text) => {
+        if (!messages) return;
+        const item = document.createElement('div');
+        item.className = `chat-message ${role}`;
+        item.textContent = text;
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+    };
+
+    const serviceReply = (value) => {
+        const textValue = value.toLowerCase();
+        if (/\b(seo|rank|google|serp|search)\b/.test(textValue)) {
+            state.interest = 'SEO and SERP growth';
+            return 'We provide technical SEO, local SEO pages for Ireland/UK/USA/Europe, SERP checks, content architecture, schema, Core Web Vitals and ranking strategy. For fast wins, start with the SEO Audit Tool or book an SEO growth plan.';
+        }
+        if (/\b(ppc|ads|google ads|paid|campaign)\b/.test(textValue)) {
+            state.interest = 'PPC advertising';
+            return 'We build PPC landing pages, conversion tracking, Google Ads strategy, keyword testing, offer matching and ROI forecasting. The PPC ROI calculator can estimate clicks, leads and ROAS before spend goes live.';
+        }
+        if (/\b(ai|automation|chatbot|workflow|crm)\b/.test(textValue)) {
+            state.interest = 'AI integration and automation';
+            return 'We integrate AI into existing websites, CRMs and workflows for lead qualification, support summaries, reply drafts, reports, bookings and internal automation. Everything is designed with human approval where it matters.';
+        }
+        if (/\b(app|mobile|android|ios|portal|dashboard)\b/.test(textValue)) {
+            state.interest = 'App or portal development';
+            return 'We build web apps, client portals, dashboards, Android/iOS-ready experiences, APIs and support systems. The best starting point is a scope map: users, roles, data, workflows and launch priorities.';
+        }
+        if (/\b(ecommerce|shop|store|woocommerce|shopify|checkout)\b/.test(textValue)) {
+            state.interest = 'Ecommerce development';
+            return 'We build ecommerce stores focused on product discovery, checkout trust, automation, speed, SEO and abandoned-cart recovery. We can work with WooCommerce, Shopify-style flows or custom PHP/MySQL commerce systems.';
+        }
+        if (/\b(security|pentest|penetration|hack|malware|headers)\b/.test(textValue)) {
+            state.interest = 'Website security and penetration testing';
+            return 'We provide defensive security reviews, header checks, TLS/DNS checks, form hardening, admin protection, secure PHP practices and penetration-testing support. The free security tools are at the bottom of the homepage.';
+        }
+        if (/\b(price|cost|quote|budget|how much)\b/.test(textValue)) {
+            state.interest = 'Quote request';
+            return 'Pricing depends on pages, content, integrations, AI, SEO, PPC and support needs. Use the quote calculator for a quick range, or share your email here and we can follow up with a project estimate.';
+        }
+        state.interest ||= 'General service enquiry';
+        return 'Crest Web Media provides website development, app development, SEO, PPC, AI automation, ecommerce, security checks, support tickets and client portals. Ask me about any service, or send your name and email and I will capture the lead locally.';
+    };
+
+    const maybeCaptureLead = async (textValue) => {
+        const email = textValue.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || '';
+        if (!email) return false;
+        const nameMatch = textValue.match(/(?:name is|i am|i'm|this is)\s+([a-z ,.'-]{2,40})/i);
+        state.name = nameMatch ? nameMatch[1].trim() : state.name || 'Website visitor';
+        state.email = email;
+
+        try {
+            const response = await fetch(chatbot.dataset.chatEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: state.name,
+                    email: state.email,
+                    interest: state.interest || 'Chatbot enquiry',
+                    message: textValue,
+                }),
+            });
+            const result = await response.json();
+            addMessage('bot', result.message || 'Thanks. Your details have been saved.');
+        } catch (error) {
+            addMessage('bot', 'I can answer offline, but the lead save failed. Please use the contact page as a backup.');
+        }
+        return true;
+    };
+
+    const openChat = () => {
+        if (!panel) return;
+        panel.hidden = false;
+        chatbot.classList.add('is-open');
+        if (!messages?.children.length) {
+            addMessage('bot', 'Hi, I can answer questions about Crest Web Media services without using an external API. Ask about websites, SEO, PPC, AI, apps, ecommerce or security.');
+        }
+        input?.focus();
+    };
+
+    const closeChat = () => {
+        chatbot.classList.remove('is-open');
+        if (panel) panel.hidden = true;
+    };
+
+    toggle?.addEventListener('click', () => {
+        if (chatbot.classList.contains('is-open')) {
+            closeChat();
+            return;
+        }
+        openChat();
+    });
+    close?.addEventListener('click', closeChat);
+
+    form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const value = input?.value.trim() || '';
+        if (!value) return;
+        addMessage('user', value);
+        if (input) input.value = '';
+        if (await maybeCaptureLead(value)) return;
+        addMessage('bot', serviceReply(value));
+        if (!state.askedLead && state.interest) {
+            state.askedLead = true;
+            addMessage('bot', 'If you want a follow-up, reply with your email. Example: "I am Alex, alex@example.com".');
+        }
+    });
+});
