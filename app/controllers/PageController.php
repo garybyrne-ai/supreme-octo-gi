@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Security;
 use App\Models\ContentRepository;
+use App\Models\SiteContentRepository;
 use App\Models\ToolLeadRepository;
 use App\Services\AuditLogger;
 use App\Services\SeoService;
@@ -14,11 +15,13 @@ use App\Services\SeoService;
 final class PageController extends Controller
 {
     private ContentRepository $content;
+    private SiteContentRepository $siteContent;
 
     public function __construct(array $config)
     {
         parent::__construct($config);
         $this->content = new ContentRepository();
+        $this->siteContent = new SiteContentRepository();
     }
 
     public function about(): void
@@ -73,6 +76,7 @@ final class PageController extends Controller
             'title' => 'Process | Crest Web Media',
             'metaDescription' => 'A structured digital process from discovery to deployment and support.',
             'process' => $this->content->process(),
+            'pageIntro' => $this->siteContent->pageIntro('process', 'Our Proven Process', 'Workflow'),
         ]);
     }
 
@@ -100,6 +104,7 @@ final class PageController extends Controller
             'title' => 'Pricing | Crest Web Media',
             'metaDescription' => 'Project pricing for digital agency websites, CMS, web apps and growth platforms.',
             'pricing' => $this->content->pricing(),
+            'pageIntro' => $this->siteContent->pageIntro('pricing', 'Pricing', 'Investment'),
         ]);
     }
 
@@ -281,10 +286,13 @@ final class PageController extends Controller
 
     private function simplePage(string $title, string $meta, string $variant): void
     {
+        $intro = $this->siteContent->pageIntro($variant, $title, '');
+
         $this->render('pages/simple', [
             'title' => $title . ' | Crest Web Media',
             'metaDescription' => $meta,
-            'pageTitle' => $title,
+            'pageTitle' => $intro['heading'] !== '' ? $intro['heading'] : $title,
+            'pageKicker' => $intro['kicker'],
             'variant' => $variant,
             'services' => $this->content->services(),
             'technologies' => $this->content->technologies(),

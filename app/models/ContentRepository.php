@@ -8,24 +8,9 @@ final class ContentRepository
 {
     public function contact(): array
     {
-        return [
-            'email' => 'ank.kalia@gmail.com',
-            'phone' => '+918894867819',
-            'phone_display' => '+91 88948 67819',
-            'whatsapp_url' => 'https://wa.me/918894867819',
-            'locations' => [
-                [
-                    'name' => 'Dublin, Ireland',
-                    'type' => 'Global client coordination',
-                    'timezone' => 'GMT / IST project overlap',
-                ],
-                [
-                    'name' => 'Shimla, Himachal Pradesh, India',
-                    'type' => 'Remote development studio',
-                    'timezone' => 'Asia/Kolkata',
-                ],
-            ],
-        ];
+        // Backend-editable via the Site Content admin module. Defaults mirror the
+        // original hard-coded values so nothing changes until an admin saves.
+        return (new SiteContentRepository())->contact();
     }
 
     public function stats(): array

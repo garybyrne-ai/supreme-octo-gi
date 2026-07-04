@@ -1,5 +1,5 @@
 <section class="subhero">
-    <span class="status-chip"><span></span> Crest Web Media</span>
+    <span class="status-chip"><span></span> <?= e(!empty($pageKicker) ? $pageKicker : 'Crest Web Media') ?></span>
     <h1><?= e($pageTitle) ?></h1>
     <p><?= e($metaDescription) ?></p>
 </section>

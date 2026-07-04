@@ -37,16 +37,20 @@ $old = $old ?? [];
                 <?php if (!empty($plan['badge'])): ?><span class="membership-badge"><?= e($plan['badge']) ?></span><?php endif; ?>
                 <header class="membership-card-head">
                     <h2><?= e($plan['name']) ?></h2>
-                    <p><?= $plan['links'] ?></p>
+                    <p><?= e($plan['links']) ?></p>
                 </header>
                 <div class="membership-card-price">
                     <strong><?= e($plan['price']) ?></strong><span>one-time</span>
                 </div>
                 <ul class="check-list">
-                    <?php foreach ($plan['features'] as $feature): ?><li><?= $feature ?></li><?php endforeach; ?>
+                    <?php foreach ($plan['features'] as $feature): ?><li><?= e($feature) ?></li><?php endforeach; ?>
                 </ul>
                 <div class="membership-card-actions">
-                    <a class="pill-button" href="#backlink-order" data-select-plan="<?= e($plan['slug']) ?>">Order <?= e($plan['name']) ?> <i class="fa-solid fa-arrow-right"></i></a>
+                    <?php if (!empty($plan['checkout_url'])): ?>
+                        <a class="pill-button" href="<?= e($plan['checkout_url']) ?>" rel="nofollow">Buy <?= e($plan['name']) ?> <i class="fa-solid fa-arrow-right"></i></a>
+                    <?php else: ?>
+                        <a class="pill-button" href="#backlink-order" data-select-plan="<?= e($plan['slug']) ?>">Order <?= e($plan['name']) ?> <i class="fa-solid fa-arrow-right"></i></a>
+                    <?php endif; ?>
                 </div>
             </article>
         <?php endforeach; ?>

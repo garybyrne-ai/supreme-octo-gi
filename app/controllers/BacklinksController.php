@@ -6,66 +6,20 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Security;
+use App\Models\BacklinkPlanRepository;
 use App\Models\SupportTicketRepository;
 use App\Services\AuditLogger;
 
 final class BacklinksController extends Controller
 {
     /**
+     * Active, backend-managed backlink plans for the public page.
+     *
      * @return array<int, array<string, mixed>>
      */
     public static function plans(): array
     {
-        return [
-            [
-                'slug' => 'irish-starter',
-                'name' => 'Irish Starter',
-                'price' => '€59',
-                'links' => '25 Irish (.ie) backlinks',
-                'badge' => 'Rare .ie links',
-                'featured' => false,
-                'features' => [
-                    '25 contextual links from real Irish (.ie) sites',
-                    'Manual, white-hat editorial placements',
-                    'Niche-relevant Irish blogs &amp; local sites',
-                    'Mixed dofollow / nofollow natural profile',
-                    'Live URL report you can verify',
-                    'Delivered over 3–4 weeks (safe velocity)',
-                ],
-            ],
-            [
-                'slug' => 'irish-growth',
-                'name' => 'Irish Growth',
-                'price' => '€119',
-                'links' => '60 Irish + niche backlinks',
-                'badge' => 'Most popular',
-                'featured' => true,
-                'features' => [
-                    'Everything in Irish Starter',
-                    '60 links: .ie + high-relevance niche sites',
-                    'Higher authority (DR 20–50) placements',
-                    'Anchor-text diversity planning',
-                    'Tiered internal + contextual links',
-                    'Priority delivery with weekly updates',
-                ],
-            ],
-            [
-                'slug' => 'irish-authority',
-                'name' => 'Irish Authority',
-                'price' => '€249',
-                'links' => '150 mixed authority backlinks',
-                'badge' => 'Maximum impact',
-                'featured' => false,
-                'features' => [
-                    'Everything in Irish Growth',
-                    '150 links incl. premium .ie &amp; DR 50+ sites',
-                    'Digital-PR style editorial mentions',
-                    'Full anchor + landing-page strategy',
-                    'Competitor gap-based targeting',
-                    'Detailed monthly reporting',
-                ],
-            ],
-        ];
+        return (new BacklinkPlanRepository())->activePlans();
     }
 
     public function index(array $data = []): void

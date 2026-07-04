@@ -6,10 +6,16 @@
         <a href="#"><i class="fa-brands fa-telegram"></i></a>
         <a href="#"><i class="fa-solid fa-envelope"></i></a>
     </div>
+    <?php
+        $hero = $hero ?? [];
+        $servingList = !empty($hero['serving']) && is_array($hero['serving'])
+            ? $hero['serving']
+            : [['flag' => '🇮🇪', 'label' => 'Ireland'], ['flag' => '🇬🇧', 'label' => 'UK'], ['flag' => '🇺🇸', 'label' => 'USA'], ['flag' => '🇪🇺', 'label' => 'Europe'], ['flag' => '🌍', 'label' => 'And Beyond']];
+    ?>
     <div class="hero-copy">
-        <div class="status-chip"><span></span> Remote. Precise. Built For Growth. <i class="fa-solid fa-mountain"></i></div>
-        <h1>We Build Digital Systems That Work. <span>Scale.</span> And <span>Make Money.</span></h1>
-        <p>Websites, PHP platforms, ecommerce, apps, SEO and AI workflows engineered for fast loading, clearer decisions and qualified demand.</p>
+        <div class="status-chip"><span></span> <?= e($hero['chip_text'] ?? 'Remote. Precise. Built For Growth.') ?> <i class="fa-solid fa-mountain"></i></div>
+        <h1><?= strip_tags((string) ($hero['headline'] ?? 'We Build Digital Systems That Work. <span>Scale.</span> And <span>Make Money.</span>'), '<span>') ?></h1>
+        <p><?= e($hero['subheading'] ?? 'Websites, PHP platforms, ecommerce, apps, SEO and AI workflows engineered for fast loading, clearer decisions and qualified demand.') ?></p>
         <div class="hero-service-grid" aria-label="Core services">
             <a href="/services/website-development"><i class="fa-solid fa-laptop-code"></i><span>Web Platforms</span></a>
             <a href="/services/app-development"><i class="fa-solid fa-mobile-screen-button"></i><span>Apps &amp; Portals</span></a>
@@ -17,23 +23,26 @@
             <a href="/services/performance-optimization"><i class="fa-solid fa-chart-line"></i><span>Conversion UX</span></a>
         </div>
         <div class="button-row">
-            <a class="pill-button" href="/portfolio">View My Work <i class="fa-solid fa-arrow-right"></i></a>
-            <a class="pill-button ghost" href="/free-penetration-testing-tools">Free Security Tools <i class="fa-solid fa-shield-halved"></i></a>
+            <a class="pill-button" href="<?= e($hero['cta_primary_url'] ?? '/portfolio') ?>"><?= e($hero['cta_primary_label'] ?? 'View My Work') ?> <i class="fa-solid fa-arrow-right"></i></a>
+            <a class="pill-button ghost" href="<?= e($hero['cta_secondary_url'] ?? '/free-penetration-testing-tools') ?>"><?= e($hero['cta_secondary_label'] ?? 'Free Security Tools') ?> <i class="fa-solid fa-shield-halved"></i></a>
         </div>
-        <div class="hero-trust-strip" aria-label="Serving clients in Ireland, UK, USA, Europe and beyond">
-            <span>Serving Clients In</span>
-            <b><span class="flag" aria-hidden="true">🇮🇪</span> Ireland</b>
-            <b><span class="flag" aria-hidden="true">🇬🇧</span> UK</b>
-            <b><span class="flag" aria-hidden="true">🇺🇸</span> USA</b>
-            <b><span class="flag" aria-hidden="true">🇪🇺</span> Europe</b>
-            <b><span class="flag" aria-hidden="true">🌍</span> And Beyond</b>
+        <div class="hero-trust-strip" aria-label="Serving clients worldwide">
+            <span><?= e($hero['serving_label'] ?? 'Serving Clients In') ?></span>
+            <?php foreach ($servingList as $svc): ?>
+            <b><?php if (!empty($svc['flag'])): ?><span class="flag" aria-hidden="true"><?= e($svc['flag']) ?></span> <?php endif; ?><?= e($svc['label'] ?? '') ?></b>
+            <?php endforeach; ?>
         </div>
     </div>
+    <?php
+        $heroContact = $contact ?? [];
+        $signalEmail = $heroContact['email'] ?? 'ank.kalia@gmail.com';
+        $signalLine = $heroContact['signal_line'] ?? 'Dublin + Shimla';
+    ?>
     <div class="hero-panels">
-        <a class="email-neon-sign" href="mailto:ank.kalia@gmail.com" aria-label="Email ank.kalia@gmail.com">
+        <a class="email-neon-sign" href="mailto:<?= e($signalEmail) ?>" aria-label="Email <?= e($signalEmail) ?>">
             <span class="signal-label"><b class="live-dot"></b> DIRECT SIGNAL</span>
-            <strong><i class="fa-solid fa-circle-check"></i> ank.kalia@gmail.com</strong>
-            <small><i class="fa-solid fa-location-dot"></i> Dublin + Shimla</small>
+            <strong><i class="fa-solid fa-circle-check"></i> <?= e($signalEmail) ?></strong>
+            <small><i class="fa-solid fa-location-dot"></i> <?= e($signalLine) ?></small>
             <span class="signal-scan" aria-hidden="true"></span>
         </a>
         <div class="live-card">

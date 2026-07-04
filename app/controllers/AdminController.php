@@ -8,8 +8,10 @@ use App\Core\Controller;
 use App\Core\Database;
 use App\Core\Security;
 use App\Models\AdminModuleDraftRepository;
+use App\Models\BacklinkPlanRepository;
 use App\Models\CommerceRepository;
 use App\Models\ContentRepository;
+use App\Models\SiteContentRepository;
 use App\Models\MailSettingsRepository;
 use App\Models\MemberRepository;
 use App\Models\MembershipPlanRepository;
@@ -156,6 +158,7 @@ final class AdminController extends Controller
             ['slug' => 'services', 'title' => 'Services Manager', 'icon' => 'fa-screwdriver-wrench', 'summary' => 'Tune service pages, FAQs, benefits, tags and conversion copy.'],
             ['slug' => 'testimonials', 'title' => 'Testimonials', 'icon' => 'fa-comment-dots', 'summary' => 'Curate client quotes, proof points and trust-building snippets.'],
             ['slug' => 'tickets', 'title' => 'Support Tickets', 'icon' => 'fa-ticket', 'summary' => 'Review customer support tickets, priorities and request references.'],
+            ['slug' => 'content', 'title' => 'Site Content', 'icon' => 'fa-pen-ruler', 'summary' => 'Edit the home hero, contact / DIRECT SIGNAL block, backlink plans and page intro headings — no code needed.'],
             ['slug' => 'newsletter-offer', 'title' => 'Newsletter Offer', 'icon' => 'fa-envelope-open-text', 'summary' => 'Edit the automated SEO, PPC, website and app development offer sent to tool leads.'],
             ['slug' => 'mail-settings', 'title' => 'Mail Settings', 'icon' => 'fa-paper-plane', 'summary' => 'Choose PHP mail or Gmail SMTP for tool sign-in codes and automated offer emails.'],
             ['slug' => 'paypal-settings', 'title' => 'Payment Settings', 'icon' => 'fa-credit-card', 'summary' => 'Configure PayPal links, Stripe checkout keys and Growth Lab Pass subscriptions.'],
@@ -205,6 +208,7 @@ final class AdminController extends Controller
             'services' => ['title' => 'Services Manager', 'icon' => 'fa-screwdriver-wrench', 'actions' => ['Edit service copy', 'Manage FAQs', 'Update deliverables']],
             'testimonials' => ['title' => 'Testimonials', 'icon' => 'fa-comment-dots', 'actions' => ['Add quote', 'Update client role', 'Feature proof card']],
             'tickets' => ['title' => 'Support Tickets', 'icon' => 'fa-ticket', 'actions' => ['Review new tickets', 'Assign priority', 'Reply to customer']],
+            'content' => ['title' => 'Site Content', 'icon' => 'fa-pen-ruler', 'actions' => ['Edit home hero', 'Edit contact block', 'Manage backlink plans']],
             'newsletter-offer' => ['title' => 'Newsletter Offer', 'icon' => 'fa-envelope-open-text', 'actions' => ['Edit offer copy', 'Review tool leads', 'Update CTA']],
             'mail-settings' => ['title' => 'Mail Settings', 'icon' => 'fa-paper-plane', 'actions' => ['Choose mail driver', 'Configure Gmail SMTP', 'Review delivery logs']],
             'paypal-settings' => ['title' => 'Payment Settings', 'icon' => 'fa-credit-card', 'actions' => ['Set gateway keys', 'Add checkout links', 'Configure Growth Lab Pass']],
@@ -238,6 +242,9 @@ final class AdminController extends Controller
             'mediaItems' => $slug === 'media' ? (new MediaLibrary())->items(120) : [],
             'forumMembers' => $slug === 'forum-members' ? (new MemberRepository())->recent(120) : [],
             'membershipPlans' => $slug === 'membership' ? (new MembershipPlanRepository())->all() : [],
+            'siteContent' => $slug === 'content' ? (new SiteContentRepository())->all() : [],
+            'backlinkPlans' => $slug === 'content' ? (new BacklinkPlanRepository())->all() : [],
+            'pageIntroDefs' => $slug === 'content' ? (new SiteContentRepository())->pageIntroDefinitions() : [],
             'catalogProducts' => $slug === 'commerce' ? (new CommerceRepository())->allProducts() : [],
             'intervals' => MembershipPlanRepository::INTERVALS,
             'catalogCategories' => CommerceRepository::CATALOG_CATEGORIES,
@@ -276,6 +283,92 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/' . $slug);
+    }
+
+    public function updateSiteContent(string $section): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Site content token expired. Please try again.';
+            $this->redirect('/admin/modules/content');
+        }
+
+        try {
+            $repo = new SiteContentRepository();
+            match ($section) {
+                'hero' => $repo->saveHero($_POST),
+                'contact' => $repo->saveContact($_POST),
+                'page-intros' => $repo->savePageIntros($_POST),
+                default => throw new \RuntimeException('Unknown content section.'),
+            };
+            $_SESSION['admin_notice'] = 'Site content updated.';
+            (new AuditLogger())->log('admin.site_content.updated', ['section' => $section]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
+    }
+
+    public function saveBacklinkPlan(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Backlink plan token expired. Please try again.';
+            $this->redirect('/admin/modules/content');
+        }
+
+        try {
+            $slug = (new BacklinkPlanRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Backlink plan saved.';
+            (new AuditLogger())->log('admin.backlink_plan.saved', ['slug' => $slug]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
+    }
+
+    public function deleteBacklinkPlan(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Backlink plan token expired. Please try again.';
+            $this->redirect('/admin/modules/content');
+        }
+
+        try {
+            $slug = (string) ($_POST['slug'] ?? '');
+            if (($_POST['state'] ?? '') === 'delete') {
+                (new BacklinkPlanRepository())->delete($slug);
+                $_SESSION['admin_notice'] = 'Backlink plan deleted.';
+                (new AuditLogger())->log('admin.backlink_plan.deleted', ['slug' => $slug]);
+            } else {
+                $active = ($_POST['state'] ?? '') === 'activate';
+                (new BacklinkPlanRepository())->setActive($slug, $active);
+                $_SESSION['admin_notice'] = $active ? 'Backlink plan activated.' : 'Backlink plan paused.';
+                (new AuditLogger())->log('admin.backlink_plan.toggled', ['slug' => $slug, 'active' => $active]);
+            }
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
     }
 
     public function updateNewsletterOffer(): void

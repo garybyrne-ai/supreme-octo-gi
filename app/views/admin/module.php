@@ -5,6 +5,7 @@ $adminMenu = [
     'services' => ['title' => 'Services Manager', 'icon' => 'fa-screwdriver-wrench'],
     'testimonials' => ['title' => 'Testimonials', 'icon' => 'fa-comment-dots'],
     'tickets' => ['title' => 'Support Tickets', 'icon' => 'fa-ticket'],
+    'content' => ['title' => 'Site Content', 'icon' => 'fa-pen-ruler'],
     'newsletter-offer' => ['title' => 'Newsletter Offer', 'icon' => 'fa-envelope-open-text'],
     'mail-settings' => ['title' => 'Mail Settings', 'icon' => 'fa-paper-plane'],
     'paypal-settings' => ['title' => 'Payment Settings', 'icon' => 'fa-credit-card'],
@@ -231,6 +232,171 @@ $moduleDrafts = $moduleDrafts ?? [];
                     <p>No registered forum members yet.</p>
                 <?php endif; ?>
             </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Site Content'): ?>
+            <?php
+                $sc = $siteContent ?? [];
+                $scHero = $sc['hero'] ?? [];
+                $scContact = $sc['contact'] ?? [];
+                $scIntros = $sc['page_intros'] ?? [];
+                $introDefs = $pageIntroDefs ?? [];
+                $backlinkPlans = $backlinkPlans ?? [];
+                $servingLines = [];
+                foreach (($scHero['serving'] ?? []) as $s) {
+                    $servingLines[] = trim(($s['flag'] ?? '') . ' | ' . ($s['label'] ?? ''), ' |');
+                }
+                $locationLines = [];
+                foreach (($scContact['locations'] ?? []) as $l) {
+                    $locationLines[] = trim(($l['name'] ?? '') . ' | ' . ($l['type'] ?? '') . ' | ' . ($l['timezone'] ?? ''), ' |');
+                }
+            ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/content/hero">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>Home Hero</h2>
+                    <label>Status chip text <input name="chip_text" value="<?= e($scHero['chip_text'] ?? '') ?>"></label>
+                    <label>Headline <small>(use &lt;span&gt;…&lt;/span&gt; to highlight words)</small>
+                        <textarea name="headline" rows="2"><?= e($scHero['headline'] ?? '') ?></textarea></label>
+                    <label>Subheading <textarea name="subheading" rows="3"><?= e($scHero['subheading'] ?? '') ?></textarea></label>
+                    <label>"Serving Clients In" label <input name="serving_label" value="<?= e($scHero['serving_label'] ?? '') ?>"></label>
+                    <label>Serving list <small>(one per line, format: flag | label)</small>
+                        <textarea name="serving" rows="5"><?= e(implode("\n", $servingLines)) ?></textarea></label>
+                    <div class="form-grid two">
+                        <label>Primary button label <input name="cta_primary_label" value="<?= e($scHero['cta_primary_label'] ?? '') ?>"></label>
+                        <label>Primary button URL <input name="cta_primary_url" value="<?= e($scHero['cta_primary_url'] ?? '') ?>"></label>
+                        <label>Secondary button label <input name="cta_secondary_label" value="<?= e($scHero['cta_secondary_label'] ?? '') ?>"></label>
+                        <label>Secondary button URL <input name="cta_secondary_url" value="<?= e($scHero['cta_secondary_url'] ?? '') ?>"></label>
+                    </div>
+                    <button class="pill-button" type="submit">Save Hero <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <form class="cyber-form" method="post" action="/admin/content/contact">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>Contact &amp; DIRECT SIGNAL</h2>
+                    <label>Contact email <input name="email" type="email" value="<?= e($scContact['email'] ?? '') ?>"></label>
+                    <div class="form-grid two">
+                        <label>Phone (raw) <input name="phone" value="<?= e($scContact['phone'] ?? '') ?>"></label>
+                        <label>Phone (display) <input name="phone_display" value="<?= e($scContact['phone_display'] ?? '') ?>"></label>
+                    </div>
+                    <label>WhatsApp URL <input name="whatsapp_url" value="<?= e($scContact['whatsapp_url'] ?? '') ?>"></label>
+                    <label>DIRECT SIGNAL location line <input name="signal_line" value="<?= e($scContact['signal_line'] ?? '') ?>"></label>
+                    <label>Locations <small>(one per line, format: name | type | timezone)</small>
+                        <textarea name="locations" rows="4"><?= e(implode("\n", $locationLines)) ?></textarea></label>
+                    <button class="pill-button" type="submit">Save Contact <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+            </section>
+
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/content/page-intros">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>Page Intro Headings</h2>
+                    <p>Override the kicker &amp; heading on key marketing pages. Leave blank to keep the built-in default.</p>
+                    <?php foreach ($introDefs as $key => $def): ?>
+                        <?php $savedIntro = $scIntros[$key] ?? []; ?>
+                        <div class="form-grid two">
+                            <label><?= e($def[0]) ?> — kicker
+                                <input name="<?= e($key) ?>_kicker" placeholder="<?= e($def[1] ?? '') ?>" value="<?= e($savedIntro['kicker'] ?? '') ?>"></label>
+                            <label><?= e($def[0]) ?> — heading
+                                <input name="<?= e($key) ?>_heading" placeholder="<?= e($def[0]) ?>" value="<?= e($savedIntro['heading'] ?? '') ?>"></label>
+                        </div>
+                    <?php endforeach; ?>
+                    <button class="pill-button" type="submit">Save Page Intros <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+            </section>
+
+            <section class="split-section">
+                <form class="cyber-form membership-plan-form" method="post" action="/admin/backlink-plans">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="original_slug" value="" data-plan-original-slug>
+                    <h2>Backlink Plan</h2>
+                    <p>Add or edit an Irish (.ie) backlink plan sold on <a href="/backlinks" target="_blank" rel="noopener">/backlinks</a>. Click "Edit" on a plan below to load it here.</p>
+                    <div class="form-grid two">
+                        <label>Name <input name="name" data-plan-field="name" required></label>
+                        <label>Slug <small>(blank = auto)</small> <input name="slug" data-plan-field="slug"></label>
+                        <label>Price <input name="price" data-plan-field="price" placeholder="€59"></label>
+                        <label>Links summary <input name="links" data-plan-field="links" placeholder="25 Irish (.ie) backlinks"></label>
+                        <label>Badge <input name="badge" data-plan-field="badge" placeholder="Rare .ie links"></label>
+                        <label>Sort order <input name="sort_order" data-plan-field="sort_order" type="number" value="100"></label>
+                        <label>Checkout URL <small>(Stripe/PayPal link, optional)</small> <input name="checkout_url" data-plan-field="checkout_url"></label>
+                    </div>
+                    <label>Features <small>(one per line)</small> <textarea name="features" rows="6" data-plan-field="features"></textarea></label>
+                    <div class="checkbox-row">
+                        <label><input type="checkbox" name="active" value="1" checked data-plan-field="active"> Active (shown on site)</label>
+                        <label><input type="checkbox" name="featured" value="1" data-plan-field="featured"> Featured (most popular)</label>
+                    </div>
+                    <button class="pill-button" type="submit">Save Plan <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <section class="cyber-card membership-plan-list">
+                    <div class="section-heading compact">
+                        <span class="status-chip"><span></span> Live plans</span>
+                        <h2>Backlink Tiers</h2>
+                    </div>
+                    <?php if (!empty($backlinkPlans)): ?>
+                        <div class="membership-plan-grid">
+                            <?php foreach ($backlinkPlans as $bp): ?>
+                                <article class="membership-plan-item <?= empty($bp['active']) ? 'is-paused' : '' ?>">
+                                    <header>
+                                        <div>
+                                            <strong><?= e($bp['name']) ?></strong>
+                                            <small><?= e($bp['slug']) ?></small>
+                                        </div>
+                                        <span class="membership-price"><?= e($bp['price']) ?><em><?= e($bp['links']) ?></em></span>
+                                    </header>
+                                    <div class="membership-plan-flags">
+                                        <em class="pill-status <?= !empty($bp['active']) ? 'is-live' : 'is-paused' ?>"><?= !empty($bp['active']) ? 'Active' : 'Paused' ?></em>
+                                        <?php if (!empty($bp['featured'])): ?><em class="pill-status is-feature">Featured</em><?php endif; ?>
+                                        <?php if (!empty($bp['checkout_url'])): ?><em class="pill-status is-gw">Checkout link</em><?php endif; ?>
+                                    </div>
+                                    <div class="membership-plan-actions">
+                                        <button type="button" class="pill-button ghost" data-edit-backlink-plan='<?= e(json_encode($bp, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>'><i class="fa-solid fa-pen"></i> Edit</button>
+                                        <form method="post" action="/admin/backlink-plans/state">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="slug" value="<?= e($bp['slug']) ?>">
+                                            <input type="hidden" name="state" value="<?= !empty($bp['active']) ? 'deactivate' : 'activate' ?>">
+                                            <button class="pill-button ghost" type="submit"><?= !empty($bp['active']) ? 'Pause' : 'Activate' ?></button>
+                                        </form>
+                                        <form method="post" action="/admin/backlink-plans/state" onsubmit="return confirm('Delete this backlink plan? This cannot be undone.');">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="slug" value="<?= e($bp['slug']) ?>">
+                                            <input type="hidden" name="state" value="delete">
+                                            <button class="pill-button ghost danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p>No backlink plans yet. Add your first plan on the left — it appears on <a href="/backlinks">/backlinks</a> instantly once active.</p>
+                    <?php endif; ?>
+                </section>
+            </section>
+            <script>
+            (function () {
+                var form = document.querySelector('.membership-plan-form[action="/admin/backlink-plans"]');
+                if (!form) { return; }
+                document.querySelectorAll('[data-edit-backlink-plan]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var plan = JSON.parse(btn.getAttribute('data-edit-backlink-plan'));
+                        var set = function (name, val) {
+                            var el = form.querySelector('[data-plan-field="' + name + '"]');
+                            if (el) { el.value = val; }
+                        };
+                        set('name', plan.name || '');
+                        set('slug', plan.slug || '');
+                        set('price', plan.price || '');
+                        set('links', plan.links || '');
+                        set('badge', plan.badge || '');
+                        set('sort_order', plan.sort_order || 100);
+                        set('checkout_url', plan.checkout_url || '');
+                        set('features', (plan.features || []).join('\n'));
+                        form.querySelector('[data-plan-field="featured"]').checked = !!plan.featured;
+                        form.querySelector('[data-plan-field="active"]').checked = !!plan.active;
+                        form.querySelector('[data-plan-original-slug]').value = plan.slug || '';
+                        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                });
+            })();
+            </script>
         <?php endif; ?>
 
         <?php if (($module['title'] ?? '') === 'Newsletter Offer'): ?>
