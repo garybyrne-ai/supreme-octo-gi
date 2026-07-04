@@ -3,11 +3,16 @@ const nav = document.querySelector('#siteNav');
 
 if (navToggle && nav) {
     const icon = navToggle.querySelector('i');
+    const collapseGroups = () => {
+        nav.querySelectorAll('.nav-item.is-expanded').forEach((item) => item.classList.remove('is-expanded'));
+    };
+
     const closeNav = () => {
         nav.classList.remove('is-open');
         document.body.classList.remove('nav-open');
         navToggle.setAttribute('aria-expanded', 'false');
         if (icon) icon.className = 'fa-solid fa-bars';
+        collapseGroups();
     };
 
     navToggle.addEventListener('click', () => {
@@ -15,10 +20,34 @@ if (navToggle && nav) {
         document.body.classList.toggle('nav-open', open);
         navToggle.setAttribute('aria-expanded', String(open));
         if (icon) icon.className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+        if (!open) collapseGroups();
     });
 
     nav.querySelectorAll('a').forEach((link) => {
+        // Group headers (Services/Tools/Store/Company) toggle a mobile accordion
+        // instead of closing the menu; only real destination links close it.
+        if (link.parentElement && link.parentElement.classList.contains('nav-item')) {
+            return;
+        }
         link.addEventListener('click', closeNav);
+    });
+
+    // Mobile accordion: tap a group header to reveal its sub-links.
+    nav.querySelectorAll('.has-mega > a').forEach((headerLink) => {
+        headerLink.addEventListener('click', (event) => {
+            if (!window.matchMedia('(max-width: 900px)').matches) {
+                return; // desktop uses hover; let the link navigate
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            const item = headerLink.closest('.nav-item');
+            if (!item) return;
+            const willOpen = !item.classList.contains('is-expanded');
+            nav.querySelectorAll('.nav-item.is-expanded').forEach((other) => {
+                if (other !== item) other.classList.remove('is-expanded');
+            });
+            item.classList.toggle('is-expanded', willOpen);
+        });
     });
 
     window.addEventListener('keydown', (event) => {

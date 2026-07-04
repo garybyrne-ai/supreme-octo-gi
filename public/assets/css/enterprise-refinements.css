@@ -240,3 +240,100 @@
 
 .fa-crown::before { content: "♛"; }
 .fa-circle-info::before { content: "ⓘ"; }
+
+/* ==========================================================================
+   Mobile mega-menu accordion — reveal Store/Company/Services/Tools sub-links
+   when a group is tapped (they were display:none on mobile before).
+   ========================================================================== */
+@media (max-width: 900px) {
+    #siteNav.is-open .nav-item.is-expanded .mega-menu,
+    body.nav-open #siteNav .nav-item.is-expanded .mega-menu {
+        display: grid !important;
+    }
+    #siteNav .nav-item.has-mega > a .fa-chevron-down { transition: transform .25s ease; margin-left: auto; }
+    #siteNav .nav-item.is-expanded > a .fa-chevron-down { transform: rotate(180deg); }
+    #siteNav .nav-item.is-expanded > a {
+        background: rgba(0, 229, 255, .12) !important;
+        border: 1px solid rgba(0, 229, 255, .3) !important;
+    }
+    #siteNav .nav-item.is-expanded .mega-menu .mega-grid a {
+        background: rgba(255, 255, 255, .04);
+        min-height: 44px;
+    }
+}
+
+/* ==========================================================================
+   Hero animations (respect prefers-reduced-motion)
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+    /* Shimmering gradient on the hero + subhero highlight words */
+    .hero h1 span,
+    .subhero h1 span {
+        background-size: 220% auto;
+        animation: heroShimmer 6s linear infinite;
+    }
+    @keyframes heroShimmer {
+        to { background-position: 220% center; }
+    }
+
+    /* Gentle floating entrance + idle drift on the hero service tiles */
+    .hero-service-grid a {
+        animation: heroFloat 6s ease-in-out infinite;
+    }
+    .hero-service-grid a:nth-child(2) { animation-delay: .8s; }
+    .hero-service-grid a:nth-child(3) { animation-delay: 1.6s; }
+    .hero-service-grid a:nth-child(4) { animation-delay: 2.4s; }
+    @keyframes heroFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+
+    /* Slow parallax drift on the hero side panels */
+    .hero-panels .email-neon-sign { animation: heroDriftA 9s ease-in-out infinite; }
+    .hero-panels .live-card { animation: heroDriftB 11s ease-in-out infinite; }
+    @keyframes heroDriftA { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes heroDriftB { 0%,100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+
+    /* Pulsing status dot + a soft glow ring behind the hero heading */
+    .hero-copy .status-chip span { animation: heroDot 2.4s ease-in-out infinite; }
+    @keyframes heroDot {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(35, 255, 154, .55); }
+        50% { box-shadow: 0 0 0 7px rgba(35, 255, 154, 0); }
+    }
+
+    /* Animated aurora sweep behind the hero copy */
+    .hero-copy::before {
+        content: "";
+        position: absolute;
+        inset: -40px -60px auto -60px;
+        height: 320px;
+        background: radial-gradient(60% 120% at 20% 0%, rgba(0,229,255,.16), transparent 60%),
+                    radial-gradient(50% 120% at 80% 10%, rgba(180,92,255,.16), transparent 60%);
+        filter: blur(18px);
+        z-index: -1;
+        opacity: .8;
+        animation: heroAurora 12s ease-in-out infinite alternate;
+        pointer-events: none;
+    }
+    @keyframes heroAurora {
+        0% { transform: translateX(-14px) translateY(0) scale(1); }
+        100% { transform: translateX(14px) translateY(-8px) scale(1.05); }
+    }
+}
+.hero-copy { position: relative; }
+
+/* Fix mobile mega-grid sub-link layout (icon left, text wraps, nothing cut) */
+@media (max-width: 900px) {
+    #siteNav .mega-menu .mega-grid { gap: 8px; }
+    #siteNav .mega-menu .mega-grid a {
+        justify-content: flex-start !important;
+        text-align: left !important;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px !important;
+        min-height: 46px;
+    }
+    #siteNav .mega-menu .mega-grid a i { flex: 0 0 auto; }
+    #siteNav .mega-menu .mega-grid a span { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+    #siteNav .mega-menu .mega-grid a small { white-space: normal; opacity: .78; }
+}
