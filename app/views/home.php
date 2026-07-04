@@ -20,29 +20,31 @@
             <a class="pill-button" href="/portfolio">View My Work <i class="fa-solid fa-arrow-right"></i></a>
             <a class="pill-button ghost" href="/free-penetration-testing-tools">Free Security Tools <i class="fa-solid fa-shield-halved"></i></a>
         </div>
-        <div class="hero-trust-strip" aria-label="Trusted by clients in">
+        <div class="hero-trust-strip" aria-label="Serving clients in Ireland, UK, USA, Europe and beyond">
             <span>Serving Clients In</span>
-            <b>Ireland</b>
-            <b>UK</b>
-            <b>USA</b>
-            <b>Europe</b>
-            <b><i class="fa-solid fa-globe"></i> And Beyond</b>
+            <b><span class="flag" aria-hidden="true">🇮🇪</span> Ireland</b>
+            <b><span class="flag" aria-hidden="true">🇬🇧</span> UK</b>
+            <b><span class="flag" aria-hidden="true">🇺🇸</span> USA</b>
+            <b><span class="flag" aria-hidden="true">🇪🇺</span> Europe</b>
+            <b><span class="flag" aria-hidden="true">🌍</span> And Beyond</b>
         </div>
     </div>
     <div class="hero-panels">
-        <a class="email-neon-sign" href="mailto:ank.kalia@gmail.com">
-            <span>DIRECT SIGNAL</span>
+        <a class="email-neon-sign" href="mailto:ank.kalia@gmail.com" aria-label="Email ank.kalia@gmail.com">
+            <span class="signal-label"><b class="live-dot"></b> DIRECT SIGNAL</span>
             <strong><i class="fa-solid fa-circle-check"></i> ank.kalia@gmail.com</strong>
             <small><i class="fa-solid fa-location-dot"></i> Dublin + Shimla</small>
+            <span class="signal-scan" aria-hidden="true"></span>
         </a>
         <div class="live-card">
             <span>LOCAL TIME</span>
             <strong id="localTime">10:30 AM</strong>
-            <em>Online &amp; Available</em>
+            <em><b class="live-dot online"></b> Online &amp; Available</em>
             <div class="mountain-hike" aria-hidden="true">
+                <span class="sky-sun"></span>
                 <span class="mountain-back"></span>
                 <span class="mountain-front"></span>
-                <span class="hiker"></span>
+                <span class="hiker"><b class="hiker-pole"></b></span>
             </div>
         </div>
     </div>
