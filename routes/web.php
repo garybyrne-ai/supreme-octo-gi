@@ -11,6 +11,7 @@ use App\Controllers\CheckoutController;
 use App\Controllers\ForumController;
 use App\Controllers\HomeController;
 use App\Controllers\InstallController;
+use App\Controllers\LocationController;
 use App\Controllers\MembershipController;
 use App\Controllers\PageController;
 use App\Controllers\PaymentWebhookController;
@@ -35,6 +36,8 @@ $router->get('/testimonials', [PageController::class, 'testimonials']);
 $router->get('/pricing', [PageController::class, 'pricing']);
 $router->get('/membership', [MembershipController::class, 'index']);
 $router->post('/membership/join', [MembershipController::class, 'join']);
+$router->get('/locations', [LocationController::class, 'hub']);
+$router->get('/locations/{county}', [LocationController::class, 'county']);
 $router->get('/faq', [PageController::class, 'faq']);
 $router->get('/contact', [PageController::class, 'contact']);
 $router->post('/contact', [PageController::class, 'sendContact']);
@@ -98,3 +101,8 @@ $router->post('/admin/membership/plans', [AdminCommerceController::class, 'saveM
 $router->post('/admin/membership/plans/toggle', [AdminCommerceController::class, 'toggleMembershipPlan']);
 $router->post('/admin/membership/plans/delete', [AdminCommerceController::class, 'deleteMembershipPlan']);
 $router->post('/admin/logout', [AdminController::class, 'logout']);
+
+// Catch-all for Ireland location-SEO landing pages (e.g. /web-design-dublin,
+// /seo-ireland). Registered LAST so every explicit route above wins first;
+// LocationController::landing() renders a 404 for any non-location slug.
+$router->get('/{slug}', [LocationController::class, 'landing']);

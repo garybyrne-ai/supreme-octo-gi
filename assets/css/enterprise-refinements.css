@@ -1,0 +1,239 @@
+/* ==========================================================================
+   Enterprise refinements — vertical rhythm, badge/title/subtitle spacing,
+   micro-details and the Ireland location-SEO landing system.
+   Loaded after the compiled theme so it only adds polish, never removes.
+   ========================================================================== */
+
+/* ---------- Global micro-details ---------- */
+::selection { background: rgba(0, 229, 255, .28); color: #eafcff; }
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+/* Thin gradient hairline used to separate hero from content */
+.hairline {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(90deg, transparent, var(--line), var(--line-strong), var(--line), transparent);
+    margin: 0;
+}
+
+/* ---------- Badge → Title → Subtitle rhythm ---------- */
+/* The inner-page hero previously stacked the badge hard against the H1 with
+   no gap. Establish a consistent, enterprise-grade vertical rhythm. */
+.subhero .status-chip,
+.subhero .kicker,
+.subhero .eyebrow {
+    margin-bottom: 22px;
+    letter-spacing: .12em;
+    padding: 9px 15px;
+}
+
+.subhero h1 {
+    margin: 0 auto;
+    max-width: 22ch;
+    letter-spacing: -0.01em;
+}
+
+.subhero p {
+    margin-top: 22px;
+    max-width: 60ch;
+    font-size: 1.06rem;
+}
+
+.subhero .button-row {
+    margin-top: 32px;
+}
+
+/* Left-aligned hero variants (service/location detail) keep the rhythm but
+   drop the auto-centering. */
+.subhero.service-detail-hero h1,
+.subhero.location-detail-hero h1,
+.subhero .hero-copy h1 {
+    margin-inline: 0;
+    max-width: 26ch;
+}
+
+.subhero.service-detail-hero p,
+.subhero.location-detail-hero p {
+    margin-inline: 0;
+}
+
+/* Section headings: give the kicker room before the H2 and the H2 room
+   before its intro paragraph. */
+.section-heading .kicker,
+.section-heading .status-chip {
+    display: inline-flex;
+    margin-bottom: 16px;
+}
+
+.section-heading h2 + p {
+    margin-top: 14px;
+    max-width: 66ch;
+}
+
+.section-heading:not(.left) h2 + p {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Consistent breathing room around stacked cards */
+.split-section { gap: clamp(18px, 3vw, 30px); }
+
+/* Refined card hover lift for link cards */
+.service-card,
+.glass-feature,
+.location-card,
+.local-service-card {
+    transition: transform .3s cubic-bezier(.2, .7, .2, 1), border-color .3s ease, box-shadow .3s ease;
+}
+.service-card:hover,
+.glass-feature:hover,
+.location-card:hover,
+.local-service-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+}
+
+/* ---------- Breadcrumbs ---------- */
+.breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-size: .8rem;
+    color: var(--muted);
+    margin-bottom: 18px;
+}
+.breadcrumbs a { color: var(--muted); }
+.breadcrumbs a:hover { color: var(--primary); }
+.breadcrumbs span[aria-hidden] { opacity: .5; }
+
+/* ---------- Locations hub ---------- */
+.location-hero-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 26px;
+}
+.location-hero-metrics span {
+    border: 1px solid var(--line);
+    background: rgba(6, 12, 24, .5);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--text);
+}
+.location-hero-metrics span b { color: var(--primary); }
+
+.province-group { margin-bottom: 34px; }
+.province-group > h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: clamp(20px, 2vw, 26px);
+    margin-bottom: 16px;
+}
+.province-group > h2::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--line-strong), transparent);
+}
+
+.location-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+.location-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card-strong);
+}
+.location-card strong { font-family: var(--font-display); font-size: 1.12rem; }
+.location-card small { color: var(--muted); }
+.location-card .location-card-towns { color: var(--muted); font-size: .8rem; margin-top: 2px; }
+.location-card .location-card-cta {
+    margin-top: auto;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: .82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ---------- County + local service pages ---------- */
+.local-trust-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-top: 6px;
+}
+.local-trust-row article {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(6, 12, 24, .5);
+    padding: 18px;
+    text-align: center;
+}
+.local-trust-row strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.local-trust-row span { color: var(--muted); font-size: .84rem; }
+
+.local-service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+}
+.local-service-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card-strong);
+}
+.local-service-card i { color: var(--primary); font-size: 1.4rem; }
+.local-service-card h3 { font-size: 1.08rem; }
+.local-service-card p { color: var(--muted); font-size: .9rem; margin: 0; flex: 1; }
+.local-service-card .local-service-cta {
+    color: var(--primary); font-weight: 700; font-size: .82rem;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+
+.local-town-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+.local-town-list span {
+    border: 1px solid var(--line);
+    background: rgba(0, 229, 255, .06);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: .8rem;
+    color: var(--text);
+}
+
+/* Glyph fallback for the locations icon when the CDN font is blocked */
+.fa-map-location-dot::before { content: "\25C9"; }

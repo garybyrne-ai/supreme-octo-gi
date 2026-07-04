@@ -55,6 +55,7 @@ $techNews = (new \App\Services\TechNewsService())->items();
             <a href="/services/pay-per-click-advertising"><i class="fa-solid fa-bullseye"></i> Pay Per Click</a>
             <a href="/services/ai-integration-services"><i class="fa-solid fa-robot"></i> AI Integration</a>
             <a href="/services/penetration-testing"><i class="fa-solid fa-shield-halved"></i> Penetration Testing</a>
+            <a href="/locations"><i class="fa-solid fa-map-location-dot"></i> Areas We Cover</a>
         </nav>
         <nav class="footer-nav-panel" aria-label="Footer growth tools">
             <h3>Growth Tools</h3>

@@ -45,6 +45,7 @@ if (is_file(base_path('config/installed.php'))) {
     <link rel="stylesheet" href="<?= asset('css/style.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/shop.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/commerce-suite.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/enterprise-refinements.css') ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
     <?= $cmsTypographyStyle ?>
     <?= $cmsCustomCssLinks ?>
