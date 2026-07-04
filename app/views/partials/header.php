@@ -5,6 +5,12 @@ $headerContact = $headerRepository->contact();
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $isServicesPath = str_starts_with($currentPath, '/services');
 $isShopPath = str_starts_with($currentPath, '/code-shop');
+$isStorePath = str_starts_with($currentPath, '/code-shop')
+    || str_starts_with($currentPath, '/membership')
+    || str_starts_with($currentPath, '/backlinks')
+    || $currentPath === '/tools-pricing';
+$isCompanyPath = in_array($currentPath, ['/about', '/portfolio', '/process', '/blog', '/support', '/contact'], true)
+    || str_starts_with($currentPath, '/blog/');
 $isToolsPath = in_array($currentPath, [
     '/tools',
     '/seo-tools',
@@ -47,10 +53,6 @@ $isToolsPath = in_array($currentPath, [
                 </div>
             </div>
         </div>
-        <a class="<?= active_path('/portfolio') ?>" href="/portfolio">Portfolio</a>
-        <a class="<?= $isShopPath ? 'is-active' : '' ?>" href="/code-shop">Marketplace</a>
-        <a class="<?= active_path('/membership') ?>" href="/membership">Membership</a>
-        <a class="<?= active_path('/backlinks') ?>" href="/backlinks">Backlinks</a>
         <div class="nav-item has-mega tools-mega">
             <a class="<?= $isToolsPath ? 'is-active' : '' ?>" href="/tools" aria-haspopup="true">Tools <i class="fa-solid fa-chevron-down"></i></a>
             <div class="mega-menu tools-menu" aria-label="Tools menu">
@@ -68,12 +70,44 @@ $isToolsPath = in_array($currentPath, [
                     <a href="/free-penetration-testing-tools"><i class="fa-solid fa-shield-halved"></i><span>Security Tools<small>Check headers, DNS and TLS.</small></span></a>
                     <a href="/ai-automation-finder"><i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Automation Finder<small>Find workflow automation candidates.</small></span></a>
                     <a href="/client-portal-preview"><i class="fa-solid fa-table-columns"></i><span>Client Portal<small>Preview reporting and support UX.</small></span></a>
+                    <a href="/tools-pricing"><i class="fa-solid fa-crown"></i><span>Growth Lab Pro<small>Unlimited scans &amp; white-label reports.</small></span></a>
                 </div>
             </div>
         </div>
-        <a class="<?= active_path('/support') ?>" href="/support">Support</a>
-        <a class="<?= active_path('/blog') ?>" href="/blog">Blog</a>
-        <a class="<?= active_path('/contact') ?>" href="/contact">Contact</a>
+        <div class="nav-item has-mega">
+            <a class="<?= $isStorePath ? 'is-active' : '' ?>" href="/code-shop" aria-haspopup="true">Store <i class="fa-solid fa-chevron-down"></i></a>
+            <div class="mega-menu" aria-label="Store menu">
+                <div class="mega-intro">
+                    <span>Buy &amp; Grow</span>
+                    <strong>Themes, plugins, memberships and Irish link building.</strong>
+                    <p>Everything you can buy from Crest Web Media in one place.</p>
+                </div>
+                <div class="mega-grid">
+                    <a href="/code-shop"><i class="fa-solid fa-cart-shopping"></i><span>Marketplace<small>Themes, plugins, templates &amp; services.</small></span></a>
+                    <a href="/membership"><i class="fa-solid fa-id-card"></i><span>Membership<small>Growth Lab plans for tools &amp; downloads.</small></span></a>
+                    <a href="/backlinks"><i class="fa-solid fa-link"></i><span>Buy Irish Backlinks<small>Rare .ie links — 25 from €59.</small></span></a>
+                    <a href="/tools-pricing"><i class="fa-solid fa-crown"></i><span>Growth Lab Pro<small>€25/mo or €200/yr tools membership.</small></span></a>
+                </div>
+            </div>
+        </div>
+        <div class="nav-item has-mega">
+            <a class="<?= $isCompanyPath ? 'is-active' : '' ?>" href="/about" aria-haspopup="true">Company <i class="fa-solid fa-chevron-down"></i></a>
+            <div class="mega-menu" aria-label="Company menu">
+                <div class="mega-intro">
+                    <span>Crest Web Media</span>
+                    <strong>Who we are and how we work.</strong>
+                    <p>Learn about the studio, see proof, and get in touch.</p>
+                </div>
+                <div class="mega-grid">
+                    <a href="/about"><i class="fa-solid fa-circle-info"></i><span>About<small>Studio, approach and values.</small></span></a>
+                    <a href="/portfolio"><i class="fa-solid fa-briefcase"></i><span>Portfolio<small>Selected work &amp; case studies.</small></span></a>
+                    <a href="/process"><i class="fa-solid fa-diagram-project"></i><span>Process<small>How projects are delivered.</small></span></a>
+                    <a href="/blog"><i class="fa-solid fa-newspaper"></i><span>Blog<small>Guides on SEO, security &amp; web.</small></span></a>
+                    <a href="/support"><i class="fa-solid fa-headset"></i><span>Support<small>Open a ticket, get help.</small></span></a>
+                    <a href="/contact"><i class="fa-solid fa-paper-plane"></i><span>Contact<small>Start a project brief.</small></span></a>
+                </div>
+            </div>
+        </div>
         <?php if (isset($_SESSION) && !empty($_SESSION['member'])): ?>
             <a class="<?= active_path('/account/dashboard') ?>" href="/account/dashboard">Dashboard</a>
         <?php endif; ?>

@@ -272,6 +272,55 @@ final class ForumRepository
                 'body' => 'Start with the data model: clients, users, tickets, report snapshots, files, invoices and activity logs. The UI should make support history easy to scan.',
                 'links' => [['name' => 'Laravel', 'url' => 'https://laravel.com/'], ['name' => 'MySQL', 'url' => 'https://www.mysql.com/']],
             ],
+            [
+                'title' => 'How to rank a local business in Google Maps (Ireland local SEO)',
+                'category' => 'SEO',
+                'excerpt' => 'Google Business Profile, NAP consistency, Irish citations, reviews and local landing pages.',
+                'body' => 'For local pack rankings, keep your name, address and phone identical everywhere, fill out the Google Business Profile fully, gather steady genuine reviews, and build a real service-in-town landing page for each area you serve.',
+                'links' => [['name' => 'Google Business Profile', 'url' => 'https://www.google.com/business/'], ['name' => 'Rich Results Test', 'url' => 'https://search.google.com/test/rich-results']],
+            ],
+            [
+                'title' => 'Are .ie backlinks worth it, and how do you get them safely?',
+                'category' => 'SEO',
+                'excerpt' => 'Why Irish top-level-domain links are rare, and white-hat ways to earn them.',
+                'body' => 'Genuine .ie links are scarce because registration is restricted and Irish publishers are selective, which is exactly why they carry local weight. Earn them with useful content, local PR, chamber and industry memberships, sponsorships and editorial outreach — never spam or link farms.',
+                'links' => [['name' => 'IE Domain Registry', 'url' => 'https://www.weare.ie/']],
+            ],
+            [
+                'title' => 'How to tell if your WordPress site is hacked (and first steps)',
+                'category' => 'Security',
+                'excerpt' => 'Redirects, spam pages, browser warnings, unknown admins and how to respond calmly.',
+                'body' => 'Warning signs include unexpected redirects, spammy pages in Google, browser malware warnings and admin users you did not create. First take a backup, change every password, enable 2FA, update everything, remove unknown users and re-scan before requesting a Search Console review.',
+                'links' => [['name' => 'Google Search Console', 'url' => 'https://search.google.com/search-console/about']],
+            ],
+            [
+                'title' => 'Google Analytics 4 vs Search Console: which numbers actually matter?',
+                'category' => 'SEO',
+                'excerpt' => 'What GA4 tells you, what Search Console tells you, and how to use both together.',
+                'body' => 'Search Console shows how you appear in Google (queries, impressions, clicks, position) while GA4 shows what people do on the site (engagement, conversions, sources). Use Search Console to find keyword and page opportunities, and GA4 to see which of those actually turn into enquiries.',
+                'links' => [['name' => 'GA4', 'url' => 'https://analytics.google.com/'], ['name' => 'Search Console', 'url' => 'https://search.google.com/search-console/about']],
+            ],
+            [
+                'title' => 'Figma to WordPress: pixel-perfect vs Elementor — what to choose',
+                'category' => 'Development',
+                'excerpt' => 'Trade-offs between a hand-coded theme and a page-builder build from a Figma design.',
+                'body' => 'A hand-coded theme gives you the cleanest markup, best speed and full control; an Elementor build is faster for the client to edit later. Choose hand-coded for performance-critical marketing sites and Elementor when the team needs to change layouts often.',
+                'links' => [['name' => 'Figma', 'url' => 'https://www.figma.com/'], ['name' => 'WordPress', 'url' => 'https://wordpress.org/']],
+            ],
+            [
+                'title' => 'How much should a small business website cost in 2026?',
+                'category' => 'Development',
+                'excerpt' => 'What drives price: pages, custom design, ecommerce, integrations and ongoing support.',
+                'body' => 'Price scales with scope, not page count alone. A brochure site, a custom CMS, an online store and a web app all carry different planning, testing and support. Be wary of very cheap builds that skip SEO, security and performance — you pay for them later.',
+                'links' => [['name' => 'Core Web Vitals', 'url' => 'https://web.dev/vitals/']],
+            ],
+            [
+                'title' => 'Speed up a slow Shopify or WooCommerce store — practical wins',
+                'category' => 'Ecommerce',
+                'excerpt' => 'Images, apps, theme bloat, third-party scripts and checkout speed.',
+                'body' => 'The usual culprits are heavy apps, unoptimised product images and too many tracking scripts. Audit installed apps, compress and correctly size images, defer non-critical scripts, and test the product and checkout pages on mobile specifically.',
+                'links' => [['name' => 'PageSpeed Insights', 'url' => 'https://pagespeed.web.dev/']],
+            ],
         ];
     }
 

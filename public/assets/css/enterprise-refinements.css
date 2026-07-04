@@ -237,3 +237,6 @@
 
 /* Glyph fallback for the locations icon when the CDN font is blocked */
 .fa-map-location-dot::before { content: "\25C9"; }
+
+.fa-crown::before { content: "♛"; }
+.fa-circle-info::before { content: "ⓘ"; }
