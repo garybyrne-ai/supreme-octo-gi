@@ -9,6 +9,7 @@ $adminMenu = [
     'mail-settings' => ['title' => 'Mail Settings', 'icon' => 'fa-paper-plane'],
     'paypal-settings' => ['title' => 'Payment Settings', 'icon' => 'fa-credit-card'],
     'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping'],
+    'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card'],
     'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question'],
     'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line'],
     'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route'],
@@ -491,45 +492,79 @@ $moduleDrafts = $moduleDrafts ?? [];
         <?php endif; ?>
 
         <?php if (($module['title'] ?? '') === 'Commerce Engine'): ?>
+            <?php
+            $catalogCategories = $catalogCategories ?? \App\Models\CommerceRepository::CATALOG_CATEGORIES;
+            $serviceDeliveries = $serviceDeliveries ?? \App\Models\CommerceRepository::SERVICE_DELIVERIES;
+            $catalogProducts = $catalogProducts ?? [];
+            ?>
             <section class="split-section">
-                <form class="cyber-form" method="post" action="/admin/cms/products">
+                <form class="cyber-form marketplace-product-form" method="post" action="/admin/cms/products">
                     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-                    <h2>Digital Product Lifecycle</h2>
+                    <h2>Marketplace Item <span class="cyber-hint">ThemeForest / CodeCanyon style</span></h2>
+                    <p>Sell themes, plugins, templates, Squarespace &amp; Wix modules, PHP scripts and done-for-you services. To edit an existing item, reuse its exact slug.</p>
                     <div class="form-grid two">
-                        <label>Title <input name="title" required value="Photo To Key PHP Website With Backend"></label>
-                        <label>Slug <input name="slug" required value="photo-to-key-php-website-backend"></label>
+                        <label>Title <input name="title" required placeholder="Aurora WordPress Portfolio Theme"></label>
+                        <label>Slug <input name="slug" required placeholder="aurora-wordpress-portfolio-theme"></label>
+                    </div>
+                    <label>Subtitle / short tag <input name="subtitle" maxlength="190" placeholder="Responsive creative theme with 12 demos"></label>
+                    <div class="form-grid two">
+                        <label>Category
+                            <select name="catalog_category">
+                                <?php foreach ($catalogCategories as $key => $label): ?>
+                                    <option value="<?= e($key) ?>"><?= e($label) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>Service Delivery <span class="cyber-hint">Figma/PSD to WordPress</span>
+                            <select name="service_delivery">
+                                <?php foreach ($serviceDeliveries as $key => $label): ?>
+                                    <option value="<?= e($key) ?>"><?= e($label) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
                     </div>
                     <label>Summary
-                        <textarea name="summary" rows="3" required>A complete camera-first key ordering website with PHP backend, checkout, shipping, VAT and Core Web Vitals-ready frontend.</textarea>
+                        <textarea name="summary" rows="3" required placeholder="One-paragraph marketplace summary shown on the shop card."></textarea>
                     </label>
                     <label>Description
-                        <textarea name="description" rows="6">Includes browser camera capture, upload flow, backend order management, Stripe/PayPal hooks, VAT/shipping fields and high-performance frontend sections.</textarea>
+                        <textarea name="description" rows="6" placeholder="Full item description, feature list, compatibility, changelog notes."></textarea>
                     </label>
                     <div class="form-grid two">
-                        <label>Product Type
+                        <label>Delivery Type
                             <select name="product_type">
                                 <option value="file">Downloadable file</option>
                                 <option value="snippet">Code snippet</option>
                             </select>
                         </label>
-                        <label>Platform <input name="platform" value="Core PHP"></label>
+                        <label>Platform <input name="platform" value="WordPress"></label>
                     </div>
                     <div class="form-grid two">
-                        <label>Price <input name="price" inputmode="decimal" value="49.00"></label>
-                        <label>Currency <input name="currency" maxlength="3" value="USD"></label>
+                        <label>Regular License Price <input name="price" inputmode="decimal" value="39.00"></label>
+                        <label>Extended License Price <input name="extended_price" inputmode="decimal" placeholder="Optional, e.g. 399.00"></label>
                     </div>
-                    <label>Platform Tags <input name="platform_tags" value="PHP 8, MySQL, Browser Camera, Stripe, PayPal, VAT, Shipping, Core Web Vitals"></label>
-                    <label>Stripe Price ID <input name="stripe_price_id" placeholder="price_..."></label>
-                    <label>PayPal Checkout URL <input name="paypal_checkout_url" type="url" placeholder="https://www.paypal.com/checkoutnow?..."></label>
-                    <label><input type="checkbox" name="is_active" value="1" checked> Active in shop</label>
-                    <button class="pill-button" type="submit">Save Product <i class="fa-solid fa-floppy-disk"></i></button>
+                    <div class="form-grid two">
+                        <label>Currency <input name="currency" maxlength="3" value="USD"></label>
+                        <label>Sort Order <input name="sort_order" inputmode="numeric" value="100"></label>
+                    </div>
+                    <label>Live Preview / Demo URL <input name="demo_url" type="url" placeholder="https://demo.crestwebmedia.com/aurora"></label>
+                    <label>Thumbnail URL <input name="thumbnail_url" type="url" placeholder="https://.../aurora-preview.webp"></label>
+                    <label>Tags <input name="platform_tags" placeholder="WordPress, Elementor, WooCommerce, Responsive, RTL"></label>
+                    <div class="form-grid two">
+                        <label>Stripe Price ID <input name="stripe_price_id" placeholder="price_..."></label>
+                        <label>PayPal Checkout URL <input name="paypal_checkout_url" type="url" placeholder="https://www.paypal.com/checkoutnow?..."></label>
+                    </div>
+                    <div class="checkbox-row">
+                        <label><input type="checkbox" name="is_active" value="1" checked> Active in shop</label>
+                        <label><input type="checkbox" name="is_featured" value="1"> Feature on marketplace</label>
+                    </div>
+                    <button class="pill-button" type="submit">Save Marketplace Item <i class="fa-solid fa-floppy-disk"></i></button>
                 </form>
 
                 <form class="cyber-form" method="post" action="/admin/cms/product-assets" enctype="multipart/form-data">
                     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                     <h2>Private Package Upload</h2>
-                    <p>ZIP files are stored above the public root. Customers receive short-lived, count-limited download grants after successful payment.</p>
-                    <label>Product ID <input name="product_id" inputmode="numeric" required placeholder="Product database ID"></label>
+                    <p>ZIP files are stored above the public root. Buyers receive short-lived, count-limited download grants after successful payment.</p>
+                    <label>Product ID <input name="product_id" inputmode="numeric" required placeholder="Product database ID (see table below)"></label>
                     <label>Version Label <input name="version_label" value="1.0.0"></label>
                     <label class="media-drop-zone">Upload ZIP Package
                         <input name="package" type="file" accept="application/zip,.zip" required>
@@ -537,6 +572,174 @@ $moduleDrafts = $moduleDrafts ?? [];
                     </label>
                     <button class="pill-button" type="submit">Upload Package <i class="fa-solid fa-lock"></i></button>
                 </form>
+            </section>
+
+            <section class="cyber-card commerce-catalog-card">
+                <div class="section-heading compact">
+                    <span class="status-chip"><span></span> Live catalog</span>
+                    <h2>Marketplace Items</h2>
+                </div>
+                <?php if (!empty($catalogProducts)): ?>
+                    <div class="commerce-catalog-table">
+                        <div class="commerce-catalog-head">
+                            <span>ID</span><span>Item</span><span>Category</span><span>Price</span><span>Status</span>
+                        </div>
+                        <?php foreach ($catalogProducts as $product): ?>
+                            <?php
+                            $priceLabel = '$' . number_format(((int) ($product['price_cents'] ?? 0)) / 100, 2);
+                            $extended = $product['extended_price_cents'] ?? null;
+                            if ($extended !== null && $extended !== '') {
+                                $priceLabel .= ' / $' . number_format(((int) $extended) / 100, 2);
+                            }
+                            ?>
+                            <div class="commerce-catalog-row">
+                                <span class="cc-id">#<?= e((string) $product['id']) ?></span>
+                                <span class="cc-title"><strong><?= e($product['title'] ?? '') ?></strong><small><?= e($product['slug'] ?? '') ?></small></span>
+                                <span class="cc-cat"><?= e($catalogCategories[$product['catalog_category'] ?? 'file'] ?? 'Digital Product') ?></span>
+                                <span class="cc-price"><?= e($priceLabel) ?></span>
+                                <span class="cc-status">
+                                    <em class="pill-status <?= !empty($product['is_active']) ? 'is-live' : 'is-paused' ?>"><?= !empty($product['is_active']) ? 'Live' : 'Paused' ?></em>
+                                    <?php if (!empty($product['is_featured'])): ?><em class="pill-status is-feature">Featured</em><?php endif; ?>
+                                </span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p>No marketplace items yet. Create your first theme, plugin or service above and it will appear here with its database ID.</p>
+                <?php endif; ?>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Membership Plans'): ?>
+            <?php
+            $intervals = $intervals ?? \App\Models\MembershipPlanRepository::INTERVALS;
+            $membershipPlans = $membershipPlans ?? [];
+            $editPlan = null;
+            $editId = (int) ($_GET['edit'] ?? 0);
+            if ($editId > 0) {
+                foreach ($membershipPlans as $candidate) {
+                    if ((int) $candidate['id'] === $editId) {
+                        $editPlan = $candidate;
+                        break;
+                    }
+                }
+            }
+            $intervalLabels = [
+                'one_time' => 'One-time',
+                'weekly' => 'Weekly',
+                'monthly' => 'Monthly',
+                'quarterly' => 'Quarterly',
+                'yearly' => 'Yearly',
+            ];
+            ?>
+            <section class="split-section membership-admin">
+                <form class="cyber-form membership-plan-form" method="post" action="/admin/membership/plans">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="id" value="<?= e((string) ($editPlan['id'] ?? '')) ?>">
+                    <h2><?= $editPlan ? 'Edit Plan: ' . e($editPlan['name']) : 'Create Membership Plan' ?></h2>
+                    <p>Control every commercial attribute of a membership tier. Connect Stripe and PayPal by pasting a hosted payment/subscribe link, a Stripe Price ID or a PayPal Plan ID.</p>
+                    <div class="form-grid two">
+                        <label>Plan Name <input name="name" required value="<?= e($editPlan['name'] ?? '') ?>" placeholder="Growth Lab Pass"></label>
+                        <label>Slug <input name="slug" value="<?= e($editPlan['slug'] ?? '') ?>" placeholder="growth-lab-pass"></label>
+                    </div>
+                    <label>Tagline <input name="tagline" maxlength="255" value="<?= e($editPlan['tagline'] ?? '') ?>" placeholder="Unlimited tools + premium downloads"></label>
+                    <div class="form-grid two">
+                        <label>Price <input name="price" inputmode="decimal" value="<?= e($editPlan ? number_format(((int) $editPlan['price_cents']) / 100, 2) : '19.00') ?>"></label>
+                        <label>Currency <input name="currency" maxlength="3" value="<?= e($editPlan['currency'] ?? 'USD') ?>"></label>
+                    </div>
+                    <div class="form-grid two">
+                        <label>Billing Interval
+                            <select name="billing_interval">
+                                <?php foreach ($intervals as $interval): ?>
+                                    <option value="<?= e($interval) ?>" <?= ($editPlan['billing_interval'] ?? 'monthly') === $interval ? 'selected' : '' ?>><?= e($intervalLabels[$interval] ?? $interval) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>Free Trial (days) <input name="trial_days" inputmode="numeric" value="<?= e((string) ($editPlan['trial_days'] ?? 0)) ?>"></label>
+                    </div>
+                    <h2>Stripe</h2>
+                    <div class="form-grid two">
+                        <label>Stripe Price ID <input name="stripe_price_id" value="<?= e($editPlan['stripe_price_id'] ?? '') ?>" placeholder="price_123"></label>
+                        <label>Stripe Payment Link <input name="stripe_payment_link" type="url" value="<?= e($editPlan['stripe_payment_link'] ?? '') ?>" placeholder="https://buy.stripe.com/..."></label>
+                    </div>
+                    <h2>PayPal</h2>
+                    <div class="form-grid two">
+                        <label>PayPal Plan ID <input name="paypal_plan_id" value="<?= e($editPlan['paypal_plan_id'] ?? '') ?>" placeholder="P-XXXXXXXX"></label>
+                        <label>PayPal Subscribe URL <input name="paypal_subscribe_url" type="url" value="<?= e($editPlan['paypal_subscribe_url'] ?? '') ?>" placeholder="https://www.paypal.com/webapps/billing/..."></label>
+                    </div>
+                    <label>Features <span class="cyber-hint">one per line</span>
+                        <textarea name="features" rows="6" placeholder="Unlimited security &amp; SEO scans&#10;All premium themes &amp; plugins&#10;Priority build support"><?= e(!empty($editPlan['features']) ? implode("\n", $editPlan['features']) : '') ?></textarea>
+                    </label>
+                    <div class="form-grid two">
+                        <label>Badge <input name="badge" maxlength="60" value="<?= e($editPlan['badge'] ?? '') ?>" placeholder="Most popular"></label>
+                        <label>CTA Label <input name="cta_label" maxlength="80" value="<?= e($editPlan['cta_label'] ?? 'Get started') ?>"></label>
+                    </div>
+                    <label>Sort Order <input name="sort_order" inputmode="numeric" value="<?= e((string) ($editPlan['sort_order'] ?? 100)) ?>"></label>
+                    <div class="checkbox-row">
+                        <label><input type="checkbox" name="is_active" value="1" <?= (!$editPlan || !empty($editPlan['is_active'])) ? 'checked' : '' ?>> Active</label>
+                        <label><input type="checkbox" name="is_featured" value="1" <?= !empty($editPlan['is_featured']) ? 'checked' : '' ?>> Highlighted / featured</label>
+                    </div>
+                    <button class="pill-button" type="submit"><?= $editPlan ? 'Update Plan' : 'Create Plan' ?> <i class="fa-solid fa-floppy-disk"></i></button>
+                    <?php if ($editPlan): ?><a class="pill-button ghost" href="/admin/modules/membership">Cancel edit</a><?php endif; ?>
+                </form>
+
+                <aside class="cyber-card membership-guidance">
+                    <h2>How members pay</h2>
+                    <ul class="check-list">
+                        <li><strong>Stripe:</strong> create a recurring Price in Stripe, paste the <code>price_...</code> ID, or paste a Stripe Payment Link for instant checkout.</li>
+                        <li><strong>PayPal:</strong> create a subscription plan, paste the Plan ID and the hosted subscribe URL.</li>
+                        <li>The public <a href="/membership" target="_blank" rel="noopener">/membership</a> page shows every active plan with Stripe and PayPal buttons.</li>
+                        <li>Leave a gateway blank to hide that button for a plan.</li>
+                        <li>Stripe webhook: <code>/webhooks/stripe</code> &nbsp; PayPal webhook: <code>/webhooks/paypal</code>.</li>
+                    </ul>
+                </aside>
+            </section>
+
+            <section class="cyber-card membership-plan-list">
+                <div class="section-heading compact">
+                    <span class="status-chip"><span></span> Live plans</span>
+                    <h2>Membership Tiers</h2>
+                </div>
+                <?php if (!empty($membershipPlans)): ?>
+                    <div class="membership-plan-grid">
+                        <?php foreach ($membershipPlans as $plan): ?>
+                            <article class="membership-plan-item <?= empty($plan['is_active']) ? 'is-paused' : '' ?>">
+                                <header>
+                                    <div>
+                                        <strong><?= e($plan['name']) ?></strong>
+                                        <small><?= e($plan['slug']) ?></small>
+                                    </div>
+                                    <span class="membership-price">
+                                        <?= e('$' . number_format(((int) $plan['price_cents']) / 100, 2)) ?>
+                                        <em><?= e($intervalLabels[$plan['billing_interval']] ?? $plan['billing_interval']) ?></em>
+                                    </span>
+                                </header>
+                                <div class="membership-plan-flags">
+                                    <em class="pill-status <?= !empty($plan['is_active']) ? 'is-live' : 'is-paused' ?>"><?= !empty($plan['is_active']) ? 'Active' : 'Paused' ?></em>
+                                    <?php if (!empty($plan['is_featured'])): ?><em class="pill-status is-feature">Featured</em><?php endif; ?>
+                                    <?php if (!empty($plan['stripe_price_id']) || !empty($plan['stripe_payment_link'])): ?><em class="pill-status is-gw">Stripe</em><?php endif; ?>
+                                    <?php if (!empty($plan['paypal_plan_id']) || !empty($plan['paypal_subscribe_url'])): ?><em class="pill-status is-gw">PayPal</em><?php endif; ?>
+                                </div>
+                                <div class="membership-plan-actions">
+                                    <a class="pill-button ghost" href="/admin/modules/membership?edit=<?= e((string) $plan['id']) ?>"><i class="fa-solid fa-pen"></i> Edit</a>
+                                    <form method="post" action="/admin/membership/plans/toggle">
+                                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                        <input type="hidden" name="id" value="<?= e((string) $plan['id']) ?>">
+                                        <input type="hidden" name="state" value="<?= !empty($plan['is_active']) ? 'pause' : 'activate' ?>">
+                                        <button class="pill-button ghost" type="submit"><?= !empty($plan['is_active']) ? 'Pause' : 'Activate' ?></button>
+                                    </form>
+                                    <form method="post" action="/admin/membership/plans/delete" onsubmit="return confirm('Delete this plan? This cannot be undone.');">
+                                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                        <input type="hidden" name="id" value="<?= e((string) $plan['id']) ?>">
+                                        <button class="pill-button ghost danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p>No membership plans yet. Create your first plan on the left — it will appear on the public membership page instantly once active.</p>
+                <?php endif; ?>
             </section>
         <?php endif; ?>
     </div>

@@ -329,9 +329,16 @@ CREATE TABLE products (
     summary TEXT NOT NULL,
     description MEDIUMTEXT NULL,
     product_type ENUM('file','snippet') NOT NULL,
+    catalog_category VARCHAR(40) NOT NULL DEFAULT 'file',
+    service_delivery VARCHAR(60) NULL,
+    subtitle VARCHAR(190) NULL,
+    demo_url VARCHAR(500) NULL,
+    thumbnail_url VARCHAR(500) NULL,
+    is_featured TINYINT(1) NOT NULL DEFAULT 0,
     platform VARCHAR(80) NOT NULL,
     platform_tags JSON NULL,
     price_cents INT UNSIGNED NOT NULL DEFAULT 0,
+    extended_price_cents INT UNSIGNED NULL,
     currency CHAR(3) NOT NULL DEFAULT 'USD',
     private_file_path VARCHAR(500) NULL,
     snippet_html MEDIUMTEXT NULL,
@@ -345,7 +352,8 @@ CREATE TABLE products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX products_type_active (product_type, is_active),
-    INDEX products_platform_active (platform, is_active)
+    INDEX products_platform_active (platform, is_active),
+    INDEX products_catalog_category (catalog_category, is_active)
 );
 
 CREATE TABLE purchases (

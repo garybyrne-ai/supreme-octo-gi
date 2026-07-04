@@ -26,15 +26,44 @@ final class DigitalCommerceEngine
         $productType = (string) ($input['product_type'] ?? 'file');
         $productType = in_array($productType, ['file', 'snippet'], true) ? $productType : 'file';
 
+        $category = (string) ($input['catalog_category'] ?? 'file');
+        if (!array_key_exists($category, \App\Models\CommerceRepository::CATALOG_CATEGORIES)) {
+            $category = 'file';
+        }
+
+        $serviceDelivery = (string) ($input['service_delivery'] ?? '');
+        if ($serviceDelivery !== '' && !array_key_exists($serviceDelivery, \App\Models\CommerceRepository::SERVICE_DELIVERIES)) {
+            $serviceDelivery = '';
+        }
+
+        $extendedRaw = $input['extended_price'] ?? '';
+        $extendedCents = ($extendedRaw === '' || $extendedRaw === null)
+            ? null
+            : max(0, (int) round(((float) $extendedRaw) * 100));
+
+        foreach (['demo_url', 'thumbnail_url'] as $urlKey) {
+            $value = trim((string) ($input[$urlKey] ?? ''));
+            if ($value !== '' && !filter_var($value, FILTER_VALIDATE_URL)) {
+                throw new \RuntimeException('Demo and thumbnail links must be valid URLs.');
+            }
+        }
+
         return $this->repository->upsertProduct([
             'slug' => $slug,
             'title' => trim((string) ($input['title'] ?? 'Untitled Digital Product')),
             'summary' => trim((string) ($input['summary'] ?? '')),
             'description' => trim((string) ($input['description'] ?? '')),
             'product_type' => $productType,
+            'catalog_category' => $category,
+            'service_delivery' => $serviceDelivery,
+            'subtitle' => trim((string) ($input['subtitle'] ?? '')) ?: null,
+            'demo_url' => trim((string) ($input['demo_url'] ?? '')) ?: null,
+            'thumbnail_url' => trim((string) ($input['thumbnail_url'] ?? '')) ?: null,
+            'is_featured' => !empty($input['is_featured']),
             'platform' => trim((string) ($input['platform'] ?? 'Core PHP')),
             'platform_tags' => $this->tags((string) ($input['platform_tags'] ?? '')),
             'price_cents' => max(0, $price),
+            'extended_price_cents' => $extendedCents,
             'currency' => strtoupper(substr((string) ($input['currency'] ?? 'USD'), 0, 3)),
             'private_file_path' => $input['private_file_path'] ?? null,
             'snippet_html' => $input['snippet_html'] ?? null,

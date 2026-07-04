@@ -8,9 +8,11 @@ use App\Core\Controller;
 use App\Core\Database;
 use App\Core\Security;
 use App\Models\AdminModuleDraftRepository;
+use App\Models\CommerceRepository;
 use App\Models\ContentRepository;
 use App\Models\MailSettingsRepository;
 use App\Models\MemberRepository;
+use App\Models\MembershipPlanRepository;
 use App\Models\NewsletterOfferRepository;
 use App\Models\PayPalSettingsRepository;
 use App\Models\SupportTicketRepository;
@@ -157,7 +159,8 @@ final class AdminController extends Controller
             ['slug' => 'newsletter-offer', 'title' => 'Newsletter Offer', 'icon' => 'fa-envelope-open-text', 'summary' => 'Edit the automated SEO, PPC, website and app development offer sent to tool leads.'],
             ['slug' => 'mail-settings', 'title' => 'Mail Settings', 'icon' => 'fa-paper-plane', 'summary' => 'Choose PHP mail or Gmail SMTP for tool sign-in codes and automated offer emails.'],
             ['slug' => 'paypal-settings', 'title' => 'Payment Settings', 'icon' => 'fa-credit-card', 'summary' => 'Configure PayPal links, Stripe checkout keys and Growth Lab Pass subscriptions.'],
-            ['slug' => 'commerce', 'title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'summary' => 'Manage digital products, private ZIP packages, licenses, orders, invoices and download grants.'],
+            ['slug' => 'commerce', 'title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'summary' => 'Sell themes, plugins, templates and services marketplace-style with private ZIP packages, licenses, orders and download grants.'],
+            ['slug' => 'membership', 'title' => 'Membership Plans', 'icon' => 'fa-id-card', 'summary' => 'Control every membership tier: price, billing interval, trial, Stripe and PayPal wiring, features and availability.'],
             ['slug' => 'faq', 'title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'summary' => 'Edit answers for common sales, delivery and support questions.'],
             ['slug' => 'seo', 'title' => 'SEO Center', 'icon' => 'fa-chart-line', 'summary' => 'Review titles, descriptions, schema signals and crawl priorities.'],
             ['slug' => 'redirects', 'title' => 'Redirect Manager', 'icon' => 'fa-route', 'summary' => 'Plan redirects, campaign URLs and migration-safe route changes.'],
@@ -205,7 +208,8 @@ final class AdminController extends Controller
             'newsletter-offer' => ['title' => 'Newsletter Offer', 'icon' => 'fa-envelope-open-text', 'actions' => ['Edit offer copy', 'Review tool leads', 'Update CTA']],
             'mail-settings' => ['title' => 'Mail Settings', 'icon' => 'fa-paper-plane', 'actions' => ['Choose mail driver', 'Configure Gmail SMTP', 'Review delivery logs']],
             'paypal-settings' => ['title' => 'Payment Settings', 'icon' => 'fa-credit-card', 'actions' => ['Set gateway keys', 'Add checkout links', 'Configure Growth Lab Pass']],
-            'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'actions' => ['Create digital product', 'Attach private ZIP package', 'Review order lifecycle']],
+            'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'actions' => ['Create marketplace item', 'Attach private ZIP package', 'Review order lifecycle']],
+            'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card', 'actions' => ['Create plan', 'Edit pricing and gateways', 'Pause or feature a plan']],
             'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'actions' => ['Add answer', 'Update schema FAQ', 'Review sales objections']],
             'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line', 'actions' => ['Audit metadata', 'Preview schema', 'Map internal links']],
             'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route', 'actions' => ['Add redirect', 'Import route map', 'Test status codes']],
@@ -233,6 +237,11 @@ final class AdminController extends Controller
             'toolLeads' => $slug === 'newsletter-offer' ? (new ToolLeadRepository())->recent(30) : [],
             'mediaItems' => $slug === 'media' ? (new MediaLibrary())->items(120) : [],
             'forumMembers' => $slug === 'forum-members' ? (new MemberRepository())->recent(120) : [],
+            'membershipPlans' => $slug === 'membership' ? (new MembershipPlanRepository())->all() : [],
+            'catalogProducts' => $slug === 'commerce' ? (new CommerceRepository())->allProducts() : [],
+            'intervals' => MembershipPlanRepository::INTERVALS,
+            'catalogCategories' => CommerceRepository::CATALOG_CATEGORIES,
+            'serviceDeliveries' => CommerceRepository::SERVICE_DELIVERIES,
             'newsletterOffer' => (new NewsletterOfferRepository())->current(),
             'mailSettings' => (new MailSettingsRepository())->current(),
             'paypalSettings' => (new PayPalSettingsRepository())->current(),

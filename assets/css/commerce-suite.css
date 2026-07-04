@@ -1,0 +1,340 @@
+/* ==========================================================================
+   Commerce Suite — membership pricing, marketplace catalog and admin console.
+   Extends the neon Crest Web Media theme using its existing CSS variables.
+   ========================================================================== */
+
+/* Font Awesome glyph fallbacks for icons introduced by the commerce suite,
+   used when the CDN icon font is blocked. */
+.fa-id-card::before { content: "▤"; }
+.fa-pen::before,
+.fa-pen-to-square::before { content: "✎"; }
+.fa-trash::before { content: "🗑"; font-size: .82em; }
+.fa-paypal::before { content: "P"; font-weight: 800; }
+
+/* ---------- Membership hero ---------- */
+.membership-hero h1 {
+    background: linear-gradient(120deg, var(--text) 12%, var(--primary) 48%, var(--secondary) 82%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ---------- Public membership pricing grid ---------- */
+.membership-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 22px;
+    align-items: stretch;
+}
+
+.membership-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 30px 26px;
+    overflow: hidden;
+    transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
+}
+
+.membership-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 82% -10%, rgba(0, 229, 255, .16), transparent 42%),
+        radial-gradient(circle at -10% 110%, rgba(180, 92, 255, .16), transparent 46%);
+    opacity: .8;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.membership-card > * { position: relative; z-index: 1; }
+
+.membership-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary);
+    box-shadow: 0 26px 60px rgba(0, 229, 255, .18);
+}
+
+.membership-card.is-featured {
+    border-color: var(--line-strong);
+    box-shadow: 0 22px 60px rgba(180, 92, 255, .22);
+}
+
+.membership-card.is-featured::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(130deg, var(--primary), var(--secondary), var(--accent));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: .6;
+    pointer-events: none;
+}
+
+.membership-badge {
+    position: absolute;
+    top: 16px;
+    right: -34px;
+    transform: rotate(45deg);
+    background: linear-gradient(120deg, var(--primary), var(--secondary));
+    color: #04070d;
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: .04em;
+    font-size: .68rem;
+    text-transform: uppercase;
+    padding: 6px 44px;
+    z-index: 2;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .35);
+}
+
+.membership-card-head h2 {
+    margin: 0 0 4px;
+    font-size: 1.35rem;
+}
+
+.membership-card-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .92rem;
+}
+
+.membership-card-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+}
+
+.membership-card-price strong {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    line-height: 1;
+    color: var(--text);
+}
+
+.membership-card-price span { color: var(--muted); font-weight: 600; }
+
+.membership-trial {
+    margin: 0;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: .9rem;
+}
+
+.membership-card .check-list { margin: 0; flex: 1; }
+
+.membership-card-actions { margin-top: auto; display: grid; gap: 10px; }
+
+.membership-join-form { display: grid; gap: 10px; }
+
+.membership-email {
+    display: grid;
+    gap: 4px;
+    font-size: .78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.membership-email input {
+    padding: 11px 13px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: rgba(2, 6, 16, .6);
+    color: var(--text);
+}
+
+.membership-email input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 229, 255, .16);
+}
+
+.membership-card-actions .pill-button { justify-content: center; width: 100%; }
+
+.membership-empty { text-align: center; display: grid; gap: 14px; padding: 44px 28px; }
+
+/* ---------- Admin: membership plan console ---------- */
+.checkbox-row { display: flex; flex-wrap: wrap; gap: 18px; margin: 6px 0 4px; }
+.checkbox-row label { display: flex; align-items: center; gap: 8px; }
+
+.cyber-hint {
+    font-family: var(--font-body);
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(0, 229, 255, .1);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 2px 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.membership-guidance code,
+.membership-plan-list code {
+    background: rgba(0, 229, 255, .12);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1px 6px;
+    font-size: .84em;
+}
+
+.membership-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.membership-plan-item {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card-strong);
+    transition: border-color .25s ease, transform .25s ease;
+}
+
+.membership-plan-item:hover { border-color: var(--primary); transform: translateY(-3px); }
+.membership-plan-item.is-paused { opacity: .62; }
+
+.membership-plan-item header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.membership-plan-item header strong { display: block; font-size: 1.05rem; }
+.membership-plan-item header small { color: var(--muted); font-size: .78rem; }
+
+.membership-price {
+    text-align: right;
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: var(--primary);
+    white-space: nowrap;
+}
+.membership-price em { display: block; font-size: .68rem; color: var(--muted); font-style: normal; }
+
+.membership-plan-flags,
+.commerce-catalog-row .cc-status { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.pill-status {
+    font-style: normal;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+}
+.pill-status.is-live { color: var(--success); border-color: rgba(25, 247, 154, .4); background: rgba(25, 247, 154, .08); }
+.pill-status.is-paused { color: var(--danger); border-color: rgba(255, 77, 129, .4); background: rgba(255, 77, 129, .08); }
+.pill-status.is-feature { color: var(--secondary); border-color: var(--line-strong); background: rgba(180, 92, 255, .1); }
+.pill-status.is-gw { color: var(--primary); border-color: var(--line); background: rgba(0, 229, 255, .08); }
+
+.membership-plan-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.membership-plan-actions form { margin: 0; }
+.membership-plan-actions .pill-button { padding: 8px 14px; font-size: .82rem; }
+.pill-button.ghost.danger { color: var(--danger); border-color: rgba(255, 77, 129, .45); }
+.pill-button.ghost.danger:hover { background: rgba(255, 77, 129, .12); }
+
+/* ---------- Admin: marketplace catalog table ---------- */
+.commerce-catalog-table { display: grid; gap: 2px; }
+.commerce-catalog-head,
+.commerce-catalog-row {
+    display: grid;
+    grid-template-columns: 64px 2.4fr 1.4fr 1fr 1.2fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+}
+.commerce-catalog-head {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+}
+.commerce-catalog-row {
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: rgba(6, 12, 24, .5);
+    transition: border-color .2s ease;
+}
+.commerce-catalog-row:hover { border-color: var(--line); }
+.commerce-catalog-row .cc-id { font-family: var(--font-display); color: var(--primary); font-weight: 700; }
+.commerce-catalog-row .cc-title strong { display: block; }
+.commerce-catalog-row .cc-title small { color: var(--muted); font-size: .76rem; }
+.commerce-catalog-row .cc-price { font-family: var(--font-display); font-weight: 700; }
+
+/* ---------- Storefront category filter tabs ---------- */
+.catalog-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 26px;
+}
+.catalog-filter button,
+.catalog-filter a {
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: rgba(6, 12, 24, .55);
+    color: var(--muted);
+    font-weight: 700;
+    font-size: .82rem;
+    letter-spacing: .02em;
+    padding: 9px 16px;
+    border-radius: 999px;
+    transition: color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease;
+}
+.catalog-filter button:hover,
+.catalog-filter a:hover { transform: translateY(-2px); border-color: var(--primary); color: var(--text); }
+.catalog-filter button.is-active,
+.catalog-filter a.is-active {
+    color: #04070d;
+    background: linear-gradient(120deg, var(--primary), var(--secondary));
+    border-color: transparent;
+}
+
+.catalog-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 6px 0;
+}
+.catalog-chip {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--primary);
+    border: 1px solid var(--line);
+    background: rgba(0, 229, 255, .08);
+    border-radius: 999px;
+    padding: 3px 10px;
+}
+.catalog-chip.service { color: var(--accent); border-color: rgba(35, 255, 154, .35); background: rgba(35, 255, 154, .08); }
+.catalog-price-line { display: flex; align-items: baseline; gap: 8px; }
+.catalog-price-line .ext { font-size: .78rem; color: var(--muted); }
+
+@media (max-width: 720px) {
+    .commerce-catalog-head { display: none; }
+    .commerce-catalog-row { grid-template-columns: 1fr 1fr; row-gap: 6px; }
+    .commerce-catalog-row .cc-title { grid-column: 1 / -1; }
+}
