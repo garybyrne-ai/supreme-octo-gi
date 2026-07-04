@@ -843,7 +843,7 @@ final class ToolsController extends Controller
 
     private function growthLabLimitMessage(): string
     {
-        return 'You have used your 3 free scans for today. Upgrade with credits or a Growth Lab Pass for deeper data, white-label PDF reports and continuous background monitoring.';
+        return 'You have used your 3 free scans for today. Upgrade to Growth Lab Pro (€25/month or €200/year) at /tools-pricing for unlimited scans, white-label PDF reports and continuous background monitoring.';
     }
 
     private function redirectToTool(string $message, bool $success): never
