@@ -40,6 +40,31 @@ This backend is structured as a lightweight Core PHP 8 CMS with strict MVC bound
 - `script_injections`: controlled injection points for `head`, `body_open` and `footer_close`.
 - `ScriptInjectionGuard`: blocks PHP execution, JavaScript URLs, event-handler payloads and unapproved remote script hosts while allowing legitimate analytics/payment scripts.
 
+### 4. Membership Plans and Marketplace Catalog
+
+- `membership_plans`: backend-controlled subscription/one-time tiers. Every
+  commercial field is admin-editable — price, currency, billing interval,
+  trial days, Stripe Price ID / Payment Link, PayPal Plan ID / subscribe URL,
+  feature list, badge, CTA label, featured flag, active flag and ordering.
+- `membership_signups`: best-effort capture of member checkout intent (email +
+  plan + gateway) recorded before the visitor is redirected to Stripe/PayPal.
+- `MembershipPlanRepository`: validated CRUD with graceful no-database
+  fallback, plus price/interval formatting helpers.
+- `AdminCommerceController` and the `membership` admin module: create, edit,
+  pause/activate and delete tiers. The public `/membership` page renders every
+  active plan with per-gateway Stripe and PayPal buttons.
+- Marketplace catalog (ThemeForest/CodeCanyon style): `products` gains
+  `catalog_category`, `service_delivery`, `subtitle`, `demo_url`,
+  `thumbnail_url`, `is_featured` and `extended_price_cents` (regular vs
+  extended license). Categories cover WordPress themes/plugins, HTML and
+  Elementor templates, Squarespace/Wix/Shopify modules, PHP scripts, snippets
+  and productised Figma/PSD-to-WordPress services. `MigrationService` adds
+  these columns to existing installs idempotently. `/code-shop` renders
+  category filter tabs, service/featured chips, thumbnails, live-demo links
+  and both license prices.
+- Styling ships as a standalone `public/assets/css/commerce-suite.css` so the
+  large compiled theme stylesheet is untouched.
+
 ## Deployment Notes
 
 1. Run `database/schema.sql` on a clean install.
