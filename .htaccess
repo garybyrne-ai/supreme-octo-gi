@@ -40,6 +40,7 @@ DirectoryIndex index.php
     RewriteRule ^assets/(.*)$ public/assets/$1 [L]
     RewriteRule ^uploads/(.*)$ public/uploads/$1 [L]
     RewriteRule ^download\.php$ public/download.php [QSA,L]
+    RewriteRule ^ads\.txt$ public/ads.txt [L]
     RewriteRule ^robots\.txt$ public/robots.txt [L]
     RewriteRule ^sitemap\.xml$ public/sitemap.xml [L]
 

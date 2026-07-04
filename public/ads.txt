@@ -1,0 +1,4 @@
+# Google AdSense ads.txt
+# Replace pub-0000000000000000 with YOUR AdSense Publisher ID, then this file
+# is served at https://www.crestwebmedia.com/ads.txt (required by AdSense).
+google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
