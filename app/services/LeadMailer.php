@@ -57,6 +57,37 @@ final class LeadMailer
         return $this->send($to, $subject, $html);
     }
 
+    /**
+     * @param array<string, mixed> $monitor
+     * @param array<string, mixed> $report
+     * @param array<int, string> $changes
+     */
+    public function sendMonitorAlert(string $email, string $name, array $monitor, array $report, array $changes): bool
+    {
+        $tool = (string) ($report['tool'] ?? 'Monitor');
+        $target = (string) ($monitor['target'] ?? '');
+        $score = (int) ($report['score'] ?? 0);
+        $subject = 'Alert: ' . $tool . ' changed for ' . $target;
+
+        $items = '';
+        foreach ($changes as $change) {
+            $items .= '<li style="margin-bottom:6px;line-height:1.6;color:#ffd7e2">' . e($change) . '</li>';
+        }
+
+        $html = '<!doctype html><html><body style="margin:0;background:#02040c;color:#f3f8ff;font-family:Arial,sans-serif">'
+            . '<div style="max-width:680px;margin:0 auto;padding:30px;background:linear-gradient(145deg,#071020,#030712);border:1px solid #ff4d81">'
+            . '<p style="color:#ff4d81;text-transform:uppercase;font-size:12px;letter-spacing:.08em">Growth Lab Monitoring Alert</p>'
+            . '<h1 style="font-size:26px;line-height:1.15;color:#fff">' . e($tool) . ' changed for ' . e($target) . '</h1>'
+            . '<p>Hi ' . e($name !== '' ? $name : 'there') . ',</p>'
+            . '<p style="line-height:1.7;color:#c8d8ef">Your scheduled monitor found the following on its latest run (current score <strong style="color:#fff">' . e((string) $score) . '/100</strong>):</p>'
+            . '<ul style="padding-left:18px">' . $items . '</ul>'
+            . '<p><a href="https://www.crestwebmedia.com/account/dashboard" style="display:inline-block;padding:14px 22px;background:linear-gradient(135deg,#00b7ff,#7b3eff);color:#fff;text-decoration:none;font-weight:bold;border-radius:999px">Open your dashboard</a></p>'
+            . '<p style="line-height:1.7;color:#9db4d0;font-size:13px">You are receiving this because you set up monitoring on Crest Web Media Growth Lab. Manage or remove monitors from your dashboard.</p>'
+            . '</div></body></html>';
+
+        return $this->send($email, $subject, $html);
+    }
+
     private function send(string $to, string $subject, string $html): bool
     {
         $settings = (new MailSettingsRepository())->current();

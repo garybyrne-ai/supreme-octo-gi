@@ -308,3 +308,26 @@
     .account-sidebar nav { grid-template-columns: repeat(2, 1fr); }
     .account-nav-group { grid-column: 1 / -1; }
 }
+
+/* ---------- Scheduled monitoring ---------- */
+.fa-plus::before { content: "+"; font-weight: 800; }
+.monitor-add-form { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 12px; align-items: end; margin-bottom: 16px; }
+.monitor-add-form label { display: grid; gap: 4px; font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.monitor-add-form select, .monitor-add-form input {
+    padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line);
+    background: rgba(2, 6, 16, .6); color: var(--text);
+}
+.monitor-list { display: grid; gap: 10px; }
+.monitor-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    border: 1px solid var(--line); border-radius: var(--radius); background: rgba(6, 12, 24, .5); padding: 12px 14px;
+}
+.monitor-item-main strong { display: block; }
+.monitor-item-main small { color: var(--muted); display: block; word-break: break-all; }
+.monitor-item-main .monitor-msg { color: var(--muted); font-size: .8rem; display: block; margin-top: 2px; }
+.monitor-status { font-style: normal; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.monitor-status-ok { color: var(--success); }
+.monitor-status-alert { color: var(--danger); }
+.monitor-status-pending, .monitor-status-unreachable, .monitor-status-paused { color: var(--muted); }
+.monitor-item form { margin: 0; }
+@media (max-width: 620px) { .monitor-add-form { grid-template-columns: 1fr; } }

@@ -131,6 +131,57 @@ $toolMenu = [
             <?php endif; ?>
         </section>
 
+        <?php $monitors = $monitors ?? []; $monitorTypes = $monitorTypes ?? \App\Models\MonitorRepository::TYPES; ?>
+        <section class="cyber-card account-panel">
+            <div class="section-heading compact left">
+                <span class="status-chip"><span></span> Monitoring</span>
+                <h2>Scheduled monitoring &amp; alerts</h2>
+            </div>
+            <?php if (!$isPro): ?>
+                <div class="account-upsell">
+                    <p>Let us watch your sites for you. <strong>Growth Lab Pro</strong> re-runs your security, DNS and TLS checks every week and emails you the moment a score drops, a certificate nears expiry, or SPF/DMARC breaks.</p>
+                    <a class="pill-button" href="/tools-pricing">Enable monitoring <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            <?php else: ?>
+                <form class="monitor-add-form" method="post" action="/account/monitors/add">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <label>Check
+                        <select name="type">
+                            <?php foreach ($monitorTypes as $key => $label): ?>
+                                <option value="<?= e($key) ?>"><?= e($label) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <label>Website or domain
+                        <input name="target" placeholder="example.com" required>
+                    </label>
+                    <button class="pill-button" type="submit"><i class="fa-solid fa-plus"></i> Add monitor</button>
+                </form>
+                <?php if (!empty($monitors)): ?>
+                    <div class="monitor-list">
+                        <?php foreach ($monitors as $m): ?>
+                            <?php $status = (string) ($m['last_status'] ?? 'pending'); ?>
+                            <article class="monitor-item">
+                                <div class="monitor-item-main">
+                                    <strong><?= e($monitorTypes[$m['type']] ?? $m['type']) ?></strong>
+                                    <small><?= e($m['target']) ?></small>
+                                    <em class="monitor-status monitor-status-<?= e($status) ?>"><?= e(ucfirst($status)) ?><?php if ($m['last_score'] !== null): ?> · <?= e((string) $m['last_score']) ?>/100<?php endif; ?></em>
+                                    <?php if (!empty($m['last_message'])): ?><span class="monitor-msg"><?= e($m['last_message']) ?></span><?php endif; ?>
+                                </div>
+                                <form method="post" action="/account/monitors/delete">
+                                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                    <input type="hidden" name="id" value="<?= e($m['id']) ?>">
+                                    <button class="pill-button ghost danger" type="submit" aria-label="Remove monitor"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p>No monitors yet. Add one above — we check weekly and only email you when something needs attention.</p>
+                <?php endif; ?>
+            <?php endif; ?>
+        </section>
+
         <section class="cyber-card account-panel">
             <div class="section-heading compact left">
                 <span class="status-chip"><span></span> Quick access</span>

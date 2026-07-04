@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Security;
 use App\Models\MembershipPlanRepository;
 use App\Models\MemberRepository;
+use App\Models\MonitorRepository;
 use App\Models\NewsletterOfferRepository;
 use App\Models\SavedReportRepository;
 use App\Models\ToolLeadRepository;
@@ -43,6 +44,8 @@ final class AccountController extends Controller
             'isPro' => $isPro,
             'scanUsage' => (new ToolUsageRepository())->status($email),
             'savedReports' => $isPro ? (new SavedReportRepository())->forEmail($email) : [],
+            'monitors' => $isPro ? (new MonitorRepository())->forEmail($email) : [],
+            'monitorTypes' => MonitorRepository::TYPES,
             'plans' => (new MembershipPlanRepository())->activePlans(),
             'planRepo' => new MembershipPlanRepository(),
             'csrf' => Security::csrfToken(),
@@ -50,6 +53,55 @@ final class AccountController extends Controller
             'error' => $_SESSION['account_error'] ?? null,
         ]);
         unset($_SESSION['account_notice'], $_SESSION['account_error']);
+    }
+
+    public function addMonitor(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['account_error'] = 'Session token expired. Please try again.';
+            $this->redirect('/account/dashboard');
+        }
+
+        if (!MemberRepository::isPro($member)) {
+            $_SESSION['account_error'] = 'Scheduled monitoring is a Growth Lab Pro feature.';
+            $this->redirect('/tools-pricing');
+        }
+
+        try {
+            (new MonitorRepository())->add(
+                (string) $member['email'],
+                (string) ($_POST['type'] ?? ''),
+                (string) ($_POST['target'] ?? '')
+            );
+            $_SESSION['account_notice'] = 'Monitor added. We will re-check it weekly and email you if anything regresses.';
+            (new AuditLogger())->log('account.monitor.added', ['email' => $member['email'], 'type' => $_POST['type'] ?? '']);
+        } catch (\Throwable $exception) {
+            $_SESSION['account_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/account/dashboard');
+    }
+
+    public function deleteMonitor(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            (new MonitorRepository())->delete((string) $member['email'], (string) ($_POST['id'] ?? ''));
+            $_SESSION['account_notice'] = 'Monitor removed.';
+        }
+
+        $this->redirect('/account/dashboard');
     }
 
     public function saveReport(): void
