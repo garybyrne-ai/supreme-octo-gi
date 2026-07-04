@@ -211,6 +211,9 @@ document.querySelectorAll('[data-account-widget]').forEach((widget) => {
                     document.querySelectorAll('[data-tools-locked="true"]').forEach((element) => {
                         element.dataset.toolsLocked = 'false';
                     });
+                    if (payload.redirect) {
+                        window.setTimeout(() => { window.location.href = payload.redirect; }, 600);
+                    }
                 } else {
                     loaded = false;
                     await loadForms(true);

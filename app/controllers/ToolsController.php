@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Security;
+use App\Models\MemberRepository;
 use App\Models\NewsletterOfferRepository;
 use App\Models\PayPalSettingsRepository;
 use App\Models\ToolLeadRepository;
@@ -813,6 +814,8 @@ final class ToolsController extends Controller
             'pendingToolLead' => $_SESSION['pending_tool_lead'] ?? [],
             'scanUsage' => !empty($_SESSION['tool_lead']['email']) ? (new ToolUsageRepository())->status((string) $_SESSION['tool_lead']['email']) : null,
             'paypalSettings' => (new PayPalSettingsRepository())->current(),
+            'member' => $_SESSION['member'] ?? null,
+            'memberIsPro' => MemberRepository::isPro($_SESSION['member'] ?? null),
             'accessMessage' => $message,
             'accessError' => $error,
         ];

@@ -74,6 +74,9 @@ $isToolsPath = in_array($currentPath, [
         <a class="<?= active_path('/support') ?>" href="/support">Support</a>
         <a class="<?= active_path('/blog') ?>" href="/blog">Blog</a>
         <a class="<?= active_path('/contact') ?>" href="/contact">Contact</a>
+        <?php if (isset($_SESSION) && !empty($_SESSION['member'])): ?>
+            <a class="<?= active_path('/account/dashboard') ?>" href="/account/dashboard">Dashboard</a>
+        <?php endif; ?>
         <button class="mobile-nav-account-link" type="button" data-mobile-account-trigger>
             <span>Login / Register</span><i class="fa-solid fa-user-shield"></i>
         </button>

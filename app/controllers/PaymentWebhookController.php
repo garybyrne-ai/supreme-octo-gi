@@ -7,9 +7,11 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Database;
 use App\Models\CodeShopRepository;
+use App\Models\MemberRepository;
 use App\Models\PayPalSettingsRepository;
 use App\Services\AuditLogger;
 use App\Services\LeadMailer;
+use App\Services\MembershipService;
 
 final class PaymentWebhookController extends Controller
 {
@@ -38,16 +40,52 @@ final class PaymentWebhookController extends Controller
             return;
         }
 
-        if (($event['type'] ?? '') !== 'checkout.session.completed') {
-            $this->recordCommerceWebhook('stripe', (string) ($event['id'] ?? hash('sha256', $payload)), (string) ($event['type'] ?? 'unknown'), $event, 'ignored');
+        $type = (string) ($event['type'] ?? '');
+        $eventId = (string) ($event['id'] ?? hash('sha256', $payload));
+        $object = is_array($event['data']['object'] ?? null) ? $event['data']['object'] : [];
+        $subscriptionTypes = ['customer.subscription.updated', 'customer.subscription.deleted'];
+        $isCheckout = $type === 'checkout.session.completed';
+        $isMembershipCheckout = $isCheckout && (
+            ($object['mode'] ?? '') === 'subscription'
+            || !empty($object['metadata']['plan_slug'])
+            || !empty($object['metadata']['membership'])
+        );
+
+        if (!$isCheckout && !in_array($type, $subscriptionTypes, true)) {
+            $this->recordCommerceWebhook('stripe', $eventId, $type !== '' ? $type : 'unknown', $event, 'ignored');
             $this->json(['received' => true, 'ignored' => true]);
             return;
         }
 
-        $this->recordCommerceWebhook('stripe', (string) ($event['id'] ?? hash('sha256', $payload)), (string) ($event['type'] ?? 'checkout.session.completed'), $event, 'received');
-        $session = $event['data']['object'] ?? null;
-        if (!is_array($session)) {
+        // Membership subscription lifecycle (activation, renewal, cancellation).
+        if (in_array($type, $subscriptionTypes, true)) {
+            $this->recordCommerceWebhook('stripe', $eventId, $type, $event, 'received');
+            $this->handleStripeSubscriptionEvent($type, $object);
+            $this->markCommerceWebhookProcessed('stripe', $eventId, 'processed');
+            $this->json(['received' => true, 'membership' => true]);
+            return;
+        }
+
+        $this->recordCommerceWebhook('stripe', $eventId, $isCheckout ? 'checkout.session.completed' : $type, $event, 'received');
+        $session = $object;
+        if ($session === []) {
             $this->json(['error' => 'Missing checkout session.'], 422);
+            return;
+        }
+
+        // Subscription checkout for a Growth Lab / membership plan.
+        if ($isMembershipCheckout) {
+            $email = strtolower(trim((string) ($session['customer_details']['email'] ?? $session['customer_email'] ?? '')));
+            $planSlug = (string) ($session['metadata']['plan_slug'] ?? $session['metadata']['plan'] ?? 'growth-lab');
+            $reference = (string) ($session['subscription'] ?? $session['id'] ?? '');
+            $periodEnd = isset($session['metadata']['period_end']) ? (string) $session['metadata']['period_end'] : null;
+
+            if ($email !== '') {
+                (new MembershipService())->activate($email, $planSlug, 'stripe', $reference, $periodEnd);
+            }
+
+            $this->markCommerceWebhookProcessed('stripe', $eventId, 'processed');
+            $this->json(['received' => true, 'membership' => true, 'email_matched' => $email !== '']);
             return;
         }
 
@@ -127,8 +165,78 @@ final class PaymentWebhookController extends Controller
             'event_type' => $eventType,
         ]);
 
+        $this->handlePayPalMembershipEvent($eventType, is_array($event['resource'] ?? null) ? $event['resource'] : []);
+
         $this->markCommerceWebhookProcessed('paypal', $eventId, 'processed');
         $this->json(['received' => true, 'event_id' => $eventId]);
+    }
+
+    /**
+     * Activate or cancel a membership from PayPal subscription webhooks.
+     * As an anti-spoofing safeguard (PayPal transmission-signature verification
+     * against the PayPal API is recommended before production), activation only
+     * proceeds for an email that already has a registered site member.
+     *
+     * @param array<string, mixed> $resource
+     */
+    private function handlePayPalMembershipEvent(string $eventType, array $resource): void
+    {
+        $activateEvents = ['BILLING.SUBSCRIPTION.ACTIVATED', 'BILLING.SUBSCRIPTION.RE-ACTIVATED', 'PAYMENT.SALE.COMPLETED'];
+        $cancelEvents = ['BILLING.SUBSCRIPTION.CANCELLED', 'BILLING.SUBSCRIPTION.EXPIRED', 'BILLING.SUBSCRIPTION.SUSPENDED'];
+
+        if (!in_array($eventType, $activateEvents, true) && !in_array($eventType, $cancelEvents, true)) {
+            return;
+        }
+
+        $email = strtolower(trim((string) ($resource['subscriber']['email_address'] ?? $resource['payer']['payer_info']['email'] ?? '')));
+        if ($email === '' || (new MemberRepository())->findByEmail($email) === null) {
+            return;
+        }
+
+        $service = new MembershipService();
+
+        if (in_array($eventType, $cancelEvents, true)) {
+            $service->deactivate($email, 'paypal', $eventType === 'BILLING.SUBSCRIPTION.EXPIRED' ? 'expired' : 'cancelled');
+            return;
+        }
+
+        $planCode = (string) ($resource['custom_id'] ?? $resource['plan_id'] ?? 'growth-lab');
+        $reference = (string) ($resource['id'] ?? '');
+        $periodEnd = isset($resource['billing_info']['next_billing_time'])
+            ? (string) $resource['billing_info']['next_billing_time']
+            : null;
+
+        $service->activate($email, $planCode, 'paypal', $reference, $periodEnd);
+    }
+
+    private function handleStripeSubscriptionEvent(string $type, array $subscription): void
+    {
+        $email = strtolower(trim((string) ($subscription['metadata']['email'] ?? '')));
+        if ($email === '') {
+            return;
+        }
+
+        $planSlug = (string) ($subscription['metadata']['plan_slug'] ?? ($subscription['items']['data'][0]['price']['nickname'] ?? 'growth-lab'));
+        $reference = (string) ($subscription['id'] ?? '');
+        $status = (string) ($subscription['status'] ?? '');
+        $periodEnd = $this->stripeDate($subscription['current_period_end'] ?? null);
+
+        $service = new MembershipService();
+
+        if ($type === 'customer.subscription.deleted' || in_array($status, ['canceled', 'unpaid', 'incomplete_expired'], true)) {
+            $service->deactivate($email, 'stripe', $status === 'incomplete_expired' ? 'expired' : 'cancelled');
+            return;
+        }
+
+        if (in_array($status, ['active', 'trialing', 'past_due'], true) || $type === 'customer.subscription.updated') {
+            $service->activate($email, $planSlug, 'stripe', $reference, $periodEnd);
+        }
+    }
+
+    private function stripeDate(mixed $timestamp): ?string
+    {
+        $ts = (int) $timestamp;
+        return $ts > 0 ? gmdate('c', $ts) : null;
     }
 
     private function productFromSession(CodeShopRepository $shop, array $session): ?array

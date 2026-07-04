@@ -46,6 +46,69 @@ final class MemberRepository
         return null;
     }
 
+    public function findByEmail(string $email): ?array
+    {
+        $email = strtolower(trim($email));
+
+        foreach ($this->all() as $member) {
+            if (($member['email'] ?? '') === $email) {
+                unset($member['password_hash']);
+                return $member;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Attach or update a member's membership record (used by payment webhooks).
+     * Matches by email so hosted Stripe/PayPal checkouts can activate accounts.
+     *
+     * @param array<string, mixed> $membership
+     */
+    public function setMembershipByEmail(string $email, array $membership): bool
+    {
+        $email = strtolower(trim($email));
+        $members = $this->all();
+        $found = false;
+
+        foreach ($members as &$member) {
+            if (($member['email'] ?? '') === $email) {
+                $member['membership'] = $membership;
+                $found = true;
+                break;
+            }
+        }
+        unset($member);
+
+        if ($found) {
+            $this->save($members);
+        }
+
+        return $found;
+    }
+
+    /**
+     * A member is "Pro" when their membership is active and not past its period.
+     *
+     * @param array<string, mixed>|null $member
+     */
+    public static function isPro(?array $member): bool
+    {
+        $membership = $member['membership'] ?? null;
+        if (!is_array($membership) || ($membership['status'] ?? '') !== 'active') {
+            return false;
+        }
+
+        $endsAt = (string) ($membership['current_period_ends_at'] ?? '');
+        if ($endsAt === '') {
+            return true;
+        }
+
+        $ts = strtotime($endsAt);
+        return $ts === false || $ts > time();
+    }
+
     public function recent(int $limit = 80): array
     {
         $members = $this->all();
