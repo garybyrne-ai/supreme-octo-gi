@@ -15,26 +15,66 @@
     <article><i class="fa-solid fa-code"></i><strong>Lean PHP Core</strong><span>No heavy framework dependency: just clear PHP 8, MySQL and maintainable modules.</span></article>
 </section>
 
+<?php
+$categoryLabels = \App\Models\CommerceRepository::CATALOG_CATEGORIES;
+$serviceLabels = \App\Models\CommerceRepository::SERVICE_DELIVERIES;
+$presentCategories = [];
+foreach ($products as $p) {
+    $key = (string) ($p['catalog_category'] ?? 'file');
+    if (!isset($presentCategories[$key])) {
+        $presentCategories[$key] = $categoryLabels[$key] ?? 'Digital Product';
+    }
+}
+?>
 <section class="section reveal" id="shop-products">
     <div class="section-heading">
-        <span class="kicker">Featured Package</span>
-        <h2>Launch a sellable digital service with the core system already in place.</h2>
+        <span class="kicker">Marketplace</span>
+        <h2>Themes, plugins, templates and done-for-you services — ready to launch.</h2>
     </div>
-    <div class="code-product-grid">
+    <?php if (count($presentCategories) > 1): ?>
+        <div class="catalog-filter" role="tablist" aria-label="Filter products by category">
+            <button type="button" class="is-active" data-catalog-filter="all">All</button>
+            <?php foreach ($presentCategories as $key => $label): ?>
+                <button type="button" data-catalog-filter="<?= e($key) ?>"><?= e($label) ?></button>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+    <div class="code-product-grid" data-catalog-grid>
         <?php foreach ($products as $product): ?>
-            <article class="code-product-card cyber-card">
-                <div class="code-product-visual" aria-hidden="true">
-                    <span class="phone-frame">
-                        <i class="fa-solid fa-camera"></i>
-                        <b></b>
-                        <em>SCAN</em>
-                    </span>
-                    <span class="product-orbit orbit-one"></span>
-                    <span class="product-orbit orbit-two"></span>
-                </div>
+            <?php
+            $catKey = (string) ($product['catalog_category'] ?? 'file');
+            $catLabel = $categoryLabels[$catKey] ?? 'Digital Product';
+            $serviceKey = (string) ($product['service_delivery'] ?? '');
+            $extended = $product['extended_price_cents'] ?? null;
+            ?>
+            <article class="code-product-card cyber-card" data-category="<?= e($catKey) ?>">
+                <?php if (!empty($product['thumbnail_url'])): ?>
+                    <div class="code-product-thumb">
+                        <img src="<?= e($product['thumbnail_url']) ?>" alt="<?= e($product['title']) ?> preview" loading="lazy">
+                    </div>
+                <?php else: ?>
+                    <div class="code-product-visual" aria-hidden="true">
+                        <span class="phone-frame">
+                            <i class="fa-solid fa-camera"></i>
+                            <b></b>
+                            <em>SCAN</em>
+                        </span>
+                        <span class="product-orbit orbit-one"></span>
+                        <span class="product-orbit orbit-two"></span>
+                    </div>
+                <?php endif; ?>
                 <div class="code-product-copy">
-                    <span class="status-chip"><span></span><?= e($product['platform']) ?> Package</span>
+                    <div class="catalog-card-meta">
+                        <span class="catalog-chip"><?= e($catLabel) ?></span>
+                        <?php if ($serviceKey !== '' && isset($serviceLabels[$serviceKey])): ?>
+                            <span class="catalog-chip service"><?= e($serviceLabels[$serviceKey]) ?></span>
+                        <?php endif; ?>
+                        <?php if (!empty($product['is_featured'])): ?>
+                            <span class="catalog-chip">★ Featured</span>
+                        <?php endif; ?>
+                    </div>
                     <h3><?= e($product['title']) ?></h3>
+                    <?php if (!empty($product['subtitle'])): ?><p class="code-product-subtitle"><?= e($product['subtitle']) ?></p><?php endif; ?>
                     <p><?= e($product['summary']) ?></p>
                     <div class="code-tags">
                         <?php foreach (array_slice($product['platform_tags'], 0, 8) as $tag): ?>
@@ -42,14 +82,48 @@
                         <?php endforeach; ?>
                     </div>
                     <div class="code-product-bottom">
-                        <strong><?= e($product['currency']) ?> <?= number_format(((int) $product['price_cents']) / 100, 2) ?></strong>
-                        <a class="pill-button" href="/code-shop/<?= e($product['slug']) ?>">View Package <i class="fa-solid fa-arrow-right"></i></a>
+                        <span class="catalog-price-line">
+                            <strong><?= e($product['currency']) ?> <?= number_format(((int) $product['price_cents']) / 100, 2) ?></strong>
+                            <?php if ($extended !== null && $extended !== ''): ?>
+                                <span class="ext">Extended <?= e($product['currency']) ?> <?= number_format(((int) $extended) / 100, 2) ?></span>
+                            <?php endif; ?>
+                        </span>
+                        <div class="button-row">
+                            <?php if (!empty($product['demo_url'])): ?>
+                                <a class="pill-button ghost" href="<?= e($product['demo_url']) ?>" target="_blank" rel="noopener">Live Demo <i class="fa-solid fa-up-right-from-square"></i></a>
+                            <?php endif; ?>
+                            <a class="pill-button" href="/code-shop/<?= e($product['slug']) ?>">View Item <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
                     </div>
                 </div>
             </article>
         <?php endforeach; ?>
     </div>
+    <p class="catalog-empty-note" data-catalog-empty hidden>No items in this category yet.</p>
 </section>
+
+<script>
+(function () {
+    var filters = document.querySelectorAll('[data-catalog-filter]');
+    var grid = document.querySelector('[data-catalog-grid]');
+    if (!filters.length || !grid) { return; }
+    var empty = document.querySelector('[data-catalog-empty]');
+    var cards = grid.querySelectorAll('.code-product-card');
+    filters.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var target = btn.getAttribute('data-catalog-filter');
+            filters.forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+            var shown = 0;
+            cards.forEach(function (card) {
+                var match = target === 'all' || card.getAttribute('data-category') === target;
+                card.hidden = !match;
+                if (match) { shown++; }
+            });
+            if (empty) { empty.hidden = shown !== 0; }
+        });
+    });
+})();
+</script>
 
 <section class="home-tools-cta code-shop-cta reveal">
     <div class="home-tools-cta-copy">
