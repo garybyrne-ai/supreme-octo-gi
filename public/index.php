@@ -47,6 +47,7 @@ $statefulPrefixes = [
     '/support',
     '/code-shop',
     '/membership',
+    '/backlinks',
     '/download.php',
     '/webhooks',
     '/tools',

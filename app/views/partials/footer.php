@@ -52,6 +52,7 @@ $techNews = (new \App\Services\TechNewsService())->items();
             <a href="/services/website-development"><i class="fa-solid fa-code"></i> Website Development</a>
             <a href="/services/app-development"><i class="fa-solid fa-mobile-screen"></i> App Development</a>
             <a href="/services/seo"><i class="fa-solid fa-ranking-star"></i> SEO & Rankings</a>
+            <a href="/backlinks"><i class="fa-solid fa-link"></i> Buy Irish Backlinks</a>
             <a href="/services/pay-per-click-advertising"><i class="fa-solid fa-bullseye"></i> Pay Per Click</a>
             <a href="/services/ai-integration-services"><i class="fa-solid fa-robot"></i> AI Integration</a>
             <a href="/services/penetration-testing"><i class="fa-solid fa-shield-halved"></i> Penetration Testing</a>

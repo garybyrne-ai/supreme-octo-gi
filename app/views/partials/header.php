@@ -50,7 +50,7 @@ $isToolsPath = in_array($currentPath, [
         <a class="<?= active_path('/portfolio') ?>" href="/portfolio">Portfolio</a>
         <a class="<?= $isShopPath ? 'is-active' : '' ?>" href="/code-shop">Marketplace</a>
         <a class="<?= active_path('/membership') ?>" href="/membership">Membership</a>
-        <a class="<?= active_path('/process') ?>" href="/process">Process</a>
+        <a class="<?= active_path('/backlinks') ?>" href="/backlinks">Backlinks</a>
         <div class="nav-item has-mega tools-mega">
             <a class="<?= $isToolsPath ? 'is-active' : '' ?>" href="/tools" aria-haspopup="true">Tools <i class="fa-solid fa-chevron-down"></i></a>
             <div class="mega-menu tools-menu" aria-label="Tools menu">
