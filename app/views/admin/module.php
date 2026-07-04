@@ -384,6 +384,10 @@ $moduleDrafts = $moduleDrafts ?? [];
                         <input name="serp_api_key" type="password" autocomplete="off" placeholder="<?= !empty($paypalSettings['serp_api_key']) ? 'Saved - leave blank to keep' : 'Paste your ZenSERP apikey' ?>">
                     </label>
                     <p class="cyber-note">When set, the SERP Checker returns live Google rankings via ZenSERP instead of the free fallback. Stored privately on the server (never in code). You can also set the <code>ZENSERP_API_KEY</code> environment variable.</p>
+                    <label>Google PageSpeed API Key <span class="cyber-hint">optional</span>
+                        <input name="google_psi_key" type="password" autocomplete="off" placeholder="<?= !empty($paypalSettings['google_psi_key']) ? 'Saved - leave blank to keep' : 'Optional — raises PageSpeed quota' ?>">
+                    </label>
+                    <p class="cyber-note">The PageSpeed &amp; Core Web Vitals tool works without a key at low volume. Add a free Google PageSpeed Insights API key (or set <code>GOOGLE_PSI_KEY</code>) to raise the request limit.</p>
                     <button class="pill-button" type="submit">Save Payment Settings <i class="fa-solid fa-floppy-disk"></i></button>
                 </form>
                 <aside class="cyber-card">

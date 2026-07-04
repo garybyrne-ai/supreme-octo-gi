@@ -135,6 +135,186 @@ final class ToolsController extends Controller
         ]);
     }
 
+    public function pagespeed(array $data = []): void
+    {
+        $this->render('pages/tool-pagespeed', array_replace([
+            'title' => 'Free PageSpeed & Core Web Vitals Checker | Crest Web Media',
+            'metaDescription' => 'Check real Google PageSpeed and Core Web Vitals (LCP, CLS, TBT) for any page, mobile-first, with a downloadable white-label report.',
+        ], $this->toolAccessData(), $data));
+    }
+
+    public function analyzePagespeed(): void
+    {
+        if (!$this->hasToolAccess()) {
+            $this->pagespeed(['accessError' => 'Register and verify your email to reveal PageSpeed results.']);
+            return;
+        }
+
+        if (Security::hitRateLimit('pagespeed', 8, 900)) {
+            http_response_code(429);
+            $this->pagespeed(['toolError' => 'Too many PageSpeed checks. Please wait a few minutes before trying again.']);
+            return;
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            http_response_code(419);
+            $this->pagespeed(['toolError' => 'Your secure form token expired. Please try again.']);
+            return;
+        }
+
+        $url = $this->normalizePublicUrl((string) ($_POST['target_url'] ?? ''));
+        if ($url === null) {
+            http_response_code(422);
+            $this->pagespeed(['toolError' => 'Enter a public HTTPS or HTTP URL. Private networks, localhost, credentials and custom ports are blocked for safety.']);
+            return;
+        }
+
+        if (!$this->consumeFreeScan('pagespeed')) {
+            http_response_code(402);
+            $this->pagespeed(['toolError' => $this->growthLabLimitMessage()]);
+            return;
+        }
+
+        $report = $this->pagespeedReport($url);
+        if ($report === null) {
+            $this->pagespeed(['toolError' => 'Could not get PageSpeed data for that URL right now. Google may be busy — try again in a moment.']);
+            return;
+        }
+
+        (new AuditLogger())->log('tools.pagespeed_analyzed', ['host' => parse_url($url, PHP_URL_HOST)]);
+        $this->pagespeed(['targetUrl' => $url, 'report' => $report]);
+    }
+
+    /**
+     * Real Google PageSpeed Insights (Lighthouse + field CrUX data).
+     * Works without an API key at low quota; a GOOGLE_PSI_KEY env var or admin
+     * setting raises the limit. Never stores the key in code.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function pagespeedReport(string $url): ?array
+    {
+        $params = [
+            'url' => $url,
+            'strategy' => 'mobile',
+            'category' => 'performance',
+        ];
+        $key = $this->psiKey();
+        if ($key !== '') {
+            $params['key'] = $key;
+        }
+        $endpoint = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?' . http_build_query($params);
+
+        $context = stream_context_create([
+            'http' => ['method' => 'GET', 'timeout' => 25, 'ignore_errors' => true, 'header' => "Accept: application/json\r\n"],
+            'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
+        ]);
+        $raw = @file_get_contents($endpoint, false, $context, 0, 3000000);
+        if (!is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        $data = json_decode($raw, true);
+
+        return is_array($data) ? $this->parsePagespeed($data, $url) : null;
+    }
+
+    /**
+     * @param array<string, mixed> $data Raw PageSpeed Insights v5 response.
+     * @return array<string, mixed>|null
+     */
+    private function parsePagespeed(array $data, string $url): ?array
+    {
+        $lh = $data['lighthouseResult'] ?? null;
+        if (!is_array($lh)) {
+            return null;
+        }
+
+        $score = (int) round(((float) ($lh['categories']['performance']['score'] ?? 0)) * 100);
+        $audits = is_array($lh['audits'] ?? null) ? $lh['audits'] : [];
+
+        $disp = static fn (string $k): string => (string) ($audits[$k]['displayValue'] ?? 'n/a');
+        $num = static fn (string $k) => $audits[$k]['numericValue'] ?? null;
+
+        $lcpMs = $num('largest-contentful-paint');
+        $clsVal = $num('cumulative-layout-shift');
+        $tbtMs = $num('total-blocking-time');
+
+        // Field (real-user CrUX) data when available.
+        $field = $data['loadingExperience']['metrics'] ?? [];
+        $fieldLabel = static function (array $field, string $metric): ?string {
+            $cat = $field[$metric]['category'] ?? null;
+            return $cat ? ucfirst(strtolower(str_replace('_', ' ', (string) $cat))) : null;
+        };
+        $fieldLcp = $fieldLabel($field, 'LARGEST_CONTENTFUL_PAINT_MS');
+        $fieldInp = $fieldLabel($field, 'INTERACTION_TO_NEXT_PAINT') ?? $fieldLabel($field, 'EXPERIMENTAL_INTERACTION_TO_NEXT_PAINT');
+
+        $facts = [
+            ['label' => 'LCP', 'value' => $disp('largest-contentful-paint')],
+            ['label' => 'CLS', 'value' => $disp('cumulative-layout-shift')],
+            ['label' => 'Total Blocking Time', 'value' => $disp('total-blocking-time')],
+            ['label' => 'First Contentful Paint', 'value' => $disp('first-contentful-paint')],
+            ['label' => 'Speed Index', 'value' => $disp('speed-index')],
+            ['label' => 'Time to Interactive', 'value' => $disp('interactive')],
+        ];
+        if ($fieldLcp !== null) {
+            $facts[] = ['label' => 'Real-user LCP', 'value' => $fieldLcp];
+        }
+        if ($fieldInp !== null) {
+            $facts[] = ['label' => 'Real-user INP', 'value' => $fieldInp];
+        }
+
+        $checks = [
+            ['label' => 'Performance score (mobile)', 'present' => $score >= 90, 'value' => $score . ' / 100', 'advice' => 'Aim for 90+; work through the opportunities below, biggest first.'],
+            ['label' => 'Largest Contentful Paint (LCP)', 'present' => $lcpMs !== null && $lcpMs <= 2500, 'value' => $disp('largest-contentful-paint') . ' (good ≤ 2.5s)', 'advice' => 'Optimise and preload the hero image, cut server response time and render-blocking CSS.'],
+            ['label' => 'Cumulative Layout Shift (CLS)', 'present' => $clsVal !== null && $clsVal <= 0.1, 'value' => $disp('cumulative-layout-shift') . ' (good ≤ 0.1)', 'advice' => 'Set width/height on images and reserve space for ads, embeds and late-loading elements.'],
+            ['label' => 'Total Blocking Time (INP proxy)', 'present' => $tbtMs !== null && $tbtMs <= 200, 'value' => $disp('total-blocking-time') . ' (good ≤ 200ms)', 'advice' => 'Reduce and defer JavaScript, remove unused third-party scripts and split long tasks.'],
+        ];
+
+        // Top opportunities → recommendations.
+        $recommendations = [];
+        foreach ($audits as $audit) {
+            if (!is_array($audit)) {
+                continue;
+            }
+            $isOpportunity = (($audit['details']['type'] ?? '') === 'opportunity');
+            $auditScore = $audit['score'] ?? null;
+            if ($isOpportunity && $auditScore !== null && $auditScore < 0.9 && !empty($audit['title'])) {
+                $save = $audit['displayValue'] ?? '';
+                $recommendations[] = trim($audit['title'] . ($save !== '' ? ' — ' . $save : ''));
+            }
+        }
+        if ($recommendations === []) {
+            $recommendations[] = 'No major opportunities flagged — keep images optimised, scripts lean and hosting fast.';
+        }
+
+        return [
+            'tool' => 'PageSpeed & Core Web Vitals',
+            'icon' => 'fa-gauge-high',
+            'target' => $url,
+            'score' => $score,
+            'summary' => 'Real Google Lighthouse performance and Core Web Vitals (mobile).',
+            'facts' => $facts,
+            'checks' => $checks,
+            'recommendations' => array_slice($recommendations, 0, 8),
+        ];
+    }
+
+    private function psiKey(): string
+    {
+        $env = (string) (getenv('GOOGLE_PSI_KEY') ?: '');
+        if ($env !== '') {
+            return trim($env);
+        }
+
+        try {
+            $settings = (new PayPalSettingsRepository())->current();
+            return trim((string) ($settings['google_psi_key'] ?? ''));
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
     public function toolsPricing(): void
     {
         $plans = (new \App\Models\MembershipPlanRepository())->activePlans();
@@ -265,6 +445,14 @@ final class ToolsController extends Controller
                 'category' => 'Paid Search',
                 'summary' => 'Model ad budget, CPC, landing-page conversion rate, revenue potential and campaign return.',
                 'accent' => 'green',
+            ],
+            [
+                'title' => 'PageSpeed & Core Web Vitals',
+                'url' => '/tools/pagespeed',
+                'icon' => 'fa-solid fa-gauge-high',
+                'category' => 'Performance',
+                'summary' => 'Real Google Lighthouse performance and Core Web Vitals (LCP, CLS, blocking time) for any page.',
+                'accent' => 'cyan',
             ],
             [
                 'title' => 'Website Speed Simulator',

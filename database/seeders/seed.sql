@@ -139,7 +139,7 @@ VALUES
     'growth-lab-monthly',
     'Growth Lab Pro (Monthly)',
     'Unlimited white-label SEO, security and technical website tools.',
-    2500, 'EUR', 'monthly', 0,
+    2500, 'EUR', 'monthly', 7,
     JSON_ARRAY('Unlimited scans across every tool', 'White-label reports with your logo', 'Downloadable client-ready PDF reports', 'On-page, technical SEO and SERP checks', 'Full security + technology scanning', 'Cancel anytime'),
     'Most popular', 'Start monthly', 1, 1, 5
 ),

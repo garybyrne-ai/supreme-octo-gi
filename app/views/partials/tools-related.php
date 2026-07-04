@@ -6,6 +6,7 @@ $allTools = [
     ['/tools/tls-ssl', 'fa-certificate', 'TLS / SSL'],
     ['/tools/security-txt', 'fa-file-shield', 'security.txt'],
     ['/tools/tech-stack', 'fa-microchip', 'Tech Stack'],
+    ['/tools/pagespeed', 'fa-gauge-high', 'PageSpeed'],
     ['/seo-tools', 'fa-chart-line', 'SEO Audit'],
     ['/serp-checker', 'fa-ranking-star', 'SERP Checker'],
 ];

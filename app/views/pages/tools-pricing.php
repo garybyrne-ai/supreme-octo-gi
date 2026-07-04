@@ -50,6 +50,7 @@ $planButtons = function (?array $plan, string $fallbackPrice, string $csrf): voi
 </section>
 
 <section class="section reveal">
+    <p class="pricing-upsell-banner"><i class="fa-solid fa-bolt"></i> Start with a <strong>7-day free trial</strong> on monthly, or pay yearly and get <strong>2 months free (save €100)</strong>.</p>
     <div class="tools-price-toggle" data-price-toggle>
         <button type="button" class="is-active" data-billing="monthly">Monthly</button>
         <button type="button" data-billing="annual">Yearly <em>Save €100</em></button>
@@ -65,6 +66,7 @@ $planButtons = function (?array $plan, string $fallbackPrice, string $csrf): voi
             <div class="membership-card-price">
                 <strong>€25</strong><span>/month</span>
             </div>
+            <p class="membership-trial"><i class="fa-solid fa-bolt"></i> 7-day free trial — cancel anytime</p>
             <ul class="check-list">
                 <?php foreach ($features as $f): ?><li><?= $f ?></li><?php endforeach; ?>
             </ul>
@@ -82,6 +84,7 @@ $planButtons = function (?array $plan, string $fallbackPrice, string $csrf): voi
             <div class="membership-card-price">
                 <strong>€200</strong><span>/year</span>
             </div>
+            <p class="membership-trial"><i class="fa-solid fa-circle-check"></i> 2 months free vs monthly — save €100</p>
             <ul class="check-list">
                 <?php foreach ($features as $f): ?><li><?= $f ?></li><?php endforeach; ?>
             </ul>

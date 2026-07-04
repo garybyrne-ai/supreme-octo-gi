@@ -73,6 +73,8 @@ $router->get('/tools/tls-ssl', [ToolsController::class, 'tlsSsl']);
 $router->get('/tools/security-txt', [ToolsController::class, 'securityTxt']);
 $router->get('/tools/tech-stack', [ToolsController::class, 'techStack']);
 $router->post('/tools/tech-stack', [ToolsController::class, 'analyzeTechStack']);
+$router->get('/tools/pagespeed', [ToolsController::class, 'pagespeed']);
+$router->post('/tools/pagespeed', [ToolsController::class, 'analyzePagespeed']);
 $router->get('/tools-pricing', [ToolsController::class, 'toolsPricing']);
 $router->get('/seo-tools', [ToolsController::class, 'seoTools']);
 $router->post('/seo-tools/audit', [ToolsController::class, 'auditSeo']);
