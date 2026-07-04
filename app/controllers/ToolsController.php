@@ -1363,6 +1363,13 @@ final class ToolsController extends Controller
 
     private function serpReport(string $keyword, string $targetHost, string $location): array
     {
+        // Prefer a real SERP API (ZenSERP) when a key is configured; otherwise
+        // fall back to the free live scrape below.
+        $apiResult = $this->zenserpReport($keyword, $targetHost, $location);
+        if ($apiResult !== null) {
+            return $apiResult;
+        }
+
         $query = trim($keyword . ' ' . $location);
         $url = 'https://lite.duckduckgo.com/lite/?q=' . rawurlencode($query);
         $context = stream_context_create([
@@ -1413,6 +1420,95 @@ final class ToolsController extends Controller
             'results' => $results,
             'opportunities' => $this->serpOpportunities($position, $results),
         ];
+    }
+
+    /**
+     * Live Google results via the ZenSERP API when a key is configured.
+     * The key is read from the ZENSERP_API_KEY env var or the admin payment/
+     * integration settings — it is never stored in the codebase.
+     *
+     * @return array<string, mixed>|null Null when no key or the call fails.
+     */
+    private function zenserpReport(string $keyword, string $targetHost, string $location): ?array
+    {
+        $apiKey = $this->serpApiKey();
+        if ($apiKey === '') {
+            return null;
+        }
+
+        $params = [
+            'apikey' => $apiKey,
+            'q' => $keyword,
+            'num' => '20',
+            'hl' => 'en',
+            'gl' => 'ie',
+            'location' => $location !== '' ? $location : 'Ireland',
+        ];
+        $endpoint = 'https://app.zenserp.com/api/v2/search?' . http_build_query($params);
+
+        $context = stream_context_create([
+            'http' => ['method' => 'GET', 'timeout' => 8, 'ignore_errors' => true, 'header' => "Accept: application/json\r\n"],
+            'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
+        ]);
+        $raw = @file_get_contents($endpoint, false, $context, 0, 600000);
+        if (!is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        $data = json_decode($raw, true);
+        $organic = $data['organic'] ?? null;
+        if (!is_array($organic)) {
+            return null;
+        }
+
+        $results = [];
+        foreach ($organic as $item) {
+            $href = (string) ($item['url'] ?? '');
+            $host = strtolower((string) parse_url($href, PHP_URL_HOST));
+            if ($href === '' || $host === '') {
+                continue;
+            }
+            $results[] = [
+                'title' => trim((string) ($item['title'] ?? '')),
+                'url' => $href,
+                'host' => preg_replace('/^www\./', '', $host),
+            ];
+            if (count($results) >= 20) {
+                break;
+            }
+        }
+
+        $normalizedTarget = preg_replace('/^www\./', '', strtolower($targetHost));
+        $position = null;
+        foreach ($results as $index => $result) {
+            if ($result['host'] === $normalizedTarget || str_ends_with((string) $result['host'], '.' . $normalizedTarget)) {
+                $position = $index + 1;
+                break;
+            }
+        }
+
+        return [
+            'engine' => 'Google live results (ZenSERP)',
+            'query' => trim($keyword . ' — ' . ($location !== '' ? $location : 'Ireland')),
+            'position' => $position,
+            'results' => array_slice($results, 0, 10),
+            'opportunities' => $this->serpOpportunities($position, $results),
+        ];
+    }
+
+    private function serpApiKey(): string
+    {
+        $env = (string) (getenv('ZENSERP_API_KEY') ?: '');
+        if ($env !== '') {
+            return trim($env);
+        }
+
+        try {
+            $settings = (new PayPalSettingsRepository())->current();
+            return trim((string) ($settings['serp_api_key'] ?? ''));
+        } catch (\Throwable) {
+            return '';
+        }
     }
 
     private function serpOpportunities(?int $position, array $results): array

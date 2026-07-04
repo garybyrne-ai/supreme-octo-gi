@@ -379,6 +379,11 @@ $moduleDrafts = $moduleDrafts ?? [];
                             <input name="stripe_cancel_url" type="url" value="<?= e($paypalSettings['stripe_cancel_url'] ?? '') ?>" placeholder="Optional custom cancel URL">
                         </label>
                     </div>
+                    <h2>Search Data <span class="cyber-hint">real SERP rankings</span></h2>
+                    <label>ZenSERP API Key
+                        <input name="serp_api_key" type="password" autocomplete="off" placeholder="<?= !empty($paypalSettings['serp_api_key']) ? 'Saved - leave blank to keep' : 'Paste your ZenSERP apikey' ?>">
+                    </label>
+                    <p class="cyber-note">When set, the SERP Checker returns live Google rankings via ZenSERP instead of the free fallback. Stored privately on the server (never in code). You can also set the <code>ZENSERP_API_KEY</code> environment variable.</p>
                     <button class="pill-button" type="submit">Save Payment Settings <i class="fa-solid fa-floppy-disk"></i></button>
                 </form>
                 <aside class="cyber-card">

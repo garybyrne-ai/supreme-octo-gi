@@ -351,3 +351,6 @@
 .code-product-subtitle { color: var(--muted); font-weight: 600; margin: 0 0 2px; }
 .catalog-empty-note { text-align: center; color: var(--muted); padding: 24px; }
 .code-product-bottom .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.cyber-note { color: var(--muted); font-size: .82rem; line-height: 1.6; margin: 4px 0 6px; }
+.cyber-note code { background: rgba(0,229,255,.12); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
