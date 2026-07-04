@@ -33,6 +33,10 @@
     </aside>
 </section>
 
+<?php if (!empty($report)): ?>
+    <section class="section tool-single-wrap"><?php require base_path('app/views/partials/tool-report.php'); ?></section>
+<?php endif; ?>
+
 <?php if (!empty($seoResult)): ?>
     <section class="tool-results reveal">
         <article class="cyber-card tool-result-card">

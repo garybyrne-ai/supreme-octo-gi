@@ -48,6 +48,105 @@ final class ToolsController extends Controller
         ], $this->toolAccessData(), $data));
     }
 
+    public function securityHeaders(array $data = []): void
+    {
+        $this->render('pages/tool-security-headers', array_replace([
+            'title' => 'Free Security Headers Checker | Crest Web Media',
+            'metaDescription' => 'Scan HTTP security headers — HSTS, CSP, COOP, CORP, frame and MIME protection, cookie flags and stack disclosure — and download a white-label PDF report.',
+        ], $this->toolAccessData(), $data));
+    }
+
+    public function dnsEmail(array $data = []): void
+    {
+        $this->render('pages/tool-dns-email', array_replace([
+            'title' => 'Free DNS & Email Security Checker | Crest Web Media',
+            'metaDescription' => 'Check MX, SPF, DMARC, CAA and nameserver records for email deliverability and spoofing protection, with a downloadable white-label report.',
+        ], $this->toolAccessData(), $data));
+    }
+
+    public function tlsSsl(array $data = []): void
+    {
+        $this->render('pages/tool-tls', array_replace([
+            'title' => 'Free TLS / SSL Certificate Checker | Crest Web Media',
+            'metaDescription' => 'Read TLS/SSL certificate issuer, subject, validity and expiry health, and download a white-label PDF report.',
+        ], $this->toolAccessData(), $data));
+    }
+
+    public function securityTxt(array $data = []): void
+    {
+        $this->render('pages/tool-security-txt', array_replace([
+            'title' => 'Free security.txt & Robots Discovery | Crest Web Media',
+            'metaDescription' => 'Discover security.txt and robots.txt disclosure files and download a white-label report.',
+        ], $this->toolAccessData(), $data));
+    }
+
+    public function techStack(array $data = []): void
+    {
+        $this->render('pages/tool-tech-stack', array_replace([
+            'title' => 'Free Website Technology Checker | Crest Web Media',
+            'metaDescription' => 'Detect the CMS, frameworks, JavaScript libraries, analytics, CDN and server behind any website, and download a white-label report.',
+        ], $this->toolAccessData(), $data));
+    }
+
+    public function analyzeTechStack(): void
+    {
+        if (!$this->hasToolAccess()) {
+            $this->techStack(['accessError' => 'Register and verify your email to reveal technology results.']);
+            return;
+        }
+
+        if (Security::hitRateLimit('tech_stack', 10, 900)) {
+            http_response_code(429);
+            $this->techStack(['toolError' => 'Too many scans. Please wait a few minutes before trying again.']);
+            return;
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            http_response_code(419);
+            $this->techStack(['toolError' => 'Your secure form token expired. Please try again.']);
+            return;
+        }
+
+        $url = $this->normalizePublicUrl((string) ($_POST['target_url'] ?? ''));
+        if ($url === null) {
+            http_response_code(422);
+            $this->techStack(['toolError' => 'Enter a public HTTPS or HTTP URL. Private networks, localhost, credentials and custom ports are blocked for safety.']);
+            return;
+        }
+
+        if (!$this->consumeFreeScan('tech_stack')) {
+            http_response_code(402);
+            $this->techStack(['toolError' => $this->growthLabLimitMessage()]);
+            return;
+        }
+
+        $headers = $this->fetchHeaders($url);
+        $html = $this->fetchHtml($url);
+        if ($headers === [] && $html === '') {
+            $this->techStack(['toolError' => 'Could not read that site. Try the exact homepage URL.']);
+            return;
+        }
+
+        (new AuditLogger())->log('tools.tech_stack_analyzed', ['host' => parse_url($url, PHP_URL_HOST)]);
+        $this->techStack([
+            'targetUrl' => $url,
+            'report' => $this->detectTech($url, $headers, $html),
+        ]);
+    }
+
+    public function toolsPricing(): void
+    {
+        $plans = (new \App\Models\MembershipPlanRepository())->activePlans();
+
+        $this->render('pages/tools-pricing', [
+            'title' => 'Growth Lab Pro — Website Tools Membership | Crest Web Media',
+            'metaDescription' => 'Unlimited SEO, security and technical website tools with white-label PDF reports. €25/month or €200/year. Cancel anytime.',
+            'plans' => $plans,
+            'planRepo' => new \App\Models\MembershipPlanRepository(),
+            'csrf' => Security::csrfToken(),
+        ]);
+    }
+
     public function growthConsultant(): void
     {
         $this->interactiveTool('growth-consultant');
@@ -103,11 +202,43 @@ final class ToolsController extends Controller
                 'accent' => 'violet',
             ],
             [
-                'title' => 'Security Testing Tools',
-                'url' => '/free-penetration-testing-tools',
-                'icon' => 'fa-solid fa-shield-halved',
+                'title' => 'Security Headers Checker',
+                'url' => '/tools/security-headers',
+                'icon' => 'fa-solid fa-lock',
                 'category' => 'Security',
-                'summary' => 'Run defensive checks for headers, DNS, TLS, security.txt, passwords, hashes, JWTs and launch readiness.',
+                'summary' => 'Score HSTS, CSP, COOP, CORP, frame and MIME protection, cookie flags and stack disclosure.',
+                'accent' => 'green',
+            ],
+            [
+                'title' => 'DNS & Email Security',
+                'url' => '/tools/dns-email',
+                'icon' => 'fa-solid fa-envelope-circle-check',
+                'category' => 'Security',
+                'summary' => 'Check MX, SPF, DMARC, CAA and nameservers for deliverability and anti-spoofing.',
+                'accent' => 'green',
+            ],
+            [
+                'title' => 'TLS / SSL Certificate',
+                'url' => '/tools/tls-ssl',
+                'icon' => 'fa-solid fa-certificate',
+                'category' => 'Security',
+                'summary' => 'Read certificate issuer, subject, validity window and days remaining to expiry.',
+                'accent' => 'green',
+            ],
+            [
+                'title' => 'Website Technology Checker',
+                'url' => '/tools/tech-stack',
+                'icon' => 'fa-solid fa-microchip',
+                'category' => 'Intelligence',
+                'summary' => 'Detect the CMS, frameworks, libraries, analytics, CDN and server behind any website.',
+                'accent' => 'cyan',
+            ],
+            [
+                'title' => 'security.txt & Discovery',
+                'url' => '/tools/security-txt',
+                'icon' => 'fa-solid fa-file-shield',
+                'category' => 'Security',
+                'summary' => 'Discover responsible-disclosure and crawler files exposed over HTTPS.',
                 'accent' => 'green',
             ],
             [
@@ -264,10 +395,25 @@ final class ToolsController extends Controller
         }
 
         (new AuditLogger())->log('tools.seo_audited', ['host' => parse_url($url, PHP_URL_HOST)]);
+        $seoResult = $this->seoAudit($url, $html, $keyword);
         $this->seoTools([
             'targetUrl' => $url,
             'keyword' => $keyword,
-            'seoResult' => $this->seoAudit($url, $html, $keyword),
+            'seoResult' => $seoResult,
+            'report' => [
+                'tool' => 'On-Page SEO',
+                'icon' => 'fa-chart-line',
+                'target' => $url,
+                'score' => $seoResult['score'],
+                'summary' => 'On-page and technical SEO signals for ' . ($keyword !== '' ? '“' . $keyword . '”' : 'this page') . '.',
+                'facts' => [
+                    ['label' => 'Words', 'value' => (string) $seoResult['words']],
+                    ['label' => 'Internal links', 'value' => (string) $seoResult['internal_links']],
+                    ['label' => 'External links', 'value' => (string) $seoResult['external_links']],
+                    ['label' => 'Keyword density', 'value' => ($seoResult['keyword_density'] ?? 0) . '%'],
+                ],
+                'checks' => $seoResult['checks'],
+            ],
         ]);
     }
 
@@ -320,169 +466,212 @@ final class ToolsController extends Controller
     public function analyzeHeaders(): void
     {
         if (!$this->hasToolAccess()) {
-            $this->index(['accessError' => 'Register and verify your email to reveal security header results.']);
+            $this->securityHeaders(['accessError' => 'Register and verify your email to reveal security header results.']);
             return;
         }
 
         if (Security::hitRateLimit('security_tools_headers', 10, 900)) {
             http_response_code(429);
-            $this->index(['toolError' => 'Too many scans. Please wait a few minutes before running another check.']);
+            $this->securityHeaders(['toolError' => 'Too many scans. Please wait a few minutes before running another check.']);
             return;
         }
 
         if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
             http_response_code(419);
-            $this->index(['toolError' => 'Your secure form token expired. Please try again.']);
+            $this->securityHeaders(['toolError' => 'Your secure form token expired. Please try again.']);
             return;
         }
 
         $url = $this->normalizePublicUrl((string) ($_POST['target_url'] ?? ''));
         if ($url === null) {
             http_response_code(422);
-            $this->index(['toolError' => 'Enter a public HTTPS or HTTP URL. Private networks, localhost, credentials and custom ports are blocked for safety.']);
+            $this->securityHeaders(['toolError' => 'Enter a public HTTPS or HTTP URL. Private networks, localhost, credentials and custom ports are blocked for safety.']);
             return;
         }
 
         if (!$this->consumeFreeScan('security_headers')) {
             http_response_code(402);
-            $this->index(['toolError' => $this->growthLabLimitMessage()]);
+            $this->securityHeaders(['toolError' => $this->growthLabLimitMessage()]);
             return;
         }
 
         $headers = $this->fetchHeaders($url);
         if ($headers === []) {
-            $this->index(['toolError' => 'Could not read response headers from that site. Try the exact homepage URL.']);
+            $this->securityHeaders(['toolError' => 'Could not read response headers from that site. Try the exact homepage URL.']);
             return;
         }
 
         (new AuditLogger())->log('tools.headers_analyzed', ['host' => parse_url($url, PHP_URL_HOST)]);
 
-        $this->index([
+        $result = $this->scoreHeaders($headers);
+        $this->securityHeaders([
             'targetUrl' => $url,
-            'headerResult' => $this->scoreHeaders($headers),
+            'report' => [
+                'tool' => 'Security Headers',
+                'icon' => 'fa-lock',
+                'target' => $url,
+                'score' => $result['score'],
+                'summary' => 'HTTP security-header posture for browser hardening and stack disclosure.',
+                'checks' => $result['checks'],
+                'facts' => $result['facts'] ?? [],
+            ],
         ]);
     }
 
     public function analyzeDns(): void
     {
         if (!$this->hasToolAccess()) {
-            $this->index(['accessError' => 'Register and verify your email to reveal DNS results.']);
+            $this->dnsEmail(['accessError' => 'Register and verify your email to reveal DNS results.']);
             return;
         }
 
         if (Security::hitRateLimit('security_tools_dns', 12, 900)) {
             http_response_code(429);
-            $this->index(['dnsError' => 'Too many DNS checks. Please wait a few minutes before trying again.']);
+            $this->dnsEmail(['dnsError' => 'Too many DNS checks. Please wait a few minutes before trying again.']);
             return;
         }
 
         if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
             http_response_code(419);
-            $this->index(['dnsError' => 'Your secure form token expired. Please try again.']);
+            $this->dnsEmail(['dnsError' => 'Your secure form token expired. Please try again.']);
             return;
         }
 
         $host = $this->normalizePublicHost((string) ($_POST['domain'] ?? ''));
         if ($host === null) {
             http_response_code(422);
-            $this->index(['dnsError' => 'Enter a valid public domain. Private networks and localhost are blocked.']);
+            $this->dnsEmail(['dnsError' => 'Enter a valid public domain. Private networks and localhost are blocked.']);
             return;
         }
 
         if (!$this->consumeFreeScan('dns_email')) {
             http_response_code(402);
-            $this->index(['dnsError' => $this->growthLabLimitMessage()]);
+            $this->dnsEmail(['dnsError' => $this->growthLabLimitMessage()]);
             return;
         }
 
         (new AuditLogger())->log('tools.dns_analyzed', ['host' => $host]);
-        $this->index([
+        $result = $this->dnsReport($host);
+        $this->dnsEmail([
             'dnsHost' => $host,
-            'dnsResult' => $this->dnsReport($host),
+            'report' => [
+                'tool' => 'DNS & Email Security',
+                'icon' => 'fa-envelope-circle-check',
+                'target' => $host,
+                'score' => $result['score'],
+                'summary' => 'DNS resilience and email anti-spoofing posture (SPF, DMARC, CAA, MX, NS).',
+                'checks' => $result['checks'],
+            ],
         ]);
     }
 
     public function analyzeTls(): void
     {
         if (!$this->hasToolAccess()) {
-            $this->index(['accessError' => 'Register and verify your email to reveal TLS results.']);
+            $this->tlsSsl(['accessError' => 'Register and verify your email to reveal TLS results.']);
             return;
         }
 
         if (Security::hitRateLimit('security_tools_tls', 10, 900)) {
             http_response_code(429);
-            $this->index(['tlsError' => 'Too many TLS checks. Please wait a few minutes before trying again.']);
+            $this->tlsSsl(['tlsError' => 'Too many TLS checks. Please wait a few minutes before trying again.']);
             return;
         }
 
         if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
             http_response_code(419);
-            $this->index(['tlsError' => 'Your secure form token expired. Please try again.']);
+            $this->tlsSsl(['tlsError' => 'Your secure form token expired. Please try again.']);
             return;
         }
 
         $host = $this->normalizePublicHost((string) ($_POST['domain'] ?? ''));
         if ($host === null) {
             http_response_code(422);
-            $this->index(['tlsError' => 'Enter a valid public domain. Private networks and localhost are blocked.']);
+            $this->tlsSsl(['tlsError' => 'Enter a valid public domain. Private networks and localhost are blocked.']);
             return;
         }
 
         if (!$this->consumeFreeScan('tls_certificate')) {
             http_response_code(402);
-            $this->index(['tlsError' => $this->growthLabLimitMessage()]);
+            $this->tlsSsl(['tlsError' => $this->growthLabLimitMessage()]);
             return;
         }
 
-        $report = $this->tlsReport($host);
-        if ($report === []) {
-            $this->index(['tlsError' => 'Could not read a TLS certificate on port 443 for that host.']);
+        $tls = $this->tlsReport($host);
+        if ($tls === []) {
+            $this->tlsSsl(['tlsError' => 'Could not read a TLS certificate on port 443 for that host.']);
             return;
         }
 
         (new AuditLogger())->log('tools.tls_analyzed', ['host' => $host]);
-        $this->index([
+        $days = (int) $tls['days_remaining'];
+        $this->tlsSsl([
             'tlsHost' => $host,
-            'tlsResult' => $report,
+            'report' => [
+                'tool' => 'TLS / SSL Certificate',
+                'icon' => 'fa-certificate',
+                'target' => $host,
+                'score' => $tls['score'],
+                'summary' => 'HTTPS certificate validity, issuer and expiry health.',
+                'facts' => [
+                    ['label' => 'Subject', 'value' => (string) $tls['subject']],
+                    ['label' => 'Issuer', 'value' => (string) $tls['issuer']],
+                    ['label' => 'Valid to', 'value' => (string) $tls['valid_to']],
+                    ['label' => 'Days left', 'value' => (string) $days],
+                ],
+                'checks' => [
+                    ['label' => 'Certificate is valid and trusted', 'present' => true, 'value' => 'Chain verified for ' . $host],
+                    ['label' => 'Comfortable renewal window', 'present' => $days > 14, 'value' => $days . ' days remaining (' . $tls['valid_from'] . ' to ' . $tls['valid_to'] . ')', 'advice' => 'Renew or enable auto-renewal — under 15 days remaining is risky.'],
+                    ['label' => 'Long-lived validity buffer', 'present' => $days > 30, 'value' => $days > 30 ? 'Over 30 days of validity' : 'Fewer than 30 days left', 'advice' => 'Automate renewal (e.g. certbot) so certificates never approach expiry.'],
+                ],
+            ],
         ]);
     }
 
     public function analyzeWellKnown(): void
     {
         if (!$this->hasToolAccess()) {
-            $this->index(['accessError' => 'Register and verify your email to reveal discovery results.']);
+            $this->securityTxt(['accessError' => 'Register and verify your email to reveal discovery results.']);
             return;
         }
 
         if (Security::hitRateLimit('security_tools_well_known', 10, 900)) {
             http_response_code(429);
-            $this->index(['wellKnownError' => 'Too many discovery checks. Please wait a few minutes before trying again.']);
+            $this->securityTxt(['wellKnownError' => 'Too many discovery checks. Please wait a few minutes before trying again.']);
             return;
         }
 
         if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
             http_response_code(419);
-            $this->index(['wellKnownError' => 'Your secure form token expired. Please try again.']);
+            $this->securityTxt(['wellKnownError' => 'Your secure form token expired. Please try again.']);
             return;
         }
 
         $host = $this->normalizePublicHost((string) ($_POST['domain'] ?? ''));
         if ($host === null) {
             http_response_code(422);
-            $this->index(['wellKnownError' => 'Enter a valid public domain. Private networks and localhost are blocked.']);
+            $this->securityTxt(['wellKnownError' => 'Enter a valid public domain. Private networks and localhost are blocked.']);
             return;
         }
 
         if (!$this->consumeFreeScan('well_known_discovery')) {
             http_response_code(402);
-            $this->index(['wellKnownError' => $this->growthLabLimitMessage()]);
+            $this->securityTxt(['wellKnownError' => $this->growthLabLimitMessage()]);
             return;
         }
 
         (new AuditLogger())->log('tools.well_known_analyzed', ['host' => $host]);
-        $this->index([
+        $result = $this->wellKnownReport($host);
+        $this->securityTxt([
             'wellKnownHost' => $host,
-            'wellKnownResult' => $this->wellKnownReport($host),
+            'report' => [
+                'tool' => 'security.txt & Discovery',
+                'icon' => 'fa-file-shield',
+                'target' => $host,
+                'score' => $result['score'],
+                'summary' => 'Responsible-disclosure and crawler discovery files exposed over HTTPS.',
+                'checks' => $result['checks'],
+            ],
         ]);
     }
 
@@ -783,15 +972,17 @@ final class ToolsController extends Controller
     private function scoreHeaders(array $headers): array
     {
         $checks = [
-            'strict-transport-security' => ['label' => 'HTTP Strict Transport Security', 'weight' => 20],
-            'content-security-policy' => ['label' => 'Content Security Policy', 'weight' => 20],
-            'x-frame-options' => ['label' => 'Clickjacking protection', 'weight' => 15],
-            'x-content-type-options' => ['label' => 'MIME sniffing protection', 'weight' => 10],
-            'referrer-policy' => ['label' => 'Referrer privacy policy', 'weight' => 10],
-            'permissions-policy' => ['label' => 'Browser permissions policy', 'weight' => 10],
+            'strict-transport-security' => ['label' => 'HTTP Strict Transport Security (HSTS)', 'weight' => 16, 'advice' => 'Add "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload" to force HTTPS.'],
+            'content-security-policy' => ['label' => 'Content Security Policy (CSP)', 'weight' => 16, 'advice' => 'Add a Content-Security-Policy header to block XSS and unapproved script sources.'],
+            'x-frame-options' => ['label' => 'Clickjacking protection', 'weight' => 12, 'advice' => 'Add "X-Frame-Options: DENY" (or a frame-ancestors CSP directive).'],
+            'x-content-type-options' => ['label' => 'MIME sniffing protection', 'weight' => 8, 'advice' => 'Add "X-Content-Type-Options: nosniff".'],
+            'referrer-policy' => ['label' => 'Referrer privacy policy', 'weight' => 8, 'advice' => 'Add "Referrer-Policy: strict-origin-when-cross-origin".'],
+            'permissions-policy' => ['label' => 'Browser permissions policy', 'weight' => 8, 'advice' => 'Add a Permissions-Policy header to disable unused APIs (camera, mic, geolocation).'],
+            'cross-origin-opener-policy' => ['label' => 'Cross-Origin-Opener-Policy (COOP)', 'weight' => 6, 'advice' => 'Add "Cross-Origin-Opener-Policy: same-origin" to isolate your browsing context.'],
+            'cross-origin-resource-policy' => ['label' => 'Cross-Origin-Resource-Policy (CORP)', 'weight' => 5, 'advice' => 'Add "Cross-Origin-Resource-Policy: same-origin" where appropriate.'],
         ];
 
-        $score = 15;
+        $score = 6;
         $rows = [];
         foreach ($checks as $header => $check) {
             $present = !empty($headers[$header]);
@@ -799,14 +990,46 @@ final class ToolsController extends Controller
             $rows[] = [
                 'label' => $check['label'],
                 'present' => $present,
-                'value' => $present ? $headers[$header] : 'Missing',
+                'value' => $present ? (string) $headers[$header] : 'Missing',
+                'advice' => $check['advice'],
             ];
         }
+
+        // Information-disclosure checks (present here is "good" = header absent).
+        foreach (['server' => 'Server banner', 'x-powered-by' => 'X-Powered-By disclosure'] as $header => $label) {
+            $leaks = !empty($headers[$header]);
+            $score += $leaks ? 0 : 6;
+            $rows[] = [
+                'label' => $label . ' hidden',
+                'present' => !$leaks,
+                'value' => $leaks ? 'Exposed: ' . $headers[$header] : 'Not disclosed',
+                'advice' => 'Hide the ' . $header . ' header so you do not advertise your stack version.',
+            ];
+        }
+
+        // Cookie flag hygiene when a Set-Cookie is present.
+        if (!empty($headers['set-cookie'])) {
+            $cookie = strtolower((string) $headers['set-cookie']);
+            $secure = str_contains($cookie, 'secure') && str_contains($cookie, 'httponly');
+            $score += $secure ? 4 : 0;
+            $rows[] = [
+                'label' => 'Secure cookie flags',
+                'present' => $secure,
+                'value' => $secure ? 'HttpOnly + Secure present' : 'Missing HttpOnly and/or Secure',
+                'advice' => 'Set Secure, HttpOnly and SameSite on session cookies.',
+            ];
+        }
+
+        $facts = [
+            ['label' => 'HTTP status', 'value' => (string) ($headers['status'][0] ?? 'Unknown')],
+            ['label' => 'Server', 'value' => (string) ($headers['server'] ?? 'Not disclosed')],
+        ];
 
         return [
             'score' => min(100, $score),
             'status' => $headers['status'][0] ?? 'No status line',
             'checks' => $rows,
+            'facts' => $facts,
         ];
     }
 
@@ -836,12 +1059,113 @@ final class ToolsController extends Controller
         return [
             'score' => min(100, $score),
             'checks' => [
-                ['label' => 'A/AAAA public records', 'present' => ($records['A'] !== [] || $records['AAAA'] !== []), 'value' => $this->recordSummary(array_merge($records['A'], $records['AAAA']), ['ip', 'ipv6'])],
-                ['label' => 'Mail exchanger records', 'present' => $records['MX'] !== [], 'value' => $this->recordSummary($records['MX'], ['target'])],
-                ['label' => 'SPF email protection', 'present' => $spf !== [], 'value' => $spf[0]['txt'] ?? 'Missing'],
-                ['label' => 'DMARC email policy', 'present' => $dmarc !== [], 'value' => $dmarcPolicy ?: 'Missing'],
-                ['label' => 'CAA certificate authority control', 'present' => $records['CAA'] !== [], 'value' => $this->recordSummary($records['CAA'], ['value', 'tag'])],
-                ['label' => 'Nameservers', 'present' => $records['NS'] !== [], 'value' => $this->recordSummary($records['NS'], ['target'])],
+                ['label' => 'A/AAAA public records', 'present' => ($records['A'] !== [] || $records['AAAA'] !== []), 'value' => $this->recordSummary(array_merge($records['A'], $records['AAAA']), ['ip', 'ipv6']), 'advice' => 'Publish an A or AAAA record so the domain resolves to your server.'],
+                ['label' => 'Mail exchanger (MX) records', 'present' => $records['MX'] !== [], 'value' => $this->recordSummary($records['MX'], ['target']), 'advice' => 'Add MX records if this domain sends or receives email.'],
+                ['label' => 'SPF email protection', 'present' => $spf !== [], 'value' => $spf[0]['txt'] ?? 'Missing', 'advice' => 'Add an SPF TXT record (v=spf1 ... -all) to stop spoofing.'],
+                ['label' => 'DMARC email policy', 'present' => $dmarc !== [], 'value' => $dmarcPolicy ?: 'Missing', 'advice' => 'Add a _dmarc TXT record (v=DMARC1; p=quarantine) to protect your brand.'],
+                ['label' => 'CAA certificate control', 'present' => $records['CAA'] !== [], 'value' => $this->recordSummary($records['CAA'], ['value', 'tag']), 'advice' => 'Add CAA records to control which CAs may issue certificates for you.'],
+                ['label' => 'Nameservers', 'present' => $records['NS'] !== [], 'value' => $this->recordSummary($records['NS'], ['target']), 'advice' => 'Ensure at least two nameservers for DNS resilience.'],
+            ],
+        ];
+    }
+
+    /**
+     * Heuristic technology detection from response headers and HTML signatures
+     * (Wappalyzer-style, using only open signals — no external service).
+     *
+     * @return array<string, mixed>
+     */
+    private function detectTech(string $url, array $headers, string $html): array
+    {
+        $haystack = strtolower($html);
+        $found = [];
+
+        $signatures = [
+            'WordPress' => ['/wp-content/', '/wp-includes/', 'wp-json'],
+            'WooCommerce' => ['woocommerce'],
+            'Elementor' => ['elementor'],
+            'Shopify' => ['cdn.shopify.com', 'shopify'],
+            'Wix' => ['wix.com', 'wixstatic'],
+            'Squarespace' => ['squarespace'],
+            'Drupal' => ['/sites/default/files', 'drupal-settings-json'],
+            'Joomla' => ['/media/jui/', 'joomla'],
+            'React' => ['data-reactroot', '__react', '/react'],
+            'Vue.js' => ['data-v-', 'vue.js', '__vue__'],
+            'Angular' => ['ng-version', 'angular'],
+            'Next.js' => ['/_next/', '__next_data__'],
+            'Bootstrap' => ['bootstrap.min.css', 'class="container"'],
+            'Tailwind CSS' => ['tailwind'],
+            'jQuery' => ['jquery'],
+            'Google Analytics' => ['google-analytics.com', 'gtag(', 'googletagmanager.com'],
+            'Google Tag Manager' => ['googletagmanager.com/gtm.js'],
+            'Meta Pixel' => ['connect.facebook.net', 'fbq('],
+            'Cloudflare' => ['cdnjs.cloudflare.com', '__cf'],
+            'Font Awesome' => ['font-awesome', 'fontawesome'],
+            'Stripe' => ['js.stripe.com'],
+            'PayPal' => ['paypal.com/sdk', 'paypalobjects'],
+        ];
+
+        foreach ($signatures as $tech => $needles) {
+            foreach ($needles as $needle) {
+                if (str_contains($haystack, $needle)) {
+                    $found[$tech] = true;
+                    break;
+                }
+            }
+        }
+
+        // Header-based signals.
+        $server = strtolower((string) ($headers['server'] ?? ''));
+        $poweredBy = strtolower((string) ($headers['x-powered-by'] ?? ''));
+        $headerSignals = [
+            'Nginx' => str_contains($server, 'nginx'),
+            'Apache' => str_contains($server, 'apache'),
+            'LiteSpeed' => str_contains($server, 'litespeed'),
+            'Cloudflare' => str_contains($server, 'cloudflare') || isset($headers['cf-ray']),
+            'PHP' => str_contains($poweredBy, 'php'),
+            'ASP.NET' => str_contains($poweredBy, 'asp.net'),
+            'Express' => str_contains($poweredBy, 'express'),
+        ];
+        foreach ($headerSignals as $tech => $hit) {
+            if ($hit) {
+                $found[$tech] = true;
+            }
+        }
+
+        $generator = $this->metaContent($html, 'generator');
+        $techList = array_keys($found);
+        sort($techList);
+
+        $checks = [];
+        foreach ($techList as $tech) {
+            $checks[] = ['label' => $tech, 'present' => true, 'value' => 'Detected'];
+        }
+        if ($checks === []) {
+            $checks[] = ['label' => 'No common technologies matched', 'present' => false, 'value' => 'The site may be hand-coded or hide its signatures.'];
+        }
+
+        $facts = [
+            ['label' => 'Server', 'value' => (string) ($headers['server'] ?? 'Not disclosed')],
+            ['label' => 'Powered by', 'value' => (string) ($headers['x-powered-by'] ?? 'Not disclosed')],
+            ['label' => 'Generator', 'value' => $generator !== '' ? $generator : 'Not disclosed'],
+            ['label' => 'Technologies', 'value' => (string) count($techList)],
+        ];
+
+        // Score is informational: more clearly-identified tech = higher confidence.
+        $score = min(100, 40 + count($techList) * 8);
+
+        return [
+            'tool' => 'Technology Stack',
+            'icon' => 'fa-microchip',
+            'target' => $url,
+            'score' => $score,
+            'summary' => 'Detected CMS, frameworks, libraries, analytics, CDN and server from public signals.',
+            'facts' => $facts,
+            'checks' => $checks,
+            'recommendations' => [
+                'Remove Server and X-Powered-By headers so you do not advertise exact versions.',
+                'Keep every detected platform, plugin and library patched to its latest version.',
+                'Audit third-party scripts (analytics, pixels) for privacy and performance impact.',
             ],
         ];
     }
@@ -993,16 +1317,29 @@ final class ToolsController extends Controller
             }
         }
 
+        $ogTitle = $this->metaContent($html, 'og:title');
+        $ogImage = $this->metaContent($html, 'og:image');
+        $twitterCard = $this->metaContent($html, 'twitter:card');
+        $hasViewport = (bool) preg_match('/<meta\b[^>]*name=["\']viewport["\']/i', $html);
+        $hasLang = (bool) preg_match('/<html\b[^>]*\blang=/i', $html);
+        $hasFavicon = (bool) preg_match('/<link\b[^>]*rel=["\'][^"\']*icon[^"\']*["\']/i', $html);
+        $density = $words > 0 && $keyword !== '' ? round(($keywordCount / max(1, $words)) * 100, 2) : 0.0;
+
         $checks = [
-            ['label' => 'Title tag', 'present' => $title !== '' && strlen($title) <= 65, 'value' => $title !== '' ? $title . ' (' . strlen($title) . ' chars)' : 'Missing'],
-            ['label' => 'Meta description', 'present' => $description !== '' && strlen($description) <= 165, 'value' => $description !== '' ? $description . ' (' . strlen($description) . ' chars)' : 'Missing'],
-            ['label' => 'Single H1', 'present' => count($h1s) === 1, 'value' => count($h1s) . ' found: ' . implode(' | ', array_slice($h1s, 0, 3))],
-            ['label' => 'Content depth', 'present' => $words >= 450, 'value' => $words . ' words'],
-            ['label' => 'Canonical URL', 'present' => $canonical !== '', 'value' => $canonical ?: 'Missing'],
-            ['label' => 'Schema markup', 'present' => $schemaCount > 0, 'value' => $schemaCount . ' JSON-LD block(s)'],
-            ['label' => 'Image alt text', 'present' => $missingAlt === 0, 'value' => count($images) . ' images, ' . $missingAlt . ' missing alt text'],
-            ['label' => 'Indexability', 'present' => !str_contains(strtolower($robots), 'noindex'), 'value' => $robots ?: 'No noindex directive found'],
-            ['label' => 'Keyword usage', 'present' => $keyword === '' || $keywordCount > 0, 'value' => $keyword === '' ? 'No focus keyword provided' : $keywordCount . ' exact mention(s)'],
+            ['label' => 'Title tag length', 'present' => $title !== '' && strlen($title) <= 65, 'value' => $title !== '' ? $title . ' (' . strlen($title) . ' chars)' : 'Missing', 'advice' => 'Write a unique 15–65 character title with the primary keyword near the front.'],
+            ['label' => 'Meta description', 'present' => $description !== '' && strlen($description) <= 165, 'value' => $description !== '' ? $description . ' (' . strlen($description) . ' chars)' : 'Missing', 'advice' => 'Add a compelling 120–160 character meta description with a call to action.'],
+            ['label' => 'Single H1', 'present' => count($h1s) === 1, 'value' => count($h1s) . ' found: ' . implode(' | ', array_slice($h1s, 0, 3)), 'advice' => 'Use exactly one H1 that states the page topic.'],
+            ['label' => 'Content depth', 'present' => $words >= 450, 'value' => $words . ' words', 'advice' => 'Aim for 600+ words of genuinely useful content for competitive terms.'],
+            ['label' => 'Canonical URL', 'present' => $canonical !== '', 'value' => $canonical ?: 'Missing', 'advice' => 'Add a self-referencing canonical link to avoid duplicate-content dilution.'],
+            ['label' => 'Structured data (schema)', 'present' => $schemaCount > 0, 'value' => $schemaCount . ' JSON-LD block(s)', 'advice' => 'Add JSON-LD schema (Organization, Service, FAQ, Breadcrumb) for rich results.'],
+            ['label' => 'Image alt text', 'present' => $missingAlt === 0, 'value' => count($images) . ' images, ' . $missingAlt . ' missing alt text', 'advice' => 'Add descriptive alt text to every meaningful image.'],
+            ['label' => 'Indexability', 'present' => !str_contains(strtolower($robots), 'noindex'), 'value' => $robots ?: 'No noindex directive found', 'advice' => 'Remove any noindex directive if this page should rank.'],
+            ['label' => 'Mobile viewport', 'present' => $hasViewport, 'value' => $hasViewport ? 'Responsive viewport set' : 'Missing viewport meta', 'advice' => 'Add <meta name="viewport" content="width=device-width, initial-scale=1">.'],
+            ['label' => 'Language declared', 'present' => $hasLang, 'value' => $hasLang ? 'html lang attribute present' : 'Missing lang attribute', 'advice' => 'Set a lang attribute on <html> (e.g. lang="en").'],
+            ['label' => 'Favicon', 'present' => $hasFavicon, 'value' => $hasFavicon ? 'Icon link present' : 'Missing', 'advice' => 'Add a favicon / site icon link for brand and trust signals.'],
+            ['label' => 'Open Graph tags', 'present' => $ogTitle !== '' && $ogImage !== '', 'value' => $ogTitle !== '' ? 'og:title + og:image present' : 'Missing Open Graph tags', 'advice' => 'Add og:title, og:description and og:image for rich social sharing.'],
+            ['label' => 'Twitter card', 'present' => $twitterCard !== '', 'value' => $twitterCard !== '' ? $twitterCard : 'Missing', 'advice' => 'Add a twitter:card meta tag (summary_large_image).'],
+            ['label' => 'Keyword usage', 'present' => $keyword === '' || $keywordCount > 0, 'value' => $keyword === '' ? 'No focus keyword provided' : $keywordCount . ' mention(s), ' . $density . '% density', 'advice' => 'Use the focus keyword in the title, H1, first paragraph and naturally in the body.'],
         ];
 
         $score = (int) round((count(array_filter($checks, static fn (array $check): bool => $check['present'])) / count($checks)) * 100);
@@ -1016,6 +1353,7 @@ final class ToolsController extends Controller
             'words' => $words,
             'internal_links' => $internal,
             'external_links' => $external,
+            'keyword_density' => $density,
             'checks' => $checks,
         ];
     }

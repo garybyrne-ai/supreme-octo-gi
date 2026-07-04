@@ -134,6 +134,22 @@ VALUES
     14900, 'USD', 'monthly', 0,
     JSON_ARRAY('Everything in Pro', 'Extended (agency) licenses included', 'Up to 10 team seats', 'Dedicated Slack channel', 'Quarterly strategy review'),
     NULL, 'Talk to sales', 0, 1, 30
+),
+(
+    'growth-lab-monthly',
+    'Growth Lab Pro (Monthly)',
+    'Unlimited white-label SEO, security and technical website tools.',
+    2500, 'EUR', 'monthly', 0,
+    JSON_ARRAY('Unlimited scans across every tool', 'White-label reports with your logo', 'Downloadable client-ready PDF reports', 'On-page, technical SEO and SERP checks', 'Full security + technology scanning', 'Cancel anytime'),
+    'Most popular', 'Start monthly', 1, 1, 5
+),
+(
+    'growth-lab-annual',
+    'Growth Lab Pro (Yearly)',
+    'The full white-label tools suite billed yearly — two months free.',
+    20000, 'EUR', 'yearly', 0,
+    JSON_ARRAY('Everything in the monthly plan', 'Two months free vs monthly', 'Priority processing', 'Continuous background monitoring', 'Cancel anytime'),
+    'Best value', 'Start yearly', 1, 1, 6
 );
 
 INSERT INTO faqs (question, answer, category, sort_order) VALUES

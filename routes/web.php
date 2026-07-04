@@ -56,6 +56,13 @@ $router->post('/free-penetration-testing-tools/well-known', [ToolsController::cl
 $router->post('/tools/access/send-code', [ToolsController::class, 'sendAccessCode']);
 $router->post('/tools/access/verify', [ToolsController::class, 'verifyAccessCode']);
 $router->get('/tools', [ToolsController::class, 'hub']);
+$router->get('/tools/security-headers', [ToolsController::class, 'securityHeaders']);
+$router->get('/tools/dns-email', [ToolsController::class, 'dnsEmail']);
+$router->get('/tools/tls-ssl', [ToolsController::class, 'tlsSsl']);
+$router->get('/tools/security-txt', [ToolsController::class, 'securityTxt']);
+$router->get('/tools/tech-stack', [ToolsController::class, 'techStack']);
+$router->post('/tools/tech-stack', [ToolsController::class, 'analyzeTechStack']);
+$router->get('/tools-pricing', [ToolsController::class, 'toolsPricing']);
 $router->get('/seo-tools', [ToolsController::class, 'seoTools']);
 $router->post('/seo-tools/audit', [ToolsController::class, 'auditSeo']);
 $router->get('/serp-checker', [ToolsController::class, 'serpChecker']);
