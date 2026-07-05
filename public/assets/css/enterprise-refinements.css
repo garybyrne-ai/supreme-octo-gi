@@ -958,3 +958,131 @@
 .portal-legal h3 { margin: 0 0 8px; color: #fff; font-size: 16px; }
 .portal-legal h3 i { color: #ffc66f; margin-right: 6px; }
 .portal-legal p { margin: 0; font-size: 14px; line-height: 1.7; color: #9db4d0; }
+
+/* ============================================================
+   Sleeker, app-like mobile navigation + down-menu accordion
+   (overrides base style.css within the same breakpoint)
+   ============================================================ */
+@media (max-width: 900px) {
+    /* App-sheet panel: cleaner surface, grabber handle, tighter rhythm */
+    .nav {
+        left: 10px; right: 10px;
+        top: calc(72px + env(safe-area-inset-top));
+        padding: 20px 12px 14px;
+        border-radius: 26px;
+        gap: 4px;
+        background:
+            linear-gradient(160deg, rgba(10, 17, 33, .98), rgba(6, 11, 22, .96));
+        border: 1px solid rgba(255, 255, 255, .1);
+        box-shadow: 0 34px 120px rgba(0, 0, 0, .7);
+    }
+    .nav::before {
+        content: ""; position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+        width: 44px; height: 5px; border-radius: 999px; background: rgba(255, 255, 255, .22);
+    }
+
+    /* Every row: app-list style, left accent on active */
+    .nav > a,
+    .nav-item > a,
+    .mobile-nav-account-link {
+        position: relative;
+        min-height: 52px;
+        border-radius: 16px;
+        font-size: 15.5px;
+        letter-spacing: .01em;
+        background: rgba(255, 255, 255, .04);
+        border: 1px solid transparent;
+        transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+    }
+    .nav > a.is-active,
+    .nav-item > a.is-active {
+        background: rgba(0, 229, 255, .1);
+        border-color: rgba(0, 229, 255, .32);
+        color: #eafcff;
+    }
+    .nav > a.is-active::before {
+        content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px;
+        border-radius: 999px; background: linear-gradient(180deg, var(--primary), var(--accent));
+    }
+
+    /* Group header chevron: push right, rotate when open */
+    .nav-item.has-mega > a { display: flex; align-items: center; }
+    .nav-item.has-mega > a i.fa-chevron-down {
+        margin-left: auto; font-size: 12px; color: #7fa8c9;
+        transition: transform 220ms ease, color 220ms ease;
+    }
+    .nav-item.is-expanded > a {
+        background: rgba(0, 229, 255, .12);
+        border-color: rgba(0, 229, 255, .3);
+        color: #fff;
+    }
+    .nav-item.is-expanded > a i.fa-chevron-down {
+        transform: rotate(180deg); color: var(--primary);
+    }
+
+    /* THE FIX: reveal the submenu when its group is expanded */
+    .nav.is-open .has-mega .mega-menu { display: none; }
+    .nav.is-open .nav-item.is-expanded .mega-menu {
+        display: block !important;
+        margin: 4px 4px 8px;
+        padding: 8px;
+        background: rgba(3, 8, 18, .6);
+        border: 1px solid rgba(255, 255, 255, .08);
+        border-radius: 18px;
+        animation: navSubReveal 240ms cubic-bezier(.22, 1, .36, 1);
+    }
+    .nav.is-open .nav-item.is-expanded .mega-grid {
+        display: grid; grid-template-columns: 1fr; gap: 4px;
+    }
+    .nav.is-open .nav-item.is-expanded .mega-grid a {
+        display: flex; align-items: center; gap: 12px;
+        min-height: 46px; padding: 8px 12px; border-radius: 12px;
+        background: rgba(255, 255, 255, .03);
+        font-family: var(--font-code);
+    }
+    .nav.is-open .nav-item.is-expanded .mega-grid a:hover,
+    .nav.is-open .nav-item.is-expanded .mega-grid a:active {
+        background: rgba(0, 229, 255, .1);
+    }
+    .nav.is-open .nav-item.is-expanded .mega-grid a i {
+        flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
+        border-radius: 9px; font-size: 14px; color: var(--primary);
+        background: rgba(0, 229, 255, .1);
+    }
+    .nav.is-open .nav-item.is-expanded .mega-grid a span { font-size: 14px; line-height: 1.25; }
+    .nav.is-open .nav-item.is-expanded .mega-grid a small {
+        display: block; font-size: 11.5px; color: #8fa5be; margin-top: 2px;
+    }
+    @keyframes navSubReveal {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Bottom app dock: refined active pill + top indicator */
+    .mobile-app-dock {
+        min-height: 66px;
+        border-radius: 24px;
+        padding: 7px;
+        gap: 2px;
+    }
+    .mobile-app-dock a,
+    .mobile-app-dock .mobile-account-trigger {
+        gap: 3px; font-size: 10.5px; letter-spacing: .02em; border-radius: 17px;
+    }
+    .mobile-app-dock a.is-active {
+        transform: translateY(-3px);
+    }
+    .mobile-app-dock a.is-active::before {
+        content: ""; position: absolute; top: -7px; left: 50%; transform: translateX(-50%);
+        width: 18px; height: 3px; border-radius: 999px;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+
+    /* Match the account trigger button to the dock links */
+    .mobile-app-dock .mobile-account-trigger {
+        display: grid; place-items: center; align-content: center; min-height: 54px;
+        color: #aebbd0; background: none; border: 0; cursor: pointer;
+        font-family: var(--font-code); font-weight: 800;
+    }
+    .mobile-app-dock .mobile-account-trigger i { font-size: 18px; }
+}
