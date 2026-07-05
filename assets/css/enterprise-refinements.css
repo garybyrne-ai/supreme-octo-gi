@@ -1141,3 +1141,61 @@
     .hero-panels .email-neon-sign { position: relative; top: 0; margin: 0; }
     .hero-panels .live-card { position: relative; top: 0; bottom: auto; margin: 0; }
 }
+
+/* ==========================================================================
+   Modern checkboxes & radios for every tool form (.cyber-form).
+   Fixes: native inputs were stretched to width:100% with big padding and stacked
+   above their label text by `.cyber-form label{display:grid}`. Now they render as
+   compact, custom, brand-styled controls in a clean clickable option row.
+   ========================================================================== */
+.cyber-form input[type="checkbox"],
+.cyber-form input[type="radio"] {
+    appearance: none; -webkit-appearance: none;
+    flex: 0 0 auto; width: 22px; height: 22px; padding: 0; margin: 0;
+    border: 2px solid rgba(0, 207, 255, .42); border-radius: 7px;
+    background: rgba(2, 7, 14, .85); cursor: pointer; position: relative;
+    transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.cyber-form input[type="radio"] { border-radius: 50%; }
+.cyber-form input[type="checkbox"]:hover,
+.cyber-form input[type="radio"]:hover { border-color: rgba(0, 229, 255, .8); }
+.cyber-form input[type="checkbox"]:checked,
+.cyber-form input[type="radio"]:checked {
+    border-color: transparent;
+    background: linear-gradient(135deg, var(--primary, #00e5ff), var(--secondary, #7b3eff));
+    box-shadow: 0 0 0 3px rgba(0, 207, 255, .16);
+}
+.cyber-form input[type="checkbox"]:checked::after {
+    content: ""; position: absolute; left: 6px; top: 2px; width: 6px; height: 11px;
+    border: solid #04070d; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
+}
+.cyber-form input[type="radio"]:checked::after {
+    content: ""; position: absolute; inset: 5px; border-radius: 50%; background: #04070d;
+}
+.cyber-form input[type="checkbox"]:focus-visible,
+.cyber-form input[type="radio"]:focus-visible { outline: 2px solid var(--primary, #00e5ff); outline-offset: 2px; }
+
+/* Turn a label that wraps a checkbox/radio into a compact, clickable option row */
+.cyber-form label:has(> input[type="checkbox"]),
+.cyber-form label:has(> input[type="radio"]) {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 16px; border-radius: 12px; font-weight: 600; cursor: pointer;
+    background: rgba(255, 255, 255, .035); border: 1px solid rgba(0, 207, 255, .16);
+    transition: border-color .15s ease, background .15s ease;
+}
+.cyber-form label:has(> input[type="checkbox"]):hover,
+.cyber-form label:has(> input[type="radio"]):hover {
+    border-color: rgba(0, 229, 255, .45); background: rgba(0, 229, 255, .06);
+}
+.cyber-form label:has(> input[type="checkbox"]:checked),
+.cyber-form label:has(> input[type="radio"]:checked) {
+    border-color: rgba(0, 229, 255, .55); background: rgba(0, 229, 255, .08);
+}
+
+/* Modern select: custom caret + consistent padding across tool forms */
+.cyber-form select {
+    appearance: none; -webkit-appearance: none;
+    padding-right: 42px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2300e5ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center;
+}
