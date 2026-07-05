@@ -51,13 +51,9 @@ $planButtons = function (?array $plan, string $fallbackPrice, string $csrf): voi
 
 <section class="section reveal">
     <p class="pricing-upsell-banner"><i class="fa-solid fa-bolt"></i> Start with a <strong>7-day free trial</strong> on monthly, or pay yearly and get <strong>2 months free (save €100)</strong>.</p>
-    <div class="tools-price-toggle" data-price-toggle>
-        <button type="button" class="is-active" data-billing="monthly">Monthly</button>
-        <button type="button" data-billing="annual">Yearly <em>Save €100</em></button>
-    </div>
 
     <div class="tools-price-wrap">
-        <article class="tools-price-card cyber-card is-featured" data-billing-view="monthly">
+        <article class="tools-price-card cyber-card is-featured">
             <span class="membership-badge">Most popular</span>
             <header class="membership-card-head">
                 <h2>Growth Lab Pro</h2>
@@ -75,7 +71,7 @@ $planButtons = function (?array $plan, string $fallbackPrice, string $csrf): voi
             </div>
         </article>
 
-        <article class="tools-price-card cyber-card is-featured" data-billing-view="annual" hidden>
+        <article class="tools-price-card cyber-card is-featured">
             <span class="membership-badge">Best value</span>
             <header class="membership-card-head">
                 <h2>Growth Lab Pro</h2>
@@ -122,19 +118,3 @@ $planButtons = function (?array $plan, string $fallbackPrice, string $csrf): voi
         <details><summary>Do you offer team or agency access?</summary><p>Yes — see the <a href="/membership">membership plans</a> for team seats and agency licensing, or <a href="/contact">contact us</a>.</p></details>
     </div>
 </section>
-
-<script>
-(function () {
-    var toggle = document.querySelector('[data-price-toggle]');
-    if (!toggle) { return; }
-    var buttons = toggle.querySelectorAll('[data-billing]');
-    var views = document.querySelectorAll('[data-billing-view]');
-    buttons.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var billing = btn.getAttribute('data-billing');
-            buttons.forEach(function (b) { b.classList.toggle('is-active', b === btn); });
-            views.forEach(function (v) { v.hidden = v.getAttribute('data-billing-view') !== billing; });
-        });
-    });
-})();
-</script>

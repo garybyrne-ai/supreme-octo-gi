@@ -166,9 +166,17 @@
 .tools-price-toggle button.is-active { color: #04070d; background: linear-gradient(120deg, var(--primary), var(--secondary)); }
 .tools-price-toggle button.is-active em { color: #04070d; }
 
-.tools-price-wrap { display: grid; place-items: center; }
-.tools-price-card { position: relative; width: min(440px, 100%); display: flex; flex-direction: column; gap: 16px; padding: 34px 30px; overflow: hidden; }
+.tools-price-wrap {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px; align-items: stretch;
+    max-width: 940px; margin: 0 auto;
+}
+.tools-price-card { position: relative; width: 100%; display: flex; flex-direction: column; gap: 16px; padding: 34px 30px; overflow: hidden; }
+.tools-price-card[hidden] { display: none; }
 .tools-price-card .check-list { flex: 1; }
+@media (max-width: 720px) {
+    .tools-price-wrap { grid-template-columns: 1fr; max-width: 440px; }
+}
 .tools-price-form { display: grid; gap: 10px; }
 .tools-price-form input[type="email"] {
     padding: 11px 13px; border-radius: var(--radius); border: 1px solid var(--line);
