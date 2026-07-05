@@ -21,6 +21,7 @@ $toolMenu = [
     ]],
     ['group' => 'Security', 'items' => [
         ['/ethical-hacking-toolkit', 'fa-shield-halved', 'Ethical Hacking Kit'],
+        ['/ethical-hacking-tools', 'fa-toolbox', 'Hacking Tools Library'],
         ['/tools/security-headers', 'fa-lock', 'Security Headers'],
         ['/tools/dns-email', 'fa-envelope-circle-check', 'DNS & Email'],
         ['/tools/tls-ssl', 'fa-certificate', 'TLS / SSL'],

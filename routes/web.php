@@ -78,6 +78,7 @@ $router->get('/cron/run-abandoned-orders', [CronController::class, 'runAbandoned
 $router->get('/tech-news-feed', [PageController::class, 'techNews']);
 $router->get('/ethical-hacking-toolkit', [ToolsController::class, 'ethicalHackingToolkit']);
 $router->post('/ethical-hacking-toolkit/exposure', [ToolsController::class, 'analyzeExposure']);
+$router->get('/ethical-hacking-tools', [ToolsController::class, 'ethicalHackingTools']);
 $router->get('/free-penetration-testing-tools', [ToolsController::class, 'index']);
 $router->post('/free-penetration-testing-tools/headers', [ToolsController::class, 'analyzeHeaders']);
 $router->post('/free-penetration-testing-tools/dns', [ToolsController::class, 'analyzeDns']);

@@ -908,3 +908,53 @@
 @media (max-width: 640px) {
     .growth-cta-foot { flex-direction: column; }
 }
+
+/* Ethical hacking tools library (Pro portal) */
+.portal-lock { text-align: center; max-width: 720px; margin: 0 auto; padding: 40px 28px; border-radius: 20px; }
+.portal-lock > i { font-size: 40px; color: #00e5ff; margin-bottom: 14px; display: block; }
+.portal-lock h2 { margin: 0 0 10px; color: #fff; }
+.portal-lock p { color: #b7c7de; line-height: 1.7; margin: 0 auto 20px; max-width: 560px; }
+.portal-lock .growth-cta-actions { justify-content: center; margin-bottom: 12px; }
+.portal-lock small { color: #9db4d0; font-size: 13px; }
+.portal-cat-title { margin: 34px 0 16px; font-size: 20px; color: #fff; }
+.portal-cat-title i { color: #00e5ff; margin-right: 8px; }
+.portal-preview-grid, .portal-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px;
+}
+.portal-preview-card { padding: 20px; border-radius: 14px; }
+.portal-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.portal-preview-head strong { color: #fff; font-size: 17px; }
+.portal-preview-card em { display: block; color: #7fb2ff; font-size: 13px; margin: 2px 0 8px; font-style: normal; }
+.portal-preview-card p { margin: 0; font-size: 14px; line-height: 1.55; color: #9db4d0; }
+.portal-locked-chip {
+    flex: 0 0 auto; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    padding: 4px 9px; border-radius: 999px; color: #ffd27f;
+    background: rgba(255, 198, 111, .12); border: 1px solid rgba(255, 198, 111, .35);
+}
+.portal-tool-card { padding: 24px; border-radius: 16px; display: flex; flex-direction: column; }
+.portal-tool-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.portal-tool-head h3 { margin: 0; font-size: 20px; color: #fff; }
+.portal-tool-head em { color: #7fb2ff; font-size: 13px; font-style: normal; }
+.portal-badge {
+    flex: 0 0 auto; font-size: 11px; padding: 5px 10px; border-radius: 999px; color: #23ff9a;
+    background: rgba(35, 255, 154, .1); border: 1px solid rgba(35, 255, 154, .3); white-space: nowrap;
+}
+.portal-tool-what { margin: 14px 0 8px; line-height: 1.6; color: #c8d8ef; font-size: 14px; }
+.portal-platforms { margin: 0 0 12px; font-size: 13px; color: #9db4d0; }
+.portal-platforms i { color: #00e5ff; margin-right: 6px; }
+.portal-features { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 14px; }
+.portal-features span { font-size: 13px; color: #b7c7de; }
+.portal-features i { color: #23ff9a; margin-right: 5px; font-size: 11px; }
+.portal-guide {
+    background: rgba(3, 8, 20, .55); border: 1px solid rgba(0, 183, 255, .18);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+}
+.portal-guide h4 { margin: 0 0 8px; font-size: 14px; color: #fff; }
+.portal-guide h4 i { color: #00e5ff; margin-right: 6px; }
+.portal-guide ol { margin: 0; padding-left: 18px; }
+.portal-guide li { font-size: 13px; line-height: 1.6; color: #b7c7de; margin-bottom: 4px; }
+.portal-tool-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+.portal-legal { margin-top: 26px; padding: 22px; border-radius: 14px; }
+.portal-legal h3 { margin: 0 0 8px; color: #fff; font-size: 16px; }
+.portal-legal h3 i { color: #ffc66f; margin-right: 6px; }
+.portal-legal p { margin: 0; font-size: 14px; line-height: 1.7; color: #9db4d0; }

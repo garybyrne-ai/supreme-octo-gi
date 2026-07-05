@@ -774,6 +774,229 @@ final class ToolsController extends Controller
         ]);
     }
 
+    public function ethicalHackingTools(array $data = []): void
+    {
+        $this->render('pages/ethical-hacking-tools', array_replace([
+            'title' => 'Ethical Hacking Tools Library (Pro) | Crest Web Media',
+            'metaDescription' => 'A curated portal of the best free, open-source ethical hacking and penetration-testing tools for websites — with official download links, what each tool does and step-by-step usage guides. Growth Lab Pro members only.',
+            'toolCatalog' => $this->ethicalHackingCatalog(),
+        ], $this->toolAccessData(), $data));
+    }
+
+    /**
+     * Curated catalogue of well-known, free / open-source security tools. We link
+     * to each project's OFFICIAL download page rather than re-hosting binaries —
+     * that keeps downloads authentic and avoids redistributing security software.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function ethicalHackingCatalog(): array
+    {
+        return [
+            [
+                'category' => 'Recon & OSINT',
+                'items' => [
+                    [
+                        'name' => 'Nmap',
+                        'tagline' => 'Network & port scanner',
+                        'license' => 'Open source (NPSL)',
+                        'platforms' => 'Windows · macOS · Linux',
+                        'what' => 'The industry-standard scanner for discovering live hosts, open ports, running services and OS fingerprints. The first step of almost every assessment.',
+                        'features' => ['Host discovery & port scanning', 'Service/version detection', 'Nmap Scripting Engine (NSE)', 'OS fingerprinting'],
+                        'steps' => ['Install, then confirm scope you are authorised to test.', 'Discover open ports & services: nmap -sV example.com', 'Run safe vuln scripts: nmap --script vuln example.com', 'Review the report and prioritise exposed services.'],
+                        'download' => 'https://nmap.org/download.html',
+                        'docs' => 'https://nmap.org/book/man.html',
+                    ],
+                    [
+                        'name' => 'theHarvester',
+                        'tagline' => 'Email & subdomain OSINT',
+                        'license' => 'Open source (GPL)',
+                        'platforms' => 'Cross-platform (Python)',
+                        'what' => 'Gathers emails, subdomains, hosts and names from public sources (search engines, certificate transparency) to map an organisation\'s footprint.',
+                        'features' => ['Subdomain enumeration', 'Email harvesting', 'Multiple public data sources', 'Passive — no packets to the target'],
+                        'steps' => ['pip install theHarvester', 'theHarvester -d example.com -b all', 'Feed discovered subdomains into your scanner.', 'Remove any exposed staging/admin hosts you find.'],
+                        'download' => 'https://github.com/laramies/theHarvester',
+                        'docs' => 'https://github.com/laramies/theHarvester#readme',
+                    ],
+                ],
+            ],
+            [
+                'category' => 'Web Application Testing',
+                'items' => [
+                    [
+                        'name' => 'OWASP ZAP',
+                        'tagline' => 'Web app vulnerability scanner',
+                        'license' => 'Free / open source',
+                        'platforms' => 'Windows · macOS · Linux',
+                        'what' => 'The OWASP flagship web proxy and scanner: intercept traffic, spider a site and run automated scans for XSS, injection and misconfiguration. The best free Burp alternative.',
+                        'features' => ['Intercepting proxy', 'Automated active/passive scans', 'AJAX spider', 'Scriptable & CI-friendly'],
+                        'steps' => ['Install and set your browser to use ZAP\'s proxy.', 'Browse the target so ZAP maps it (spider).', 'Run an Active Scan on your own site only.', 'Triage alerts by risk and fix highest first.'],
+                        'download' => 'https://www.zaproxy.org/download/',
+                        'docs' => 'https://www.zaproxy.org/getting-started/',
+                    ],
+                    [
+                        'name' => 'Burp Suite Community',
+                        'tagline' => 'Web proxy & tester',
+                        'license' => 'Free (Community Edition)',
+                        'platforms' => 'Windows · macOS · Linux',
+                        'what' => 'The most widely used web-security toolkit. The free Community Edition gives you the intercepting proxy, repeater and decoder for manual testing.',
+                        'features' => ['Intercepting proxy', 'Repeater for crafting requests', 'Decoder & comparer', 'Huge extension ecosystem'],
+                        'steps' => ['Install and launch a temporary project.', 'Proxy your browser through Burp (127.0.0.1:8080).', 'Capture a request and send it to Repeater.', 'Modify inputs to test validation on your own app.'],
+                        'download' => 'https://portswigger.net/burp/communitydownload',
+                        'docs' => 'https://portswigger.net/burp/documentation',
+                    ],
+                    [
+                        'name' => 'Nikto',
+                        'tagline' => 'Web server scanner',
+                        'license' => 'Open source (GPL)',
+                        'platforms' => 'Cross-platform (Perl)',
+                        'what' => 'Fast web-server scanner that checks for thousands of dangerous files, outdated software and common server misconfigurations.',
+                        'features' => ['6700+ dangerous-file checks', 'Outdated-component detection', 'Server misconfig checks', 'Plain-text or HTML reports'],
+                        'steps' => ['Install via your package manager or clone from GitHub.', 'nikto -h https://example.com', 'Review flagged files & headers.', 'Remove leftover files and patch old software.'],
+                        'download' => 'https://github.com/sullo/nikto',
+                        'docs' => 'https://github.com/sullo/nikto/wiki',
+                    ],
+                    [
+                        'name' => 'sqlmap',
+                        'tagline' => 'SQL injection testing',
+                        'license' => 'Open source (GPL)',
+                        'platforms' => 'Cross-platform (Python)',
+                        'what' => 'Automates detection and exploitation of SQL-injection flaws so you can prove — and then fix — database vulnerabilities in your own apps.',
+                        'features' => ['Detects many injection types', 'Supports major databases', 'Safe test flags', 'DB fingerprinting'],
+                        'steps' => ['Only test an app you own or are contracted to assess.', 'sqlmap -u "https://example.com/item?id=1" --batch', 'If injectable, note the parameter.', 'Fix with parameterised queries / prepared statements.'],
+                        'download' => 'https://sqlmap.org/',
+                        'docs' => 'https://github.com/sqlmapproject/sqlmap/wiki',
+                    ],
+                    [
+                        'name' => 'WPScan',
+                        'tagline' => 'WordPress security scanner',
+                        'license' => 'Free for personal use',
+                        'platforms' => 'Cross-platform (Ruby)',
+                        'what' => 'Scans WordPress sites for vulnerable core, plugins and themes, weak users and exposed configuration — essential if you run WordPress.',
+                        'features' => ['Plugin/theme vuln database', 'User enumeration', 'Weak-password checks', 'Config exposure detection'],
+                        'steps' => ['Get a free API token from wpscan.com.', 'wpscan --url https://example.com --api-token YOUR_TOKEN', 'Update anything flagged as vulnerable.', 'Harden logins and hide version info.'],
+                        'download' => 'https://wpscan.com/wordpress-security-scanner/',
+                        'docs' => 'https://github.com/wpscanteam/wpscan',
+                    ],
+                    [
+                        'name' => 'Nuclei',
+                        'tagline' => 'Template-based vuln scanner',
+                        'license' => 'Open source (MIT)',
+                        'platforms' => 'Windows · macOS · Linux',
+                        'what' => 'A fast, community-driven scanner that runs thousands of YAML vulnerability templates against your targets — great for catching known CVEs quickly.',
+                        'features' => ['Thousands of community templates', 'Very fast, low false positives', 'CI/CD friendly', 'Custom template support'],
+                        'steps' => ['Install the single binary from GitHub releases.', 'nuclei -u https://example.com', 'Keep templates updated: nuclei -update-templates', 'Patch anything matched by a template.'],
+                        'download' => 'https://github.com/projectdiscovery/nuclei/releases',
+                        'docs' => 'https://docs.projectdiscovery.io/tools/nuclei',
+                    ],
+                    [
+                        'name' => 'ffuf',
+                        'tagline' => 'Content & directory fuzzer',
+                        'license' => 'Open source (MIT)',
+                        'platforms' => 'Windows · macOS · Linux',
+                        'what' => 'A blazing-fast web fuzzer for discovering hidden directories, files and parameters that should not be publicly reachable.',
+                        'features' => ['Directory & file discovery', 'Parameter fuzzing', 'Very fast (Go)', 'Flexible filtering'],
+                        'steps' => ['Download the binary from GitHub releases.', 'ffuf -u https://example.com/FUZZ -w wordlist.txt', 'Review 200/301 responses.', 'Lock down anything sensitive that responds.'],
+                        'download' => 'https://github.com/ffuf/ffuf/releases',
+                        'docs' => 'https://github.com/ffuf/ffuf#readme',
+                    ],
+                ],
+            ],
+            [
+                'category' => 'Password & Authentication',
+                'items' => [
+                    [
+                        'name' => 'John the Ripper',
+                        'tagline' => 'Password strength auditor',
+                        'license' => 'Open source (GPL)',
+                        'platforms' => 'Windows · macOS · Linux',
+                        'what' => 'Tests how resistant your own password hashes are to cracking, so you can enforce stronger policies. Use only on hashes you are authorised to audit.',
+                        'features' => ['Many hash formats', 'Wordlist & incremental modes', 'Rules engine', 'GPU builds available'],
+                        'steps' => ['Export hashes you own to a file.', 'john --wordlist=rockyou.txt hashes.txt', 'john --show hashes.txt to see cracked ones.', 'Force resets & stronger rules for weak accounts.'],
+                        'download' => 'https://www.openwall.com/john/',
+                        'docs' => 'https://www.openwall.com/john/doc/',
+                    ],
+                    [
+                        'name' => 'Hashcat',
+                        'tagline' => 'GPU password recovery',
+                        'license' => 'Open source (MIT)',
+                        'platforms' => 'Windows · macOS · Linux',
+                        'what' => 'The fastest password-recovery tool, GPU-accelerated. Ideal for auditing the real-world strength of stored credentials you are responsible for.',
+                        'features' => ['GPU acceleration', '300+ hash types', 'Mask & rule attacks', 'Distributed cracking'],
+                        'steps' => ['Identify the hash mode for your hashes.', 'hashcat -m 0 -a 0 hashes.txt wordlist.txt', 'Review cracked results.', 'Mandate longer passphrases / MFA where weak.'],
+                        'download' => 'https://hashcat.net/hashcat/',
+                        'docs' => 'https://hashcat.net/wiki/',
+                    ],
+                    [
+                        'name' => 'THC-Hydra',
+                        'tagline' => 'Login brute-force tester',
+                        'license' => 'Open source (AGPL)',
+                        'platforms' => 'Cross-platform',
+                        'what' => 'Tests login endpoints against weak credentials across many protocols, so you can confirm rate-limiting and lockout actually work on your services.',
+                        'features' => ['50+ protocols', 'Parallel connections', 'Custom credential lists', 'Login-form support'],
+                        'steps' => ['Only target your own auth endpoints.', 'hydra -l admin -P list.txt example.com http-post-form ...', 'Confirm lockout / rate-limits trigger.', 'Add throttling, MFA and account lockout.'],
+                        'download' => 'https://github.com/vanhauser-thc/thc-hydra',
+                        'docs' => 'https://github.com/vanhauser-thc/thc-hydra#readme',
+                    ],
+                ],
+            ],
+            [
+                'category' => 'Network & Traffic',
+                'items' => [
+                    [
+                        'name' => 'Wireshark',
+                        'tagline' => 'Packet analyzer',
+                        'license' => 'Open source (GPL)',
+                        'platforms' => 'Windows · macOS · Linux',
+                        'what' => 'The world\'s most popular network protocol analyzer — capture and inspect traffic to spot cleartext data, misconfigurations and suspicious connections.',
+                        'features' => ['Live capture & deep inspection', 'Hundreds of protocols', 'Powerful display filters', 'TLS/SSL debugging'],
+                        'steps' => ['Install and choose a capture interface.', 'Filter, e.g. http or tls, to focus.', 'Look for cleartext credentials or tokens.', 'Move anything sensitive onto HTTPS/TLS.'],
+                        'download' => 'https://www.wireshark.org/download.html',
+                        'docs' => 'https://www.wireshark.org/docs/',
+                    ],
+                    [
+                        'name' => 'Metasploit Framework',
+                        'tagline' => 'Exploitation framework',
+                        'license' => 'Open source (BSD)',
+                        'platforms' => 'Windows · macOS · Linux',
+                        'what' => 'The standard framework for validating vulnerabilities safely in a lab, verifying patches and building repeatable proof-of-concept tests.',
+                        'features' => ['Huge exploit & payload library', 'Auxiliary scanners', 'Post-exploitation modules', 'Lab-friendly workflow'],
+                        'steps' => ['Install and run against a lab VM you control.', 'msfconsole, then search a known CVE.', 'Confirm whether your patched host is affected.', 'Document and remediate findings.'],
+                        'download' => 'https://github.com/rapid7/metasploit-framework',
+                        'docs' => 'https://docs.metasploit.com/',
+                    ],
+                ],
+            ],
+            [
+                'category' => 'Platforms & Distros',
+                'items' => [
+                    [
+                        'name' => 'Kali Linux',
+                        'tagline' => 'Pen-testing OS',
+                        'license' => 'Free / open source',
+                        'platforms' => 'ISO · VM · WSL · ARM',
+                        'what' => 'A Debian-based distribution that ships hundreds of the tools above pre-installed and configured — the fastest way to get a full testing lab running.',
+                        'features' => ['600+ pre-installed tools', 'VM & WSL images', 'Regular rolling updates', 'Great documentation'],
+                        'steps' => ['Download the VM or ISO image.', 'Run it in a VM isolated from production.', 'Update: sudo apt update && sudo apt full-upgrade', 'Use it only against systems you may test.'],
+                        'download' => 'https://www.kali.org/get-kali/',
+                        'docs' => 'https://www.kali.org/docs/',
+                    ],
+                    [
+                        'name' => 'OWASP Juice Shop',
+                        'tagline' => 'Legal practice target',
+                        'license' => 'Open source (MIT)',
+                        'platforms' => 'Docker · Node · cloud',
+                        'what' => 'A deliberately insecure web app you run yourself to practise every technique legally and safely — the perfect place to learn before touching real systems.',
+                        'features' => ['100+ built-in challenges', 'Runs locally in Docker', 'Score board & hints', 'Maps to OWASP Top 10'],
+                        'steps' => ['docker run -p 3000:3000 bkimminich/juice-shop', 'Open http://localhost:3000', 'Work through the challenges to learn.', 'Apply the lessons to harden your real apps.'],
+                        'download' => 'https://owasp.org/www-project-juice-shop/',
+                        'docs' => 'https://pwning.owasp-juice.shop/',
+                    ],
+                ],
+            ],
+        ];
+    }
+
     public function ethicalHackingToolkit(array $data = []): void
     {
         $this->render('pages/ethical-hacking-toolkit', array_replace([
@@ -937,6 +1160,7 @@ final class ToolsController extends Controller
             ['title' => 'TLS / SSL Certificate', 'url' => '/tools/tls-ssl', 'icon' => 'fa-certificate', 'summary' => 'Read certificate issuer, validity window and days remaining to expiry.', 'accent' => 'green'],
             ['title' => 'security.txt & Discovery', 'url' => '/tools/security-txt', 'icon' => 'fa-file-shield', 'summary' => 'Check responsible-disclosure and crawler-discovery files.', 'accent' => 'cyan'],
             ['title' => 'Password & Token Lab', 'url' => '/free-penetration-testing-tools', 'icon' => 'fa-key', 'summary' => 'Test passphrase strength, decode JWTs, hash text and build a hardened CSP — all locally.', 'accent' => 'violet'],
+            ['title' => 'Hacking Tools Library (Pro)', 'url' => '/ethical-hacking-tools', 'icon' => 'fa-toolbox', 'summary' => 'Members-only portal: download the best free pen-testing tools with official links and step-by-step usage guides.', 'accent' => 'red'],
         ];
     }
 
