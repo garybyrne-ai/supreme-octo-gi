@@ -41,6 +41,21 @@ use App\Core\Router;
 
 $config = require BASE_PATH . '/config/app.php';
 $requestPath = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+
+// Admin-managed URL redirects run before routing (skip admin + asset paths).
+if (!str_starts_with($requestPath, '/admin') && !str_starts_with($requestPath, '/assets')) {
+    try {
+        $redirect = (new App\Models\RedirectRepository())->match($requestPath);
+        if ($redirect !== null) {
+            $status = in_array($redirect['status'], [301, 302, 307, 308], true) ? $redirect['status'] : 301;
+            header('Location: ' . $redirect['to'], true, $status);
+            exit;
+        }
+    } catch (Throwable) {
+        // never let redirect lookup break the site
+    }
+}
+
 $isInstalled = is_file(BASE_PATH . '/config/installed.php');
 $isGet = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET';
 $statefulPrefixes = [

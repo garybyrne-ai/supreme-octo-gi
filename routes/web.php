@@ -124,6 +124,8 @@ $router->post('/admin/clients/state', [AdminController::class, 'clientState']);
 $router->post('/admin/content-item/save', [AdminController::class, 'saveContentItem']);
 $router->post('/admin/content-item/delete', [AdminController::class, 'deleteContentItem']);
 $router->post('/admin/content-item/move', [AdminController::class, 'moveContentItem']);
+$router->post('/admin/seo-settings', [AdminController::class, 'updateSeoSettings']);
+$router->post('/admin/backup/download', [AdminController::class, 'downloadBackup']);
 $router->get('/privacy-policy', [PageController::class, 'legal']);
 $router->get('/cookie-policy', [PageController::class, 'legal']);
 $router->get('/terms-and-conditions', [PageController::class, 'legal']);

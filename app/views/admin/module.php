@@ -42,6 +42,7 @@ $modulesWithRealUi = [
     'Commerce Engine', 'Membership Plans', 'Coupons', 'Theme Settings',
     'Clients', 'Search Console', 'Referrals', 'Client Work Log', 'Abandoned Orders', 'AI Assistant',
     'Services Manager', 'Testimonials', 'FAQ Manager', 'Blog Manager', 'Portfolio Manager',
+    'SEO Center', 'Redirect Manager', 'Activity Logs', 'Backups', 'Analytics',
 ];
 $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
 ?>
@@ -502,6 +503,172 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                         <p>No entries yet. Post your first client update on the left.</p>
                     <?php endif; ?>
                 </section>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'SEO Center'): ?>
+            <?php $seoSettings = $seoSettings ?? []; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/seo-settings">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>Global SEO &amp; social</h2>
+                    <p>These apply site-wide. Per-page titles and descriptions are still set on each page; these fill the gaps and control social sharing, verification and schema.</p>
+                    <label>Default meta description <small>(used when a page has none)</small>
+                        <textarea name="default_meta_description" rows="2"><?= e($seoSettings['default_meta_description'] ?? '') ?></textarea></label>
+                    <label>Social share image URL <small>(Open Graph / Twitter — 1200×630 works best)</small>
+                        <input name="og_image" type="url" value="<?= e($seoSettings['og_image'] ?? '') ?>" placeholder="https://www.crestwebmedia.com/assets/images/og.png"></label>
+                    <label>Twitter / X handle <input name="twitter_site" value="<?= e($seoSettings['twitter_site'] ?? '') ?>" placeholder="@crestwebmedia"></label>
+                    <div class="form-grid two">
+                        <label>Google verification <small>(content value)</small><input name="google_verification" value="<?= e($seoSettings['google_verification'] ?? '') ?>"></label>
+                        <label>Bing verification <small>(msvalidate.01)</small><input name="bing_verification" value="<?= e($seoSettings['bing_verification'] ?? '') ?>"></label>
+                    </div>
+                    <label class="member-check"><input type="checkbox" name="allow_indexing" value="1" <?= !empty($seoSettings['allow_indexing']) ? 'checked' : '' ?>> Allow search engines to index the site <small>(uncheck for staging)</small></label>
+                    <button class="pill-button" type="submit">Save SEO Settings <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <form class="cyber-form" method="post" action="/admin/seo-settings">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="default_meta_description" value="<?= e($seoSettings['default_meta_description'] ?? '') ?>">
+                    <input type="hidden" name="og_image" value="<?= e($seoSettings['og_image'] ?? '') ?>">
+                    <input type="hidden" name="twitter_site" value="<?= e($seoSettings['twitter_site'] ?? '') ?>">
+                    <input type="hidden" name="google_verification" value="<?= e($seoSettings['google_verification'] ?? '') ?>">
+                    <input type="hidden" name="bing_verification" value="<?= e($seoSettings['bing_verification'] ?? '') ?>">
+                    <input type="hidden" name="allow_indexing" value="<?= !empty($seoSettings['allow_indexing']) ? '1' : '' ?>">
+                    <h2>Organization &amp; profiles</h2>
+                    <p>Feeds your Organization schema (rich results) and the <code>sameAs</code> links search engines use to connect your brand.</p>
+                    <div class="form-grid two">
+                        <label>Organization name <input name="organization_name" value="<?= e($seoSettings['organization_name'] ?? '') ?>" placeholder="Crest Web Media"></label>
+                        <label>Logo URL <input name="organization_logo" type="url" value="<?= e($seoSettings['organization_logo'] ?? '') ?>"></label>
+                    </div>
+                    <div class="form-grid two">
+                        <label>LinkedIn URL <input name="social_linkedin" type="url" value="<?= e($seoSettings['social_linkedin'] ?? '') ?>"></label>
+                        <label>GitHub URL <input name="social_github" type="url" value="<?= e($seoSettings['social_github'] ?? '') ?>"></label>
+                    </div>
+                    <div class="form-grid two">
+                        <label>Facebook URL <input name="social_facebook" type="url" value="<?= e($seoSettings['social_facebook'] ?? '') ?>"></label>
+                        <label>X / Twitter URL <input name="social_x" type="url" value="<?= e($seoSettings['social_x'] ?? '') ?>"></label>
+                    </div>
+                    <button class="pill-button" type="submit">Save Organization <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Redirect Manager'): ?>
+            <?php $redirectsList = $redirectsList ?? []; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="type" value="redirect">
+                    <h2>Add a redirect</h2>
+                    <p>Send an old or changed URL to a new one. Applied before routing on every request.</p>
+                    <label>From path <small>(on this site, e.g. <code>/old-page</code>)</small><input name="from" required placeholder="/old-page"></label>
+                    <label>To <small>(a path like <code>/new-page</code> or a full URL)</small><input name="to" required placeholder="/new-page"></label>
+                    <label>Type
+                        <select name="status">
+                            <option value="301">301 — Permanent</option>
+                            <option value="302">302 — Temporary</option>
+                            <option value="307">307 — Temporary (keep method)</option>
+                            <option value="308">308 — Permanent (keep method)</option>
+                        </select>
+                    </label>
+                    <button class="pill-button" type="submit">Add Redirect <i class="fa-solid fa-plus"></i></button>
+                </form>
+                <div class="cyber-card admin-editable-panel">
+                    <h2>Redirects (<?= count($redirectsList) ?>)</h2>
+                    <?php if (empty($redirectsList)): ?>
+                        <p>No redirects yet. Add one on the left — for example after renaming a page or changing a URL structure.</p>
+                    <?php else: ?>
+                        <div class="admin-editable-list">
+                            <?php foreach ($redirectsList as $rd): ?>
+                                <div class="admin-edit-item" style="padding:12px 16px">
+                                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                                        <code><?= e($rd['from'] ?? '') ?></code> <i class="fa-solid fa-arrow-right" style="color:var(--primary)"></i> <code><?= e($rd['to'] ?? '') ?></code>
+                                        <span class="portal-badge"><?= e((string) ($rd['status'] ?? 301)) ?></span>
+                                        <form method="post" action="/admin/content-item/delete" onsubmit="return confirm('Delete this redirect?');" style="margin-left:auto">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="redirect"><input type="hidden" name="id" value="<?= e($rd['id'] ?? '') ?>">
+                                            <button type="submit" class="serp-tr-remove" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Analytics'): ?>
+            <?php $analytics = $analytics ?? []; ?>
+            <section class="cyber-card">
+                <div class="section-heading compact"><span class="status-chip"><span></span> Live</span><h2>Site metrics</h2></div>
+                <p>Real numbers from your own data. <?= !empty($analytics['ga4_configured']) ? 'Google Analytics 4 is connected for traffic analytics.' : 'Add a Google Analytics 4 ID in <a href="/admin/modules/ads">Ads &amp; Consent</a> for full traffic analytics.' ?></p>
+                <div class="serp-metrics">
+                    <div class="serp-metric"><span>Members</span><strong><?= (int) ($analytics['members_total'] ?? 0) ?></strong></div>
+                    <div class="serp-metric tier-excellent"><span>Pro members</span><strong><?= (int) ($analytics['members_pro'] ?? 0) ?></strong></div>
+                    <div class="serp-metric"><span>Free members</span><strong><?= (int) ($analytics['members_free'] ?? 0) ?></strong></div>
+                    <div class="serp-metric"><span>Tool leads</span><strong><?= (int) ($analytics['tool_leads'] ?? 0) ?></strong></div>
+                    <div class="serp-metric"><span>Referrals</span><strong><?= (int) ($analytics['referrals'] ?? 0) ?></strong></div>
+                    <div class="serp-metric"><span>Open tickets</span><strong><?= (int) ($analytics['open_tickets'] ?? 0) ?></strong></div>
+                    <div class="serp-metric"><span>Blog posts</span><strong><?= (int) ($analytics['blog_posts'] ?? 0) ?></strong></div>
+                    <div class="serp-metric"><span>Activity events</span><strong><?= (int) ($analytics['activity_events'] ?? 0) ?></strong></div>
+                </div>
+                <h3 style="margin:18px 0 10px">Checkout recovery</h3>
+                <div class="serp-metrics">
+                    <div class="serp-metric"><span>Started</span><strong><?= (int) ($analytics['orders_started'] ?? 0) ?></strong></div>
+                    <div class="serp-metric"><span>Recovery emailed</span><strong><?= (int) ($analytics['orders_recovered'] ?? 0) ?></strong></div>
+                    <div class="serp-metric tier-excellent"><span>Paid</span><strong><?= (int) ($analytics['orders_paid'] ?? 0) ?></strong></div>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Activity Logs'): ?>
+            <?php $activityLog = $activityLog ?? []; ?>
+            <section class="cyber-card ticket-table-card">
+                <div class="section-heading compact"><span class="status-chip"><span></span> Audit</span><h2>Recent activity</h2></div>
+                <p>The most recent system and admin events (logins, saves, orders, payments). Read-only.</p>
+                <?php if (empty($activityLog)): ?>
+                    <p>No activity recorded yet.</p>
+                <?php else: ?>
+                    <div class="ticket-table full">
+                        <?php foreach ($activityLog as $ev): ?>
+                            <div>
+                                <strong><?= e($ev['event'] ?? '') ?></strong>
+                                <span><?php $ctx = $ev['context'] ?? []; echo is_array($ctx) && $ctx !== [] ? e(excerpt(json_encode($ctx, JSON_UNESCAPED_SLASHES), 90)) : '<small>—</small>'; ?></span>
+                                <small><?= e(!empty($ev['timestamp']) ? gmdate('j M Y, H:i', (int) strtotime((string) $ev['timestamp'])) : '') ?></small>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Backups'): ?>
+            <?php $backupInventory = $backupInventory ?? []; $backupTotal = $backupTotal ?? 0; ?>
+            <section class="split-section">
+                <div class="cyber-card">
+                    <div class="section-heading compact"><span class="status-chip"><span></span> Export</span><h2>Download a backup</h2></div>
+                    <p>Bundles all your editable content and settings (members, blog, services, portfolio, orders, settings…) into a single JSON snapshot you can save off-site. Total data: <strong><?= number_format($backupTotal / 1024, 1) ?> KB</strong>.</p>
+                    <form method="post" action="/admin/backup/download">
+                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                        <button class="pill-button" type="submit"><i class="fa-solid fa-download"></i> Download backup snapshot</button>
+                    </form>
+                    <p><small><i class="fa-solid fa-circle-info"></i> Store the file somewhere safe. To restore, keep the file — restore tooling can be added on request, or the JSON files can be placed back into <code>storage/data</code>.</small></p>
+                </div>
+                <div class="cyber-card admin-editable-panel">
+                    <h2>Data files (<?= count($backupInventory) ?>)</h2>
+                    <?php if (empty($backupInventory)): ?>
+                        <p>No stored data files yet — they are created as you use the CMS.</p>
+                    <?php else: ?>
+                        <div class="ticket-table full">
+                            <?php foreach ($backupInventory as $file): ?>
+                                <div>
+                                    <strong><?= e($file['name']) ?></strong>
+                                    <span><?= number_format($file['size'] / 1024, 1) ?> KB</span>
+                                    <small><?= e($file['modified']) ?></small>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </section>
         <?php endif; ?>
 

@@ -8,10 +8,14 @@ final class SeoService
 {
     public static function organizationSchema(array $config): string
     {
-        return json_encode([
+        $seo = (new \App\Models\SeoSettingsRepository())->current();
+        $socials = (new \App\Models\SeoSettingsRepository())->socialProfiles();
+        $sameAs = $socials !== [] ? $socials : ['https://www.linkedin.com/', 'https://github.com/'];
+
+        $schema = [
             '@context' => 'https://schema.org',
             '@type' => 'Organization',
-            'name' => $config['name'],
+            'name' => ($seo['organization_name'] ?? '') !== '' ? $seo['organization_name'] : $config['name'],
             'url' => $config['url'],
             'description' => $config['tagline'],
             'email' => $config['admin_email'],
@@ -35,11 +39,14 @@ final class SeoService
                 ['@type' => 'Place', 'name' => 'Shimla, Himachal Pradesh, India'],
             ],
             'foundingLocation' => 'Shimla, Himachal Pradesh, India',
-            'sameAs' => [
-                'https://www.linkedin.com/',
-                'https://github.com/',
-            ],
-        ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+            'sameAs' => $sameAs,
+        ];
+
+        if (($seo['organization_logo'] ?? '') !== '') {
+            $schema['logo'] = $seo['organization_logo'];
+        }
+
+        return json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 
     public static function faqSchema(array $faqs): string

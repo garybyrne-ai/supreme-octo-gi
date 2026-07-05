@@ -274,6 +274,12 @@ final class AdminController extends Controller
             'faqList' => $slug === 'faq' ? (new \App\Models\FaqContentRepository())->ensureSeeded($content->faqs()) : [],
             'blogList' => $slug === 'blog' ? (new \App\Models\BlogPostRepository())->ensureSeeded($content->posts()) : [],
             'portfolioList' => $slug === 'portfolio' ? (new \App\Models\PortfolioRepository())->ensureSeeded($content->portfolio()) : [],
+            'seoSettings' => $slug === 'seo' ? (new \App\Models\SeoSettingsRepository())->current() : [],
+            'redirectsList' => $slug === 'redirects' ? (new \App\Models\RedirectRepository())->saved() : [],
+            'activityLog' => $slug === 'activity' ? (new \App\Services\ActivityLogReader())->recent(150) : [],
+            'backupInventory' => $slug === 'backups' ? (new \App\Services\BackupService())->inventory() : [],
+            'backupTotal' => $slug === 'backups' ? (new \App\Services\BackupService())->totalBytes() : 0,
+            'analytics' => $slug === 'analytics' ? $this->analyticsSnapshot() : [],
             'backlinkPlans' => $slug === 'content' ? (new BacklinkPlanRepository())->all() : [],
             'carePlans' => $slug === 'content' ? (new CarePlanRepository())->all() : [],
             'coupons' => $slug === 'coupons' ? (new CouponRepository())->all() : [],
@@ -542,6 +548,38 @@ final class AdminController extends Controller
     }
 
     /**
+     * Real, available site metrics for the Analytics module (no fake charts).
+     *
+     * @return array<string, mixed>
+     */
+    private function analyticsSnapshot(): array
+    {
+        $members = (new MemberRepository())->recent(1000);
+        $proCount = 0;
+        foreach ($members as $m) {
+            if (MemberRepository::isPro($m)) {
+                $proCount++;
+            }
+        }
+        $orders = (new \App\Models\PendingOrderRepository())->stats();
+
+        return [
+            'members_total' => count($members),
+            'members_pro' => $proCount,
+            'members_free' => count($members) - $proCount,
+            'tool_leads' => count((new ToolLeadRepository())->recent(2000)),
+            'referrals' => count((new \App\Models\ReferralRepository())->allEvents()),
+            'open_tickets' => count((new SupportTicketRepository())->recent(500)),
+            'orders_started' => (int) ($orders['started'] ?? 0),
+            'orders_recovered' => (int) ($orders['recovered'] ?? 0),
+            'orders_paid' => (int) ($orders['completed'] ?? 0),
+            'activity_events' => count((new \App\Services\ActivityLogReader())->recent(500)),
+            'blog_posts' => count((new ContentRepository())->posts()),
+            'ga4_configured' => (new AdsSettingsRepository())->analyticsId() !== '',
+        ];
+    }
+
+    /**
      * @return array{0: string, 1: \App\Models\EditableContentRepository, 2: string}
      */
     private function resolveContentType(string $type): array
@@ -551,8 +589,45 @@ final class AdminController extends Controller
             'faq' => ['faq', new \App\Models\FaqContentRepository(), 'faq'],
             'blog' => ['blog post', new \App\Models\BlogPostRepository(), 'blog'],
             'portfolio' => ['portfolio item', new \App\Models\PortfolioRepository(), 'portfolio'],
+            'redirect' => ['redirect', new \App\Models\RedirectRepository(), 'redirects'],
             default => ['service', new \App\Models\ServiceContentRepository(), 'services'],
         };
+    }
+
+    public function updateSeoSettings(): void
+    {
+        $this->guardAdminPost('/admin/modules/seo', 'SEO settings token expired. Please try again.');
+
+        try {
+            (new \App\Models\SeoSettingsRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'SEO settings saved.';
+            (new AuditLogger())->log('admin.seo.updated', []);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/seo');
+    }
+
+    public function downloadBackup(): void
+    {
+        Security::ensureSession();
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Backup token expired. Please try again.';
+            $this->redirect('/admin/modules/backups');
+        }
+
+        $service = new \App\Services\BackupService();
+        (new AuditLogger())->log('admin.backup.downloaded', []);
+
+        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $service->snapshotFilename() . '"');
+        header('Cache-Control: no-store');
+        echo $service->buildSnapshot();
+        exit;
     }
 
     public function updateAiSettings(): void
