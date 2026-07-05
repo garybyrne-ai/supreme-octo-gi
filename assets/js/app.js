@@ -562,7 +562,20 @@ if (keywordDensity) {
             }
         }
         const density = words.length ? ((hits * Math.max(phrase.length, 1)) / words.length) * 100 : 0;
-        output.textContent = `${words.length} words\n${hits} exact keyword matches\n${density.toFixed(2)}% density\n${density > 3 ? 'Reduce repetition and use related terms.' : density > 0.4 ? 'Healthy range for focused copy.' : 'Add the keyword naturally in headings and body copy.'}`;
+        const verdict = density > 3
+            ? { label: 'Over-optimised', tone: 'bad', note: 'Reduce repetition and use related terms.' }
+            : density > 0.4
+                ? { label: 'Healthy', tone: 'good', note: 'Good range for focused copy.' }
+                : { label: 'Too thin', tone: 'warn', note: 'Add the keyword naturally in headings and body.' };
+        const barWidth = Math.min(100, Math.round((density / 4) * 100));
+        output.innerHTML = `
+            <div class="seo-metric-grid">
+                <div class="seo-metric"><b>${words.length}</b><span>Total words</span></div>
+                <div class="seo-metric"><b>${hits}</b><span>Exact matches</span></div>
+                <div class="seo-metric"><b>${density.toFixed(2)}%</b><span>Keyword density</span></div>
+            </div>
+            <div class="seo-density-bar"><i style="width:${barWidth}%"></i></div>
+            <p class="seo-verdict is-${verdict.tone}"><b>${verdict.label}.</b> ${verdict.note}</p>`;
     });
 }
 
@@ -582,9 +595,14 @@ if (schemaValidator) {
             if (!schema['@context']) warnings.push('Add @context.');
             if (!schema['@type']) warnings.push('Add @type.');
             if (!schema.name && !schema.headline) warnings.push('Add name or headline.');
-            output.textContent = warnings.length ? `Valid JSON, but improve schema:\n${warnings.join('\n')}` : 'Valid JSON-LD with core schema fields present.';
+            const type = escapeHtml(String(schema['@type'] || 'Unknown'));
+            if (warnings.length) {
+                output.innerHTML = `<p class="seo-verdict is-warn"><b>Valid JSON — schema needs work.</b> Type: <code>${type}</code></p><ul class="seo-check-list">${warnings.map((w) => `<li class="is-warn"><i class="fa-solid fa-triangle-exclamation"></i>${escapeHtml(w)}</li>`).join('')}</ul>`;
+            } else {
+                output.innerHTML = `<p class="seo-verdict is-good"><b>Valid JSON-LD.</b> Core fields present for <code>${type}</code>.</p><ul class="seo-check-list"><li class="is-good"><i class="fa-solid fa-circle-check"></i>@context present</li><li class="is-good"><i class="fa-solid fa-circle-check"></i>@type present</li><li class="is-good"><i class="fa-solid fa-circle-check"></i>Name / headline present</li></ul>`;
+            }
         } catch (error) {
-            output.textContent = `Invalid JSON: ${error.message}`;
+            output.innerHTML = `<p class="seo-verdict is-bad"><b>Invalid JSON.</b> ${escapeHtml(error.message)}</p>`;
         }
     });
 }
@@ -605,7 +623,16 @@ if (robotsBuilder) {
         ];
         if (checked('archive')) directives.push('noarchive');
         if (checked('snippet')) directives.push('nosnippet');
-        output.textContent = `<meta name="robots" content="${directives.join(', ')}">`;
+        const tag = `<meta name="robots" content="${directives.join(', ')}">`;
+        output.innerHTML = `<pre class="seo-code"><code>${escapeHtml(tag)}</code></pre><button class="pill-button ghost seo-copy-btn" type="button">Copy tag <i class="fa-solid fa-copy"></i></button>`;
+        const copyBtn = output.querySelector('.seo-copy-btn');
+        copyBtn?.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(tag);
+                copyBtn.innerHTML = 'Copied <i class="fa-solid fa-check"></i>';
+                setTimeout(() => { copyBtn.innerHTML = 'Copy tag <i class="fa-solid fa-copy"></i>'; }, 1600);
+            } catch (error) { /* clipboard unavailable */ }
+        });
     });
 }
 

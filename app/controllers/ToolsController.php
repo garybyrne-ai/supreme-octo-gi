@@ -2496,7 +2496,7 @@ final class ToolsController extends Controller
         }
 
         return [
-            'engine' => 'DuckDuckGo Lite live results',
+            'engine' => 'Live organic results',
             'query' => $query,
             'position' => $position,
             'results' => $results,
@@ -2570,7 +2570,7 @@ final class ToolsController extends Controller
         }
 
         return [
-            'engine' => 'Google live results (ZenSERP)',
+            'engine' => 'Google live results',
             'query' => trim($keyword . ' — ' . ($location !== '' ? $location : 'Ireland')),
             'position' => $position,
             'results' => array_slice($results, 0, 10),

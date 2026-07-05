@@ -114,43 +114,51 @@
     </section>
 <?php endif; ?>
 
-<section class="tool-workbench reveal" id="seo-local-tools" data-tools-locked="<?= empty($toolLead) ? 'true' : 'false' ?>">
-    <div class="cyber-form glass-tool" data-serp-preview-builder>
-        <h2>SERP Preview Builder</h2>
+<section class="section reveal">
+    <div class="section-heading">
+        <span class="kicker">On-page toolkit</span>
+        <h2>Free SEO utilities</h2>
+        <p>Preview your Google snippet, check keyword density, validate schema and build a robots tag — instant, private and free.</p>
+    </div>
+</section>
+
+<section class="tool-workbench seo-workbench reveal" id="seo-local-tools" data-tools-locked="<?= empty($toolLead) ? 'true' : 'false' ?>">
+    <div class="cyber-form glass-tool seo-tool-card" data-serp-preview-builder>
+        <header class="seo-tool-head"><span class="seo-tool-ico"><i class="fa-solid fa-ranking-star"></i></span><div><h3>SERP Preview Builder</h3><small>See how your page looks in Google results</small></div></header>
         <label>Page Title <input name="title" maxlength="80" placeholder="Web Design Ireland | Crest Web Media"></label>
         <label>URL <input name="url" placeholder="https://example.com/service"></label>
-        <label>Description <textarea name="description" rows="4" maxlength="190" placeholder="Write the search snippet here"></textarea></label>
-        <button class="pill-button ghost" type="button">Preview Snippet <i class="fa-solid fa-ranking-star"></i></button>
-        <output class="hash-output">SERP preview output</output>
+        <label>Description <textarea name="description" rows="3" maxlength="190" placeholder="Write the search snippet here"></textarea></label>
+        <button class="pill-button" type="button">Preview Snippet <i class="fa-solid fa-eye"></i></button>
+        <output class="seo-tool-output">Your Google preview appears here.</output>
     </div>
 
-    <div class="cyber-form glass-tool" data-keyword-density>
-        <h2>Keyword Density Analyzer</h2>
+    <div class="cyber-form glass-tool seo-tool-card" data-keyword-density>
+        <header class="seo-tool-head"><span class="seo-tool-ico"><i class="fa-solid fa-chart-simple"></i></span><div><h3>Keyword Density Analyzer</h3><small>Check how often your keyword appears</small></div></header>
         <label>Focus Keyword <input name="keyword" placeholder="web design ireland"></label>
-        <label>Page Copy <textarea name="copy" rows="7" placeholder="Paste page copy here"></textarea></label>
-        <button class="pill-button ghost" type="button">Analyze Copy <i class="fa-solid fa-chart-simple"></i></button>
-        <output class="hash-output">Keyword density output</output>
+        <label>Page Copy <textarea name="copy" rows="6" placeholder="Paste page copy here"></textarea></label>
+        <button class="pill-button" type="button">Analyze Copy <i class="fa-solid fa-magnifying-glass-chart"></i></button>
+        <output class="seo-tool-output">Density breakdown appears here.</output>
     </div>
 
-    <div class="cyber-form glass-tool" data-schema-validator>
-        <h2>JSON-LD Schema Validator</h2>
+    <div class="cyber-form glass-tool seo-tool-card" data-schema-validator>
+        <header class="seo-tool-head"><span class="seo-tool-ico"><i class="fa-solid fa-code"></i></span><div><h3>JSON-LD Schema Validator</h3><small>Check structured data for rich results</small></div></header>
         <label>Schema JSON-LD
-            <textarea rows="7" placeholder='{"@context":"https://schema.org","@type":"Service","name":"Web Design"}'></textarea>
+            <textarea rows="6" placeholder='{"@context":"https://schema.org","@type":"Service","name":"Web Design"}'></textarea>
         </label>
-        <button class="pill-button ghost" type="button">Validate Schema <i class="fa-solid fa-code"></i></button>
-        <output class="hash-output">Schema validation output</output>
+        <button class="pill-button" type="button">Validate Schema <i class="fa-solid fa-circle-check"></i></button>
+        <output class="seo-tool-output">Validation result appears here.</output>
     </div>
 
-    <div class="cyber-form glass-tool" data-robots-builder>
-        <h2>Robots Meta Builder</h2>
+    <div class="cyber-form glass-tool seo-tool-card" data-robots-builder>
+        <header class="seo-tool-head"><span class="seo-tool-ico"><i class="fa-solid fa-robot"></i></span><div><h3>Robots Meta Builder</h3><small>Control how search engines crawl the page</small></div></header>
         <div class="tool-toggle-grid">
             <label><input type="checkbox" name="index" checked> Index</label>
             <label><input type="checkbox" name="follow" checked> Follow</label>
             <label><input type="checkbox" name="archive"> No archive</label>
             <label><input type="checkbox" name="snippet"> No snippet</label>
         </div>
-        <button class="pill-button ghost" type="button">Build Tag <i class="fa-solid fa-robot"></i></button>
-        <output class="hash-output">Robots meta output</output>
+        <button class="pill-button" type="button">Build Tag <i class="fa-solid fa-wrench"></i></button>
+        <output class="seo-tool-output">Generated tag appears here.</output>
     </div>
 </section>
 

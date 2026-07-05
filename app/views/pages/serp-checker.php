@@ -117,26 +117,47 @@ $sparkline = static function (array $positions): string {
 <?php endif; ?>
 
 <?php if (!empty($serpResult)): ?>
-    <section class="tool-results reveal">
-        <article class="cyber-card tool-result-card">
-            <h2>Top Results</h2>
-            <div class="serp-result-list">
+    <?php
+        $rawDomain = strtolower(trim((string) ($domain ?? '')));
+        $targetHost = preg_replace('/^www\./', '', (string) (parse_url(str_contains($rawDomain, '://') ? $rawDomain : 'https://' . $rawDomain, PHP_URL_HOST) ?: $rawDomain));
+    ?>
+    <section class="section reveal">
+        <div class="serp-board cyber-card">
+            <header class="serp-board-head">
+                <div>
+                    <h2>Live SERP &mdash; Top 10</h2>
+                    <p><span class="serp-engine-chip"><i class="fa-solid fa-globe"></i> <?= e($serpResult['engine']) ?></span> for <strong><?= e($serpResult['query']) ?></strong></p>
+                </div>
+                <?php if (!empty($serpResult['position'])): ?>
+                    <div class="serp-board-rank"><span>Your rank</span><strong>#<?= e((string) $serpResult['position']) ?></strong></div>
+                <?php else: ?>
+                    <div class="serp-board-rank is-out"><span>Your rank</span><strong>Not in top 10</strong></div>
+                <?php endif; ?>
+            </header>
+            <ol class="serp-board-list">
                 <?php foreach ($serpResult['results'] as $index => $result): ?>
-                    <a href="<?= e($result['url']) ?>" target="_blank" rel="noopener">
-                        <b>#<?= $index + 1 ?></b>
-                        <span><strong><?= e(excerpt($result['title'], 90)) ?></strong><small><?= e($result['host']) ?></small></span>
-                    </a>
+                    <?php $isYou = $targetHost !== '' && ($result['host'] === $targetHost || str_ends_with((string) $result['host'], '.' . $targetHost)); ?>
+                    <li class="serp-row<?= $isYou ? ' is-you' : '' ?>">
+                        <span class="serp-pos"><?= $index + 1 ?></span>
+                        <img class="serp-fav" src="https://www.google.com/s2/favicons?sz=64&amp;domain=<?= e($result['host']) ?>" alt="" width="20" height="20" loading="lazy">
+                        <span class="serp-row-body">
+                            <a href="<?= e($result['url']) ?>" target="_blank" rel="noopener" class="serp-row-title"><?= e(excerpt($result['title'], 90)) ?></a>
+                            <span class="serp-row-url"><?= e($result['host']) ?><?php if ($isYou): ?> <em class="serp-you-badge">You</em><?php endif; ?></span>
+                        </span>
+                    </li>
                 <?php endforeach; ?>
-            </div>
-        </article>
-        <article class="cyber-card tool-result-card">
-            <h2>Opportunities</h2>
-            <div class="tool-check-list">
+            </ol>
+        </div>
+        <?php if (!empty($serpResult['opportunities'])): ?>
+        <div class="cyber-card serp-opps">
+            <h3><i class="fa-solid fa-lightbulb"></i> Ranking opportunities</h3>
+            <ul class="serp-opps-list">
                 <?php foreach ($serpResult['opportunities'] as $note): ?>
-                    <div class="is-good"><i class="fa-solid fa-lightbulb"></i><span><strong>Action</strong><small><?= e($note) ?></small></span></div>
+                    <li><i class="fa-solid fa-arrow-trend-up"></i> <?= e($note) ?></li>
                 <?php endforeach; ?>
-            </div>
-        </article>
+            </ul>
+        </div>
+        <?php endif; ?>
     </section>
 <?php endif; ?>
 
