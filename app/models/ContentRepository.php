@@ -1152,7 +1152,7 @@ final class ContentRepository
 
     public function portfolio(): array
     {
-        return [
+        $defaults = [
             ['title' => 'Embryomic', 'category' => 'Healthcare Technology Website', 'summary' => 'Advanced reproductive health technology website focused on clinical trust, modern presentation and clear specialist pathways.', 'accent' => 'blue', 'url' => 'https://www.embryomic.com/', 'image' => 'embryomic.webp'],
             ['title' => 'Dyno Locks', 'category' => 'Locksmith Website', 'summary' => '24-hour locksmith and security service website built around fast enquiries, trust and local search.', 'accent' => 'cyan', 'url' => 'https://www.dynolocks.ie', 'image' => 'dynolocks.webp'],
             ['title' => 'VanQuotes.ie', 'category' => 'Lead Generation Platform', 'summary' => 'Ireland removals quote platform connecting customers with man-with-a-van and moving companies.', 'accent' => 'green', 'url' => 'https://www.vanquotes.ie', 'image' => 'vanquotes.webp'],
@@ -1173,6 +1173,8 @@ final class ContentRepository
             ['title' => 'Task Management App', 'category' => 'Mobile Application', 'summary' => 'Operational task interface with quick capture, status clarity, team accountability and app-style mobile navigation.', 'accent' => 'cyan'],
             ['title' => 'RDT Care Document Validator', 'category' => 'Lab Verification Portal', 'summary' => 'Document validation portal for labs, built around quick verification, clear trust signals and secure access to report checks.', 'accent' => 'green', 'url' => 'https://verify.rdtcare.com/#', 'image' => 'rdtcare-validator.webp'],
         ];
+
+        return (new PortfolioRepository())->resolve($defaults);
     }
 
     public function testimonials(): array
@@ -1211,8 +1213,11 @@ final class ContentRepository
     public function posts(): array
     {
         $generated = array_map(fn (array $topic, int $index): array => $this->buildLongFormPost($topic, $index), $this->blogTopics(), array_keys($this->blogTopics()));
+        $defaults = array_merge($this->customPosts(), $generated);
 
-        return array_merge($this->customPosts(), $generated);
+        // Admin-editable: use the managed post set once an admin edits the blog,
+        // otherwise the hand-written + generated defaults above.
+        return (new BlogPostRepository())->resolve($defaults);
     }
 
     /**

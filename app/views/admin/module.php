@@ -41,7 +41,7 @@ $modulesWithRealUi = [
     'Site Content', 'Ads & Consent', 'Newsletter Offer', 'Mail Settings', 'Payment Settings',
     'Commerce Engine', 'Membership Plans', 'Coupons', 'Theme Settings',
     'Clients', 'Search Console', 'Referrals', 'Client Work Log', 'Abandoned Orders', 'AI Assistant',
-    'Services Manager', 'Testimonials', 'FAQ Manager',
+    'Services Manager', 'Testimonials', 'FAQ Manager', 'Blog Manager', 'Portfolio Manager',
 ];
 $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
 ?>
@@ -502,6 +502,142 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                         <p>No entries yet. Post your first client update on the left.</p>
                     <?php endif; ?>
                 </section>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Blog Manager'): ?>
+            <?php $blogList = $blogList ?? []; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="type" value="blog">
+                    <h2>Write a new post</h2>
+                    <p>Posts appear on <a href="/blog" target="_blank" rel="noopener">/blog</a> at <code>/blog/{slug}</code> with full Article + FAQ schema.</p>
+                    <div class="form-grid two">
+                        <label>Title <input name="title" required></label>
+                        <label>Slug <small>(auto from title)</small><input name="slug"></label>
+                    </div>
+                    <div class="form-grid two">
+                        <label>Category <input name="category" placeholder="SEO, Security, Web Design…"></label>
+                        <label>Publish date <input name="published_at" type="date"></label>
+                    </div>
+                    <label>Excerpt <small>(short summary for cards &amp; meta)</small><textarea name="excerpt" rows="2"></textarea></label>
+                    <label>Focus keyword <input name="focus_keyword"></label>
+                    <label>Content <small>(use <code>## Heading</code> to start a section; blank line = new paragraph)</small>
+                        <textarea name="content" rows="12" placeholder="## The quick answer&#10;&#10;First paragraph…&#10;&#10;Second paragraph…&#10;&#10;## Next section&#10;&#10;More text…"></textarea></label>
+                    <label>Checklist <small>(one item per line — optional)</small><textarea name="checklist" rows="4"></textarea></label>
+                    <label>FAQ <small>(one per line as <code>Question || Answer</code> — optional)</small><textarea name="faq" rows="4"></textarea></label>
+                    <button class="pill-button" type="submit">Publish Post <i class="fa-solid fa-plus"></i></button>
+                </form>
+                <div class="cyber-card admin-editable-panel">
+                    <h2>Posts (<?= count($blogList) ?>)</h2>
+                    <p>Click a post to edit its full content. Newest edits go live immediately.</p>
+                    <div class="admin-editable-list">
+                        <?php foreach ($blogList as $post): ?>
+                            <details class="admin-edit-item">
+                                <summary><i class="fa-solid fa-newspaper"></i> <strong><?= e($post['title'] ?? '') ?></strong><small><?= e($post['category'] ?? '') ?> · <?= e($post['published_at'] ?? '') ?></small></summary>
+                                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                    <input type="hidden" name="type" value="blog">
+                                    <input type="hidden" name="id" value="<?= e($post['id'] ?? $post['slug'] ?? '') ?>">
+                                    <div class="form-grid two">
+                                        <label>Title <input name="title" value="<?= e($post['title'] ?? '') ?>" required></label>
+                                        <label>Slug <input name="slug" value="<?= e($post['slug'] ?? '') ?>"></label>
+                                    </div>
+                                    <div class="form-grid two">
+                                        <label>Category <input name="category" value="<?= e($post['category'] ?? '') ?>"></label>
+                                        <label>Publish date <input name="published_at" type="date" value="<?= e($post['published_at'] ?? '') ?>"></label>
+                                    </div>
+                                    <label>Excerpt <textarea name="excerpt" rows="2"><?= e($post['excerpt'] ?? '') ?></textarea></label>
+                                    <label>Focus keyword <input name="focus_keyword" value="<?= e($post['focus_keyword'] ?? '') ?>"></label>
+                                    <label>Content <small>(<code>## Heading</code> starts a section; blank line = new paragraph)</small>
+                                        <textarea name="content" rows="14"><?= e(\App\Models\BlogPostRepository::sectionsToText($post['body_sections'] ?? [])) ?></textarea></label>
+                                    <label>Checklist <textarea name="checklist" rows="4"><?= e(implode("\n", (array) ($post['checklist'] ?? []))) ?></textarea></label>
+                                    <label>FAQ <small>(<code>Question || Answer</code> per line)</small><textarea name="faq" rows="4"><?= e(\App\Models\BlogPostRepository::faqToText($post['faq'] ?? [])) ?></textarea></label>
+                                    <div class="admin-item-actions">
+                                        <button class="pill-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                                        <a class="pill-button ghost" href="/blog/<?= e($post['slug'] ?? '') ?>" target="_blank" rel="noopener">View <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                    </div>
+                                </form>
+                                <div class="admin-item-toolbar">
+                                    <?php foreach (['up' => 'fa-arrow-up', 'down' => 'fa-arrow-down'] as $dir => $ic): ?>
+                                        <form method="post" action="/admin/content-item/move">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="blog"><input type="hidden" name="id" value="<?= e($post['id'] ?? $post['slug'] ?? '') ?>"><input type="hidden" name="dir" value="<?= $dir ?>">
+                                            <button type="submit" title="Move <?= $dir ?>"><i class="fa-solid <?= $ic ?>"></i></button>
+                                        </form>
+                                    <?php endforeach; ?>
+                                    <form method="post" action="/admin/content-item/delete" onsubmit="return confirm('Delete this post?');">
+                                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="blog"><input type="hidden" name="id" value="<?= e($post['id'] ?? $post['slug'] ?? '') ?>">
+                                        <button type="submit" class="danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </details>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Portfolio Manager'): ?>
+            <?php $portfolioList = $portfolioList ?? []; $accents = ['blue', 'cyan', 'green', 'orange', 'purple']; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="type" value="portfolio">
+                    <h2>Add a project</h2>
+                    <p>Projects shown on the home page and <a href="/portfolio" target="_blank" rel="noopener">/portfolio</a>.</p>
+                    <label>Title <input name="title" required></label>
+                    <label>Category <input name="category" placeholder="Healthcare Website, E-Commerce Store…"></label>
+                    <label>Summary <textarea name="summary" rows="3"></textarea></label>
+                    <div class="form-grid two">
+                        <label>Accent colour
+                            <select name="accent"><?php foreach ($accents as $a): ?><option value="<?= $a ?>"><?= ucfirst($a) ?></option><?php endforeach; ?></select>
+                        </label>
+                        <label>Live URL <small>(optional)</small><input name="url" type="url" placeholder="https://…"></label>
+                    </div>
+                    <label>Image filename <small>(optional — upload in Media Library first)</small><input name="image" placeholder="project.webp"></label>
+                    <button class="pill-button" type="submit">Add Project <i class="fa-solid fa-plus"></i></button>
+                </form>
+                <div class="cyber-card admin-editable-panel">
+                    <h2>Projects (<?= count($portfolioList) ?>)</h2>
+                    <div class="admin-editable-list">
+                        <?php foreach ($portfolioList as $pf): ?>
+                            <details class="admin-edit-item">
+                                <summary><i class="fa-solid fa-layer-group"></i> <strong><?= e($pf['title'] ?? '') ?></strong><small><?= e($pf['category'] ?? '') ?></small></summary>
+                                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                    <input type="hidden" name="type" value="portfolio">
+                                    <input type="hidden" name="id" value="<?= e($pf['id'] ?? '') ?>">
+                                    <label>Title <input name="title" value="<?= e($pf['title'] ?? '') ?>" required></label>
+                                    <label>Category <input name="category" value="<?= e($pf['category'] ?? '') ?>"></label>
+                                    <label>Summary <textarea name="summary" rows="3"><?= e($pf['summary'] ?? '') ?></textarea></label>
+                                    <div class="form-grid two">
+                                        <label>Accent colour
+                                            <select name="accent"><?php foreach ($accents as $a): ?><option value="<?= $a ?>" <?= ($pf['accent'] ?? '') === $a ? 'selected' : '' ?>><?= ucfirst($a) ?></option><?php endforeach; ?></select>
+                                        </label>
+                                        <label>Live URL <input name="url" type="url" value="<?= e($pf['url'] ?? '') ?>"></label>
+                                    </div>
+                                    <label>Image filename <input name="image" value="<?= e($pf['image'] ?? '') ?>"></label>
+                                    <div class="admin-item-actions">
+                                        <button class="pill-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                                    </div>
+                                </form>
+                                <div class="admin-item-toolbar">
+                                    <?php foreach (['up' => 'fa-arrow-up', 'down' => 'fa-arrow-down'] as $dir => $ic): ?>
+                                        <form method="post" action="/admin/content-item/move">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="portfolio"><input type="hidden" name="id" value="<?= e($pf['id'] ?? '') ?>"><input type="hidden" name="dir" value="<?= $dir ?>">
+                                            <button type="submit" title="Move <?= $dir ?>"><i class="fa-solid <?= $ic ?>"></i></button>
+                                        </form>
+                                    <?php endforeach; ?>
+                                    <form method="post" action="/admin/content-item/delete" onsubmit="return confirm('Delete this project?');">
+                                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="portfolio"><input type="hidden" name="id" value="<?= e($pf['id'] ?? '') ?>">
+                                        <button type="submit" class="danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </details>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </section>
         <?php endif; ?>
 

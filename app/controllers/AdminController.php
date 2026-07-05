@@ -272,6 +272,8 @@ final class AdminController extends Controller
             'servicesList' => $slug === 'services' ? (new \App\Models\ServiceContentRepository())->ensureSeeded($content->services()) : [],
             'testimonialsList' => $slug === 'testimonials' ? (new \App\Models\TestimonialRepository())->ensureSeeded($content->testimonials()) : [],
             'faqList' => $slug === 'faq' ? (new \App\Models\FaqContentRepository())->ensureSeeded($content->faqs()) : [],
+            'blogList' => $slug === 'blog' ? (new \App\Models\BlogPostRepository())->ensureSeeded($content->posts()) : [],
+            'portfolioList' => $slug === 'portfolio' ? (new \App\Models\PortfolioRepository())->ensureSeeded($content->portfolio()) : [],
             'backlinkPlans' => $slug === 'content' ? (new BacklinkPlanRepository())->all() : [],
             'carePlans' => $slug === 'content' ? (new CarePlanRepository())->all() : [],
             'coupons' => $slug === 'coupons' ? (new CouponRepository())->all() : [],
@@ -547,6 +549,8 @@ final class AdminController extends Controller
         return match ($type) {
             'testimonial' => ['testimonial', new \App\Models\TestimonialRepository(), 'testimonials'],
             'faq' => ['faq', new \App\Models\FaqContentRepository(), 'faq'],
+            'blog' => ['blog post', new \App\Models\BlogPostRepository(), 'blog'],
+            'portfolio' => ['portfolio item', new \App\Models\PortfolioRepository(), 'portfolio'],
             default => ['service', new \App\Models\ServiceContentRepository(), 'services'],
         };
     }
