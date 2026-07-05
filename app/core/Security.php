@@ -12,9 +12,15 @@ final class Security
             return;
         }
 
+        $isHttps = ($_SERVER['HTTPS'] ?? '') === 'on'
+            || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
+            || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443;
+
         session_start([
+            'name' => 'cwm_session',
             'cookie_httponly' => true,
             'cookie_samesite' => 'Lax',
+            'cookie_secure' => $isHttps,
             'use_strict_mode' => true,
         ]);
     }

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 define('BASE_PATH', dirname(__DIR__));
 
+// Never leak stack traces, file paths or SQL to visitors — errors go to the log.
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+
 require BASE_PATH . '/app/helpers/functions.php';
 
 spl_autoload_register(static function (string $class): void {
@@ -83,6 +87,10 @@ if ($isGet) {
         header('Surrogate-Control: no-store');
     }
 }
+
+// Full security response headers (CSP, HSTS, COOP, anti-clickjacking, etc.) are
+// centralised in Router::sendSecurityHeaders() so every routed response — the
+// only responses PHP controls — is hardened from one place.
 
 if (!$isInstalled && !str_starts_with($requestPath, '/install') && !str_starts_with($requestPath, '/assets')) {
     header('Location: /install', true, 302);

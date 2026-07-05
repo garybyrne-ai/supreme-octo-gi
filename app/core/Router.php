@@ -99,11 +99,26 @@ final class Router
 
     private function sendSecurityHeaders(): void
     {
+        if (headers_sent()) {
+            return;
+        }
+
+        header_remove('X-Powered-By');
         header('X-Frame-Options: DENY');
         header('X-Content-Type-Options: nosniff');
         header('Referrer-Policy: strict-origin-when-cross-origin');
-        header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+        header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(self), usb=(), interest-cohort=()');
+        header('Cross-Origin-Opener-Policy: same-origin');
+        header('Cross-Origin-Resource-Policy: same-origin');
+        header('X-Permitted-Cross-Domain-Policies: none');
         header('Content-Security-Policy: ' . ($this->config['security']['csp'] ?? "default-src 'self'"));
+
+        $isHttps = ($_SERVER['HTTPS'] ?? '') === 'on'
+            || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
+            || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443;
+        if ($isHttps) {
+            header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+        }
     }
 }
 

@@ -11,6 +11,7 @@ $adminMenu = [
     'paypal-settings' => ['title' => 'Payment Settings', 'icon' => 'fa-credit-card'],
     'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping'],
     'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card'],
+    'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear'],
     'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question'],
     'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line'],
     'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route'],
@@ -230,6 +231,80 @@ $moduleDrafts = $moduleDrafts ?? [];
                     </div>
                 <?php else: ?>
                     <p>No registered forum members yet.</p>
+                <?php endif; ?>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Member Manager'): ?>
+            <?php $siteMembers = $siteMembers ?? []; ?>
+            <section class="cyber-card member-manager">
+                <div class="section-heading compact">
+                    <span class="status-chip"><span></span> Members</span>
+                    <h2>Member Manager</h2>
+                </div>
+                <p>Edit any member, upgrade or downgrade their Growth Lab Pro access and pick exactly when it ends using the calendar. Leave the expiry blank for lifetime Pro. Downgrading to Free removes tool Pro access immediately.</p>
+                <?php if (!empty($siteMembers)): ?>
+                    <div class="member-card-grid">
+                        <?php foreach ($siteMembers as $sm):
+                            $membership = is_array($sm['membership'] ?? null) ? $sm['membership'] : [];
+                            $isPro = \App\Models\MemberRepository::isPro($sm);
+                            $endsAt = (string) ($membership['current_period_ends_at'] ?? '');
+                            $endsInput = $endsAt !== '' ? date('Y-m-d\TH:i', (int) strtotime($endsAt)) : '';
+                            $endsLabel = $endsAt !== '' ? date('j M Y, H:i', (int) strtotime($endsAt)) : 'Lifetime';
+                        ?>
+                            <article class="member-card <?= $isPro ? 'is-pro' : 'is-free' ?>">
+                                <header class="member-card-head">
+                                    <div>
+                                        <strong><?= e($sm['name'] ?? 'Member') ?></strong>
+                                        <small><?= e($sm['email'] ?? '') ?></small>
+                                    </div>
+                                    <span class="member-tier <?= $isPro ? 'tier-pro' : 'tier-free' ?>">
+                                        <?= $isPro ? 'PRO' : 'FREE' ?>
+                                    </span>
+                                </header>
+                                <p class="member-meta">
+                                    <?php if ($isPro): ?>
+                                        <i class="fa-solid fa-circle-check"></i> Pro until <strong><?= e($endsLabel) ?></strong>
+                                    <?php elseif (!empty($membership)): ?>
+                                        <i class="fa-solid fa-clock"></i> Pro expired / cancelled
+                                    <?php else: ?>
+                                        <i class="fa-regular fa-circle"></i> Free account
+                                    <?php endif; ?>
+                                    <?php if (!empty($sm['forum_verified'])): ?><span class="member-flag">Forum approved</span><?php endif; ?>
+                                </p>
+                                <form class="cyber-form member-edit-form" method="post" action="/admin/members/save">
+                                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                    <input type="hidden" name="member_id" value="<?= e($sm['id'] ?? '') ?>">
+                                    <div class="form-grid two">
+                                        <label>Name <input name="name" value="<?= e($sm['name'] ?? '') ?>"></label>
+                                        <label>Email <input name="email" type="email" value="<?= e($sm['email'] ?? '') ?>"></label>
+                                    </div>
+                                    <div class="form-grid two">
+                                        <label>Membership
+                                            <select name="plan" data-member-plan>
+                                                <option value="pro" <?= $isPro ? 'selected' : '' ?>>Pro (Growth Lab)</option>
+                                                <option value="free" <?= $isPro ? '' : 'selected' ?>>Free</option>
+                                            </select>
+                                        </label>
+                                        <label>Pro access ends <small>(calendar — blank = lifetime)</small>
+                                            <input name="expires_at" type="datetime-local" value="<?= e($endsInput) ?>">
+                                        </label>
+                                    </div>
+                                    <label class="member-check"><input type="checkbox" name="forum_verified" value="1" <?= !empty($sm['forum_verified']) ? 'checked' : '' ?>> Allow forum posting</label>
+                                    <div class="member-card-actions">
+                                        <button class="pill-button" type="submit">Save Member <i class="fa-solid fa-floppy-disk"></i></button>
+                                    </div>
+                                </form>
+                                <form method="post" action="/admin/members/delete" class="member-delete-form" onsubmit="return confirm('Delete this member permanently? This cannot be undone.');">
+                                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                    <input type="hidden" name="member_id" value="<?= e($sm['id'] ?? '') ?>">
+                                    <button class="pill-button ghost danger" type="submit"><i class="fa-solid fa-trash"></i> Delete member</button>
+                                </form>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p>No members yet. When people register at <a href="/account/forms" target="_blank" rel="noopener">/account</a> they will appear here, and you can also create one from the <a href="/admin/modules/membership">Pro Test Account</a> tool.</p>
                 <?php endif; ?>
             </section>
         <?php endif; ?>

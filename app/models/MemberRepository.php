@@ -167,6 +167,112 @@ final class MemberRepository
         return $ts === false || $ts > time();
     }
 
+    /**
+     * Fetch a single member by id (without the password hash).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function find(string $id): ?array
+    {
+        foreach ($this->all() as $member) {
+            if (($member['id'] ?? '') === $id) {
+                unset($member['password_hash']);
+                return $member;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Admin edit of a member: name, email, forum posting access and membership
+     * tier with an explicit expiry date/time. Selecting "free" downgrades the
+     * member; "pro" upgrades them and (optionally) sets when access ends.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed> the updated member (without password hash)
+     */
+    public function adminUpdate(string $id, array $data): array
+    {
+        $members = $this->all();
+
+        $newEmail = strtolower(trim((string) ($data['email'] ?? '')));
+        if ($newEmail !== '' && !filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new \RuntimeException('Enter a valid email address.');
+        }
+        foreach ($members as $existing) {
+            if (($existing['id'] ?? '') !== $id && $newEmail !== '' && ($existing['email'] ?? '') === $newEmail) {
+                throw new \RuntimeException('Another member already uses that email address.');
+            }
+        }
+
+        $plan = strtolower(trim((string) ($data['plan'] ?? 'free')));
+        $expiresIso = null;
+        if ($plan === 'pro') {
+            $expiresRaw = trim((string) ($data['expires_at'] ?? ''));
+            if ($expiresRaw !== '') {
+                $ts = strtotime($expiresRaw);
+                if ($ts === false) {
+                    throw new \RuntimeException('Enter a valid expiry date and time.');
+                }
+                $expiresIso = date('c', $ts);
+            }
+        }
+
+        $found = false;
+        foreach ($members as &$member) {
+            if (($member['id'] ?? '') !== $id) {
+                continue;
+            }
+
+            if (trim((string) ($data['name'] ?? '')) !== '') {
+                $member['name'] = trim((string) $data['name']);
+            }
+            if ($newEmail !== '') {
+                $member['email'] = $newEmail;
+            }
+            $member['forum_verified'] = !empty($data['forum_verified']);
+
+            if ($plan === 'pro') {
+                $current = is_array($member['membership'] ?? null) ? $member['membership'] : [];
+                $member['membership'] = array_replace($current, [
+                    'plan' => $current['plan'] ?? 'growth-lab-pro',
+                    'plan_name' => $current['plan_name'] ?? 'Growth Lab Pro',
+                    'status' => 'active',
+                    'provider' => $current['provider'] ?? 'admin',
+                    'activated_at' => $current['activated_at'] ?? gmdate('c'),
+                    'current_period_ends_at' => $expiresIso,
+                    'updated_at' => gmdate('c'),
+                ]);
+            } else {
+                // Downgrade to Free — drop the active membership entirely.
+                $member['membership'] = null;
+            }
+
+            $found = true;
+            break;
+        }
+        unset($member);
+
+        if (!$found) {
+            throw new \RuntimeException('Member not found.');
+        }
+
+        $this->save($members);
+
+        return $this->find($id) ?? [];
+    }
+
+    public function deleteMember(string $id): void
+    {
+        $members = array_values(array_filter(
+            $this->all(),
+            static fn (array $member): bool => ($member['id'] ?? '') !== $id
+        ));
+
+        $this->save($members);
+    }
+
     public function recent(int $limit = 80): array
     {
         $members = $this->all();

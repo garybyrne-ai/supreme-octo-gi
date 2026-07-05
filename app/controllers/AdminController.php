@@ -164,6 +164,7 @@ final class AdminController extends Controller
             ['slug' => 'paypal-settings', 'title' => 'Payment Settings', 'icon' => 'fa-credit-card', 'summary' => 'Configure PayPal links, Stripe checkout keys and Growth Lab Pass subscriptions.'],
             ['slug' => 'commerce', 'title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'summary' => 'Sell themes, plugins, templates and services marketplace-style with private ZIP packages, licenses, orders and download grants.'],
             ['slug' => 'membership', 'title' => 'Membership Plans', 'icon' => 'fa-id-card', 'summary' => 'Control every membership tier: price, billing interval, trial, Stripe and PayPal wiring, features and availability.'],
+            ['slug' => 'members', 'title' => 'Member Manager', 'icon' => 'fa-users-gear', 'summary' => 'Edit members, upgrade or downgrade Pro access with a calendar expiry date, manage forum posting and remove accounts.'],
             ['slug' => 'faq', 'title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'summary' => 'Edit answers for common sales, delivery and support questions.'],
             ['slug' => 'seo', 'title' => 'SEO Center', 'icon' => 'fa-chart-line', 'summary' => 'Review titles, descriptions, schema signals and crawl priorities.'],
             ['slug' => 'redirects', 'title' => 'Redirect Manager', 'icon' => 'fa-route', 'summary' => 'Plan redirects, campaign URLs and migration-safe route changes.'],
@@ -214,6 +215,7 @@ final class AdminController extends Controller
             'paypal-settings' => ['title' => 'Payment Settings', 'icon' => 'fa-credit-card', 'actions' => ['Set gateway keys', 'Add checkout links', 'Configure Growth Lab Pass']],
             'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'actions' => ['Create marketplace item', 'Attach private ZIP package', 'Review order lifecycle']],
             'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card', 'actions' => ['Create plan', 'Edit pricing and gateways', 'Pause or feature a plan']],
+            'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear', 'actions' => ['Edit member', 'Upgrade or downgrade Pro', 'Set access expiry']],
             'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'actions' => ['Add answer', 'Update schema FAQ', 'Review sales objections']],
             'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line', 'actions' => ['Audit metadata', 'Preview schema', 'Map internal links']],
             'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route', 'actions' => ['Add redirect', 'Import route map', 'Test status codes']],
@@ -241,6 +243,7 @@ final class AdminController extends Controller
             'toolLeads' => $slug === 'newsletter-offer' ? (new ToolLeadRepository())->recent(30) : [],
             'mediaItems' => $slug === 'media' ? (new MediaLibrary())->items(120) : [],
             'forumMembers' => $slug === 'forum-members' ? (new MemberRepository())->recent(120) : [],
+            'siteMembers' => $slug === 'members' ? (new MemberRepository())->recent(200) : [],
             'membershipPlans' => $slug === 'membership' ? (new MembershipPlanRepository())->all() : [],
             'siteContent' => $slug === 'content' ? (new SiteContentRepository())->all() : [],
             'backlinkPlans' => $slug === 'content' ? (new BacklinkPlanRepository())->all() : [],
@@ -369,6 +372,63 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/content');
+    }
+
+    public function saveMember(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Member session token expired. Please try again.';
+            $this->redirect('/admin/modules/members');
+        }
+
+        try {
+            $id = (string) ($_POST['member_id'] ?? '');
+            if ($id === '') {
+                throw new \RuntimeException('A member id is required.');
+            }
+            $member = (new MemberRepository())->adminUpdate($id, $_POST);
+            $tier = MemberRepository::isPro($member) ? 'Pro' : 'Free';
+            $_SESSION['admin_notice'] = 'Member “' . ($member['email'] ?? '') . '” saved (' . $tier . ').';
+            (new AuditLogger())->log('admin.member.updated', ['id' => $id, 'plan' => $_POST['plan'] ?? '']);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/members');
+    }
+
+    public function deleteMember(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Member session token expired. Please try again.';
+            $this->redirect('/admin/modules/members');
+        }
+
+        try {
+            $id = (string) ($_POST['member_id'] ?? '');
+            if ($id === '') {
+                throw new \RuntimeException('A member id is required.');
+            }
+            (new MemberRepository())->deleteMember($id);
+            $_SESSION['admin_notice'] = 'Member deleted.';
+            (new AuditLogger())->log('admin.member.deleted', ['id' => $id]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/members');
     }
 
     public function createTestMember(): void

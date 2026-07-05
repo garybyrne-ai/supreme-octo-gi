@@ -354,3 +354,59 @@
 
 .cyber-note { color: var(--muted); font-size: .82rem; line-height: 1.6; margin: 4px 0 6px; }
 .cyber-note code { background: rgba(0,229,255,.12); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+
+/* ==========================================================================
+   Member Manager + Pro Test Account (admin) — edit members, upgrade/downgrade
+   Pro with a calendar expiry, and manage forum access.
+   ========================================================================== */
+.pro-test-account { margin-bottom: 22px; }
+.pro-test-account .form-grid.two { margin-bottom: 12px; }
+
+.member-manager > p { color: var(--muted); max-width: 760px; }
+.member-card-grid {
+    display: grid; gap: 16px; margin-top: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}
+.member-card {
+    border: 1px solid var(--line); border-radius: 16px;
+    background: rgba(6, 12, 24, .55);
+    padding: 18px; display: grid; gap: 12px;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+.member-card.is-pro { border-color: rgba(0, 229, 255, .38); box-shadow: inset 0 0 0 1px rgba(0, 229, 255, .08); }
+.member-card:hover { border-color: var(--primary); }
+.member-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.member-card-head strong { display: block; font-family: var(--font-display); font-size: 1.05rem; }
+.member-card-head small { color: var(--muted); word-break: break-all; }
+.member-tier {
+    flex: none; font-size: .68rem; font-weight: 800; letter-spacing: .08em;
+    padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line);
+}
+.member-tier.tier-pro { color: #04101f; background: linear-gradient(120deg, var(--primary), var(--secondary, #7c5cff)); border: 0; }
+.member-tier.tier-free { color: var(--muted); }
+.member-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--muted); font-size: .85rem; margin: 0; }
+.member-meta i { color: var(--primary); }
+.member-card.is-free .member-meta i { color: var(--muted); }
+.member-flag {
+    font-size: .66rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--success); border: 1px solid rgba(25, 247, 154, .35);
+    background: rgba(25, 247, 154, .08); padding: 2px 8px; border-radius: 999px;
+}
+.member-edit-form { display: grid; gap: 12px; margin: 0; padding: 0; border: 0; background: none; }
+.member-edit-form .form-grid.two { gap: 12px; }
+.member-edit-form label { display: grid; gap: 6px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.member-edit-form input,
+.member-edit-form select {
+    width: 100%; padding: 11px 13px; border-radius: 10px;
+    border: 1px solid var(--line); background: rgba(2, 6, 16, .7); color: var(--text);
+    font-size: .92rem; font-family: inherit; text-transform: none; letter-spacing: normal;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+.member-edit-form input:focus,
+.member-edit-form select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 229, 255, .16); }
+.member-check { display: flex !important; flex-direction: row !important; align-items: center; gap: 8px; text-transform: none !important; letter-spacing: normal !important; font-weight: 600 !important; color: var(--text) !important; }
+.member-check input { width: auto; }
+.member-card-actions { display: flex; gap: 10px; }
+.member-delete-form { margin: 0; }
+.member-delete-form .pill-button.danger { color: var(--danger); border-color: rgba(255, 77, 129, .4); }
+@media (max-width: 480px) { .member-card-grid { grid-template-columns: 1fr; } }

@@ -109,6 +109,8 @@ $router->post('/admin/content/{section}', [AdminController::class, 'updateSiteCo
 $router->post('/admin/backlink-plans', [AdminController::class, 'saveBacklinkPlan']);
 $router->post('/admin/backlink-plans/state', [AdminController::class, 'deleteBacklinkPlan']);
 $router->post('/admin/test-member', [AdminController::class, 'createTestMember']);
+$router->post('/admin/members/save', [AdminController::class, 'saveMember']);
+$router->post('/admin/members/delete', [AdminController::class, 'deleteMember']);
 $router->post('/admin/newsletter-offer', [AdminController::class, 'updateNewsletterOffer']);
 $router->post('/admin/mail-settings', [AdminController::class, 'updateMailSettings']);
 $router->post('/admin/mail-settings/test', [AdminController::class, 'testMailSettings']);
