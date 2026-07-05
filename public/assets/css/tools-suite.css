@@ -334,3 +334,118 @@
 
 .pricing-upsell-banner { text-align:center; max-width:640px; margin:0 auto 18px; padding:12px 18px; border:1px solid var(--line); border-radius:999px; background:rgba(35,255,154,.06); color:var(--text); font-size:.92rem; }
 .pricing-upsell-banner i { color: var(--accent); }
+
+/* ==========================================================================
+   Premium, simplified tool forms — unified glass card, big focus-glow inputs,
+   responsive field grid and a gradient run button. Applies to every tool
+   (.cyber-form.glass-tool) with no per-page markup changes.
+   ========================================================================== */
+.cyber-form.glass-tool {
+    position: relative;
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    align-items: end;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: clamp(22px, 4vw, 38px);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background:
+        radial-gradient(140% 120% at 0% 0%, rgba(0, 229, 255, .10), transparent 55%),
+        radial-gradient(140% 120% at 100% 0%, rgba(124, 92, 255, .12), transparent 55%),
+        rgba(6, 12, 24, .66);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 24px 60px -30px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .05);
+    overflow: hidden;
+}
+.cyber-form.glass-tool::before {
+    content: "";
+    position: absolute; inset: 0 0 auto 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), var(--secondary, #7c5cff), transparent);
+    background-size: 220% 100%;
+    animation: toolScan 4.5s linear infinite;
+    opacity: .9;
+}
+.cyber-form.glass-tool > h2,
+.cyber-form.glass-tool > p,
+.cyber-form.glass-tool > .notice,
+.cyber-form.glass-tool > button,
+.cyber-form.glass-tool > input[type="hidden"] {
+    grid-column: 1 / -1;
+    margin: 0;
+}
+.cyber-form.glass-tool > h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    letter-spacing: -.01em;
+    display: flex; align-items: center; gap: 10px;
+}
+.cyber-form.glass-tool > h2::before {
+    content: ""; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--primary); box-shadow: 0 0 12px var(--primary); flex: none;
+}
+.cyber-form.glass-tool > p { color: var(--muted); font-size: .92rem; margin-top: -6px; }
+.cyber-form.glass-tool label {
+    display: grid; gap: 8px;
+    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted);
+}
+.cyber-form.glass-tool label input,
+.cyber-form.glass-tool label select {
+    width: 100%;
+    padding: 15px 17px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(2, 6, 16, .7);
+    color: var(--text);
+    font-size: 1rem;
+    font-family: inherit;
+    letter-spacing: normal; text-transform: none;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.cyber-form.glass-tool label input::placeholder { color: rgba(150, 166, 190, .55); }
+.cyber-form.glass-tool label input:focus,
+.cyber-form.glass-tool label select:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(2, 6, 16, .92);
+    box-shadow: 0 0 0 4px rgba(0, 229, 255, .16);
+}
+.cyber-form.glass-tool > button {
+    justify-self: start;
+    display: inline-flex; align-items: center; gap: 10px;
+    margin-top: 4px;
+    padding: 15px 30px;
+    border: 0; border-radius: 999px;
+    font-size: .98rem; font-weight: 700; cursor: pointer;
+    color: #04101f;
+    background: linear-gradient(120deg, var(--primary), var(--secondary, #7c5cff));
+    box-shadow: 0 14px 30px -12px rgba(0, 229, 255, .55);
+    transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.cyber-form.glass-tool > button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+    box-shadow: 0 20px 40px -12px rgba(0, 229, 255, .7);
+}
+.cyber-form.glass-tool > button:active { transform: translateY(0); }
+.cyber-form.glass-tool > button i { transition: transform .2s ease; }
+.cyber-form.glass-tool > button:hover i { transform: translateX(4px); }
+.cyber-form.glass-tool > .notice.error {
+    border: 1px solid rgba(255, 77, 129, .4);
+    background: rgba(255, 77, 129, .1);
+    color: #ffd6e0;
+    border-radius: 12px; padding: 12px 14px; font-size: .9rem;
+}
+@keyframes toolScan { 0% { background-position: 120% 0; } 100% { background-position: -120% 0; } }
+@media (max-width: 560px) {
+    .cyber-form.glass-tool { grid-template-columns: 1fr; }
+    .cyber-form.glass-tool > button { justify-self: stretch; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cyber-form.glass-tool::before { animation: none; }
+    .cyber-form.glass-tool > button:hover { transform: none; }
+    .cyber-form.glass-tool > button:hover i { transform: none; }
+}

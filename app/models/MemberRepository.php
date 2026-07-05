@@ -32,6 +32,64 @@ final class MemberRepository
         return $member;
     }
 
+    /**
+     * Create or refresh a member and grant them active Growth Lab Pro access.
+     * Used by the admin "Pro Test Account" tool so the owner can log in and
+     * exercise every gated tool. Merges by email — existing members and their
+     * data are never clobbered.
+     *
+     * @return array<string, mixed> the member (without password hash)
+     */
+    public function upsertProMember(string $name, string $email, string $password): array
+    {
+        $email = strtolower(trim($email));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \RuntimeException('Enter a valid email address for the test account.');
+        }
+        if (strlen($password) < 10) {
+            throw new \RuntimeException('Use a password of at least 10 characters.');
+        }
+
+        $membership = [
+            'plan' => 'growth-lab-pro-test',
+            'plan_name' => 'Growth Lab Pro (test)',
+            'status' => 'active',
+            'provider' => 'admin-test',
+            'activated_at' => gmdate('c'),
+            'current_period_ends_at' => gmdate('c', time() + (3650 * 86400)),
+        ];
+
+        $members = $this->all();
+        $found = false;
+        foreach ($members as &$member) {
+            if (($member['email'] ?? '') === $email) {
+                $member['name'] = trim($name) !== '' ? trim($name) : ($member['name'] ?? 'Pro Tester');
+                $member['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+                $member['membership'] = $membership;
+                $member['forum_verified'] = true;
+                $found = true;
+                break;
+            }
+        }
+        unset($member);
+
+        if (!$found) {
+            array_unshift($members, [
+                'id' => bin2hex(random_bytes(8)),
+                'name' => trim($name) !== '' ? trim($name) : 'Pro Tester',
+                'email' => $email,
+                'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                'forum_verified' => true,
+                'membership' => $membership,
+                'created_at' => gmdate('c'),
+            ]);
+        }
+
+        $this->save($members);
+
+        return $this->findByEmail($email) ?? [];
+    }
+
     public function verify(string $email, string $password): ?array
     {
         $email = strtolower(trim($email));

@@ -108,6 +108,7 @@ $router->post('/admin/forum-members/verify', [AdminController::class, 'verifyFor
 $router->post('/admin/content/{section}', [AdminController::class, 'updateSiteContent']);
 $router->post('/admin/backlink-plans', [AdminController::class, 'saveBacklinkPlan']);
 $router->post('/admin/backlink-plans/state', [AdminController::class, 'deleteBacklinkPlan']);
+$router->post('/admin/test-member', [AdminController::class, 'createTestMember']);
 $router->post('/admin/newsletter-offer', [AdminController::class, 'updateNewsletterOffer']);
 $router->post('/admin/mail-settings', [AdminController::class, 'updateMailSettings']);
 $router->post('/admin/mail-settings/test', [AdminController::class, 'testMailSettings']);

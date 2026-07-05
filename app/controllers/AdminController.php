@@ -371,6 +371,34 @@ final class AdminController extends Controller
         $this->redirect('/admin/modules/content');
     }
 
+    public function createTestMember(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Test account token expired. Please try again.';
+            $this->redirect('/admin/modules/membership');
+        }
+
+        try {
+            $member = (new MemberRepository())->upsertProMember(
+                (string) ($_POST['name'] ?? 'Pro Tester'),
+                (string) ($_POST['email'] ?? ''),
+                (string) ($_POST['password'] ?? '')
+            );
+            $_SESSION['admin_notice'] = 'Pro test account ready: ' . ($member['email'] ?? '') . '. Sign in at /account with the password you just set to test every tool as a paid member. Delete this account before launch.';
+            (new AuditLogger())->log('admin.test_member.created', ['email' => $member['email'] ?? '']);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/membership');
+    }
+
     public function updateNewsletterOffer(): void
     {
         Security::ensureSession();

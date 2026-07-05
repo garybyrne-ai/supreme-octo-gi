@@ -1020,6 +1020,11 @@ final class ToolsController extends Controller
     {
         Security::ensureSession();
 
+        // Growth Lab Pro members get unlimited scans — bypass the daily free cap.
+        if (MemberRepository::isPro($_SESSION['member'] ?? null)) {
+            return true;
+        }
+
         $email = (string) ($_SESSION['tool_lead']['email'] ?? '');
         if ($email === '') {
             return false;

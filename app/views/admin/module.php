@@ -807,6 +807,23 @@ $moduleDrafts = $moduleDrafts ?? [];
                 'yearly' => 'Yearly',
             ];
             ?>
+            <section class="cyber-card pro-test-account">
+                <div class="section-heading compact">
+                    <span class="status-chip"><span></span> Testing</span>
+                    <h2>Pro Test Account</h2>
+                </div>
+                <p>Create a Growth Lab <strong>Pro</strong> member so you can sign in at <a href="/account" target="_blank" rel="noopener">/account</a> and test every tool with unlimited scans, white-label reports and saved reports. Choose any password — it is never stored in code. Delete or downgrade this account before you launch publicly.</p>
+                <form class="cyber-form" method="post" action="/admin/test-member">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <div class="form-grid two">
+                        <label>Name <input name="name" value="Pro Tester"></label>
+                        <label>Email (username) <input name="email" type="email" value="pro@crestwebmedia.com" required></label>
+                    </div>
+                    <label>Password <small>(min 10 characters — you choose it)</small>
+                        <input name="password" type="text" minlength="10" placeholder="Type a strong password you'll remember" required></label>
+                    <button class="pill-button" type="submit">Create / Refresh Pro Test Login <i class="fa-solid fa-user-shield"></i></button>
+                </form>
+            </section>
             <section class="split-section membership-admin">
                 <form class="cyber-form membership-plan-form" method="post" action="/admin/membership/plans">
                     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
