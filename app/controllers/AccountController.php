@@ -49,6 +49,7 @@ final class AccountController extends Controller
             'plans' => (new MembershipPlanRepository())->activePlans(),
             'planRepo' => new MembershipPlanRepository(),
             'referral' => (new \App\Models\ReferralRepository())->statsFor($email, (string) ($member['name'] ?? '')),
+            'portalLog' => (new \App\Models\ClientPortalRepository())->forEmail($email),
             'csrf' => Security::csrfToken(),
             'notice' => $_SESSION['account_notice'] ?? null,
             'error' => $_SESSION['account_error'] ?? null,

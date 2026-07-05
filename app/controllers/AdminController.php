@@ -172,6 +172,7 @@ final class AdminController extends Controller
             ['slug' => 'members', 'title' => 'Member Manager', 'icon' => 'fa-users-gear', 'summary' => 'Edit members, upgrade or downgrade Pro access with a calendar expiry date, manage forum posting and remove accounts.'],
             ['slug' => 'clients', 'title' => 'Clients', 'icon' => 'fa-handshake', 'summary' => 'Manage the client logo wall and case studies: name, logo image, industry, services, results — shown on the home page and gated portfolio.'],
             ['slug' => 'referrals', 'title' => 'Referrals', 'icon' => 'fa-share-nodes', 'summary' => 'See who referred whom through the 20% referral program, so you can track and pay commissions.'],
+            ['slug' => 'work-log', 'title' => 'Client Work Log', 'icon' => 'fa-clipboard-list', 'summary' => 'Post work updates, reports, backups and notes for a client — they see them in their logged-in client portal.'],
             ['slug' => 'coupons', 'title' => 'Coupons', 'icon' => 'fa-tags', 'summary' => 'Create discount codes for backlinks, care plans, audits and Speed Rescue — percent or fixed, usage caps and expiry dates.'],
             ['slug' => 'ads', 'title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'summary' => 'Paste your Google AdSense ID, edit ads.txt and the GDPR cookie-consent message. Ads only load after visitors consent.'],
             ['slug' => 'search-console', 'title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart', 'summary' => 'Set the Google OAuth Client ID & Secret so Pro members can connect Search Console and import queries, clicks and backlinks.'],
@@ -228,6 +229,7 @@ final class AdminController extends Controller
             'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear', 'actions' => ['Edit member', 'Upgrade or downgrade Pro', 'Set access expiry']],
             'clients' => ['title' => 'Clients', 'icon' => 'fa-handshake', 'actions' => ['Add client logo', 'Edit case study', 'Reorder or hide']],
             'referrals' => ['title' => 'Referrals', 'icon' => 'fa-share-nodes', 'actions' => ['Review referrals', 'Track commissions']],
+            'work-log' => ['title' => 'Client Work Log', 'icon' => 'fa-clipboard-list', 'actions' => ['Post an update', 'Attach a report', 'Log a backup']],
             'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags', 'actions' => ['Create coupon', 'Set usage cap & expiry', 'Pause or delete codes']],
             'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'actions' => ['Set AdSense ID', 'Edit ads.txt', 'Edit consent message']],
             'search-console' => ['title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart', 'actions' => ['Set OAuth Client ID', 'Set Client Secret', 'Copy redirect URI']],
@@ -270,6 +272,8 @@ final class AdminController extends Controller
             'gscRedirectUri' => $slug === 'search-console' ? (new \App\Services\SearchConsoleService())->redirectUri() : '',
             'clientList' => $slug === 'clients' ? (new ClientRepository())->all() : [],
             'referralEvents' => $slug === 'referrals' ? (new \App\Models\ReferralRepository())->allEvents() : [],
+            'workLog' => $slug === 'work-log' ? (new \App\Models\ClientPortalRepository())->recent(60) : [],
+            'workLogTypes' => \App\Models\ClientPortalRepository::TYPES,
             'pageIntroDefs' => $slug === 'content' ? (new SiteContentRepository())->pageIntroDefinitions() : [],
             'catalogProducts' => $slug === 'commerce' ? (new CommerceRepository())->allProducts() : [],
             'intervals' => MembershipPlanRepository::INTERVALS,
@@ -433,6 +437,35 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/clients');
+    }
+
+    public function saveWorkLog(): void
+    {
+        $this->guardAdminPost('/admin/modules/work-log', 'Work log token expired. Please try again.');
+
+        try {
+            (new \App\Models\ClientPortalRepository())->add($_POST);
+            $_SESSION['admin_notice'] = 'Work log entry posted — the client sees it in their portal.';
+            (new AuditLogger())->log('admin.work_log.added', ['email' => $_POST['email'] ?? '']);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/work-log');
+    }
+
+    public function deleteWorkLog(): void
+    {
+        $this->guardAdminPost('/admin/modules/work-log', 'Work log token expired. Please try again.');
+
+        try {
+            (new \App\Models\ClientPortalRepository())->delete((string) ($_POST['email'] ?? ''), (string) ($_POST['id'] ?? ''));
+            $_SESSION['admin_notice'] = 'Work log entry removed.';
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/work-log');
     }
 
     public function updateSearchConsoleSettings(): void

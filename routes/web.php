@@ -108,6 +108,8 @@ $router->post('/support/tickets', [SupportController::class, 'store']);
 $router->get('/ads.txt', [PageController::class, 'adsTxt']);
 $router->post('/admin/ads-settings', [AdminController::class, 'updateAdsSettings']);
 $router->post('/admin/search-console-settings', [AdminController::class, 'updateSearchConsoleSettings']);
+$router->post('/admin/work-log', [AdminController::class, 'saveWorkLog']);
+$router->post('/admin/work-log/delete', [AdminController::class, 'deleteWorkLog']);
 $router->post('/admin/clients', [AdminController::class, 'saveClient']);
 $router->post('/admin/clients/state', [AdminController::class, 'clientState']);
 $router->get('/privacy-policy', [PageController::class, 'legal']);

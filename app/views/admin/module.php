@@ -14,6 +14,7 @@ $adminMenu = [
     'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear'],
     'clients' => ['title' => 'Clients', 'icon' => 'fa-handshake'],
     'referrals' => ['title' => 'Referrals', 'icon' => 'fa-share-nodes'],
+    'work-log' => ['title' => 'Client Work Log', 'icon' => 'fa-clipboard-list'],
     'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags'],
     'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad'],
     'search-console' => ['title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart'],
@@ -37,7 +38,7 @@ $modulesWithRealUi = [
     'Media Library', 'Support Tickets', 'Forum Members', 'Member Manager', 'Clients',
     'Site Content', 'Ads & Consent', 'Newsletter Offer', 'Mail Settings', 'Payment Settings',
     'Commerce Engine', 'Membership Plans', 'Coupons', 'Theme Settings',
-    'Clients', 'Search Console', 'Referrals',
+    'Clients', 'Search Console', 'Referrals', 'Client Work Log',
 ];
 $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
 ?>
@@ -450,6 +451,51 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                     </form>
                     <p><small><i class="fa-solid fa-circle-info"></i> AdSense also wants you to place ad units in your pages. Once approved, paste the ad-unit snippet into <a href="/admin/modules/theme">Theme Settings → Script injections</a> or tell me where you want ads and I'll wire the slots.</small></p>
                 </div>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Client Work Log'): ?>
+            <?php $workLog = $workLog ?? []; $workLogTypes = $workLogTypes ?? \App\Models\ClientPortalRepository::TYPES; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/work-log">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>Post a client update</h2>
+                    <p>The client sees this on their logged-in dashboard (they must have registered with this email). Great for care-plan clients: log work done, attach a report link, note a backup.</p>
+                    <div class="form-grid two">
+                        <label>Client email <input name="email" type="email" required placeholder="client@business.ie"></label>
+                        <label>Type
+                            <select name="type">
+                                <?php foreach ($workLogTypes as $t): ?><option value="<?= e($t) ?>"><?= e(ucfirst($t)) ?></option><?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>Date <input name="date" type="date"></label>
+                        <label>Report / file link <small>(optional)</small> <input name="link" placeholder="https://…"></label>
+                    </div>
+                    <label>Title <input name="title" required placeholder="Monthly maintenance completed"></label>
+                    <label>Note <textarea name="note" rows="4" placeholder="What was done, findings, next steps…"></textarea></label>
+                    <button class="pill-button" type="submit">Post Update <i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+                <section class="cyber-card ticket-table-card">
+                    <h2>Recent entries</h2>
+                    <?php if (!empty($workLog)): ?>
+                        <div class="ticket-table full">
+                            <?php foreach ($workLog as $entry): ?>
+                                <div>
+                                    <strong><?= e($entry['title'] ?? '') ?></strong>
+                                    <span><?= e($entry['email'] ?? '') ?><small><?= e(ucfirst((string) ($entry['type'] ?? 'update'))) ?> · <?= e((string) ($entry['date'] ?? '')) ?></small></span>
+                                    <form method="post" action="/admin/work-log/delete" onsubmit="return confirm('Delete this entry?');">
+                                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                        <input type="hidden" name="email" value="<?= e($entry['email'] ?? '') ?>">
+                                        <input type="hidden" name="id" value="<?= e($entry['id'] ?? '') ?>">
+                                        <button class="pill-button ghost small danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p>No entries yet. Post your first client update on the left.</p>
+                    <?php endif; ?>
+                </section>
             </section>
         <?php endif; ?>
 

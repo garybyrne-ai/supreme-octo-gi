@@ -183,6 +183,31 @@ $toolMenu = [
             <?php endif; ?>
         </section>
 
+        <?php $portalLog = $portalLog ?? []; ?>
+        <?php if (!empty($portalLog)): ?>
+        <?php $typeIcons = ['update' => 'fa-screwdriver-wrench', 'report' => 'fa-file-lines', 'backup' => 'fa-database', 'seo' => 'fa-chart-line', 'note' => 'fa-note-sticky']; ?>
+        <section class="cyber-card account-panel work-log-panel">
+            <div class="section-heading compact left">
+                <span class="status-chip"><span></span> Your Project</span>
+                <h2>Work log &amp; reports</h2>
+            </div>
+            <p>Updates from the Crest Web Media team on your website, SEO and maintenance.</p>
+            <div class="work-log-list">
+                <?php foreach (array_slice($portalLog, 0, 30) as $entry): ?>
+                    <article class="work-log-item">
+                        <span class="work-log-icon"><i class="fa-solid <?= e($typeIcons[$entry['type'] ?? 'update'] ?? 'fa-screwdriver-wrench') ?>"></i></span>
+                        <div>
+                            <strong><?= e($entry['title'] ?? '') ?></strong>
+                            <small><?= e(ucfirst((string) ($entry['type'] ?? 'update'))) ?> · <?= e(!empty($entry['date']) ? gmdate('j M Y', (int) strtotime((string) $entry['date'])) : '') ?></small>
+                            <?php if (!empty($entry['note'])): ?><p><?= nl2br(e($entry['note'])) ?></p><?php endif; ?>
+                            <?php if (!empty($entry['link'])): ?><a class="small-link" href="<?= e($entry['link']) ?>" target="_blank" rel="noopener">Open report <i class="fa-solid fa-arrow-up-right-from-square"></i></a><?php endif; ?>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <?php endif; ?>
+
         <?php $referral = $referral ?? ['code' => '', 'count' => 0]; ?>
         <?php if (!empty($referral['code'])): ?>
         <?php
