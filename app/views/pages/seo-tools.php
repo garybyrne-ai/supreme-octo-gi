@@ -1,7 +1,7 @@
 <section class="subhero tools-hero">
     <span class="status-chip"><span></span> Free SEO Audit</span>
-    <h1>SEO Tool Built for Pages That Need to Win Work</h1>
-    <p>Audit any public page for titles, meta descriptions, headings, schema, image alt text, internal links, content depth, indexability and keyword usage.</p>
+    <h1>The Deepest Free On-Page &amp; Technical SEO Audit in Ireland</h1>
+    <p>28+ weighted checks on any public page — titles, meta, heading hierarchy, schema, Core Web Vitals signals, HTTPS, links, readability and full keyword &amp; content analysis — with a prioritised fix list and a white-label PDF you can hand to clients.</p>
 </section>
 
 <?php require base_path('app/views/partials/tool-access-gate.php'); ?>

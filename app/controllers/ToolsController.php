@@ -36,8 +36,8 @@ final class ToolsController extends Controller
     public function seoTools(array $data = []): void
     {
         $this->render('pages/seo-tools', array_replace([
-            'title' => 'Free SEO Tools | Crest Web Media',
-            'metaDescription' => 'Free SEO audit tools for titles, meta descriptions, headings, content, links, schema, images and indexability.',
+            'title' => 'Free On-Page SEO Audit Tool (28+ Checks) | Crest Web Media',
+            'metaDescription' => 'The deepest free on-page & technical SEO audit in Ireland: 28+ weighted checks — titles, meta, heading hierarchy, schema, Core Web Vitals, readability, keyword & content analysis — with a prioritised fix list and white-label PDF export.',
         ], $this->toolAccessData(), $data));
     }
 

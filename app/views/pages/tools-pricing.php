@@ -45,8 +45,8 @@ $planButtons = function (?array $plan, string $fallbackPrice, string $csrf): voi
 ?>
 <section class="subhero tools-hero">
     <span class="status-chip"><span></span> Growth Lab Pro</span>
-    <h1>SEMrush-style tools. <span>White-label reports.</span> One simple price.</h1>
-    <p>Run every SEO, security and technical website tool without limits, remove our branding, add your own logo and download client-ready PDF reports. Perfect for agencies and freelancers.</p>
+    <h1>The deepest on-page &amp; technical SEO audit. <span>White-label reports.</span> One simple price.</h1>
+    <p>Run every on-page SEO, security and technical website tool without limits, remove our branding, add your own logo and download client-ready PDF reports. Built for agencies and freelancers who want depth per euro and reports that look like a €300 audit.</p>
 </section>
 
 <section class="section reveal">
@@ -116,7 +116,8 @@ $planButtons = function (?array $plan, string $fallbackPrice, string $csrf): voi
     <div class="section-heading"><h2>Membership FAQ</h2></div>
     <div class="faq-list">
         <details><summary>Can I put my own logo on the reports?</summary><p>Yes. On any report, open the report toolbar, add your agency name and a logo URL, then download the PDF. Your branding is saved in your browser for next time.</p></details>
-        <details><summary>Is this really like SEMrush or Ahrefs?</summary><p>Growth Lab Pro focuses on live on-page &amp; technical SEO, SERP checks, full website security scanning and technology detection — with white-label PDF export. It does not resell a third-party backlink index, so it complements rather than replaces a backlink database.</p></details>
+        <details><summary>Do you check backlinks like Ahrefs or SEMrush?</summary><p>No — and we are upfront about that. We do not run a third-party backlink index. What we do is go <strong>deeper than most tools on live on-page &amp; technical SEO</strong>: 28+ weighted checks, readability, content and keyword analysis, schema, Core Web Vitals signals, security and technology detection — all exportable as a white-label PDF. It complements a backlink database rather than replacing it. If you want your own site's backlinks, you can connect Google Search Console (see below).</p></details>
+        <details><summary>Can I see my backlinks?</summary><p>You can see <strong>your own site's</strong> backlinks by connecting Google Search Console — Google reports the sites and pages linking to you. We can import that with your permission. We do not (and cannot honestly) provide competitor backlink data, which requires a web-wide crawl database.</p></details>
         <details><summary>Can I cancel anytime?</summary><p>Yes — monthly and yearly plans can be cancelled anytime and you keep access until the end of the paid period.</p></details>
         <details><summary>Do you offer team or agency access?</summary><p>Yes — see the <a href="/membership">membership plans</a> for team seats and agency licensing, or <a href="/contact">contact us</a>.</p></details>
     </div>
