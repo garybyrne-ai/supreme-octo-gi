@@ -17,7 +17,14 @@
         $hero = $hero ?? [];
         $servingList = !empty($hero['serving']) && is_array($hero['serving'])
             ? $hero['serving']
-            : [['flag' => '🇮🇪', 'label' => 'Ireland'], ['flag' => '🇬🇧', 'label' => 'UK'], ['flag' => '🇺🇸', 'label' => 'USA'], ['flag' => '🇪🇺', 'label' => 'Europe'], ['flag' => '🌍', 'label' => 'And Beyond']];
+            : [
+                ['flag' => '/assets/images/flags/ie.svg', 'label' => 'Ireland'],
+                ['flag' => '/assets/images/flags/gb.svg', 'label' => 'UK'],
+                ['flag' => '/assets/images/flags/us.svg', 'label' => 'USA'],
+                ['flag' => '/assets/images/flags/eu.svg', 'label' => 'Europe'],
+                ['flag' => '/assets/images/flags/in.svg', 'label' => 'India'],
+                ['flag' => '/assets/images/flags/world.svg', 'label' => 'And Beyond'],
+            ];
     ?>
     <div class="hero-copy">
         <div class="status-chip"><span></span> <?= e($hero['chip_text'] ?? 'Remote. Precise. Built For Growth.') ?> <i class="fa-solid fa-mountain"></i></div>
@@ -36,7 +43,8 @@
         <div class="hero-trust-strip" aria-label="Serving clients worldwide">
             <span><?= e($hero['serving_label'] ?? 'Serving Clients In') ?></span>
             <?php foreach ($servingList as $svc): ?>
-            <b><?php if (!empty($svc['flag'])): ?><span class="flag" aria-hidden="true"><?= e($svc['flag']) ?></span> <?php endif; ?><?= e($svc['label'] ?? '') ?></b>
+            <?php $svcFlag = (string) ($svc['flag'] ?? ''); ?>
+            <b><?php if ($svcFlag !== ''): ?><?php if (str_starts_with($svcFlag, '/') || str_starts_with($svcFlag, 'http')): ?><img class="flag-img" src="<?= e($svcFlag) ?>" alt="" width="24" height="16" loading="lazy"> <?php else: ?><span class="flag" aria-hidden="true"><?= e($svcFlag) ?></span> <?php endif; ?><?php endif; ?><?= e($svc['label'] ?? '') ?></b>
             <?php endforeach; ?>
         </div>
         <?php

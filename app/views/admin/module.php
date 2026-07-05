@@ -476,8 +476,8 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                         <textarea name="headline" rows="2"><?= e($scHero['headline'] ?? '') ?></textarea></label>
                     <label>Subheading <textarea name="subheading" rows="3"><?= e($scHero['subheading'] ?? '') ?></textarea></label>
                     <label>"Serving Clients In" label <input name="serving_label" value="<?= e($scHero['serving_label'] ?? '') ?>"></label>
-                    <label>Serving list <small>(one per line, format: flag | label)</small>
-                        <textarea name="serving" rows="5"><?= e(implode("\n", $servingLines)) ?></textarea></label>
+                    <label>Serving list <small>(one per line: flag | label. Flag can be an image path like /assets/images/flags/ie.svg or an emoji)</small>
+                        <textarea name="serving" rows="6"><?= e(implode("\n", $servingLines)) ?></textarea></label>
                     <label>Hero ticker items <small>(one per line — the scrolling proof strip)</small>
                         <textarea name="ticker" rows="4"><?= e(implode("\n", is_array($scHero['ticker'] ?? null) ? $scHero['ticker'] : [])) ?></textarea></label>
                     <div class="form-grid two">

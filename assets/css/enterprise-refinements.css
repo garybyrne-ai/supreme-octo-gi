@@ -774,3 +774,10 @@
 .case-study-block h2 i { color: var(--primary); }
 .case-study-block p { color: var(--muted); line-height: 1.7; }
 @media (max-width: 560px) { .clients-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Serving-clients flag images (replace unreliable emoji flags) */
+.hero-trust-strip .flag-img {
+    display: inline-block; width: 24px; height: 16px; border-radius: 3px;
+    object-fit: cover; vertical-align: -3px; margin-right: 2px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
+}
