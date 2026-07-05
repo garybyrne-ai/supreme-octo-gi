@@ -37,22 +37,3 @@ $pass49Url = $paypalSettings['growth_lab_49_url'] ?? '';
         </form>
     <?php endif; ?>
 </section>
-
-<?php
-// Prefer a direct PayPal subscribe link if the admin configured one, otherwise
-// send visitors to the on-site pricing page where Stripe/PayPal checkout lives.
-$passUrl = $pass19Url ?: $pass49Url;
-$passHref = $passUrl ?: '/tools-pricing';
-$passExternal = $passUrl !== '';
-?>
-<section class="growth-lab-upgrade reveal">
-    <article class="cyber-card growth-lab-card">
-        <span class="kicker">Growth Lab Pro</span>
-        <h2>Need unlimited scans, white-label reports or monitoring?</h2>
-        <p>Free accounts get 3 scans per day. <strong>Growth Lab Pro — €25/month or €200/year</strong> unlocks unlimited scans across every tool, white-label PDF reports and continuous background monitoring. Built for agencies, SEO teams and business owners.</p>
-        <div class="growth-lab-actions">
-            <a class="pill-button" href="<?= e($passHref) ?>"<?= $passExternal ? ' target="_blank" rel="noopener"' : '' ?>>Get Growth Lab Pro <i class="fa-solid fa-bolt"></i></a>
-            <a class="pill-button ghost" href="/membership">See All Plans <i class="fa-solid fa-id-card"></i></a>
-        </div>
-    </article>
-</section>

@@ -22,3 +22,5 @@
 </section>
 
 <?php $currentTool = '/tools/tech-stack'; require base_path('app/views/partials/tools-related.php'); ?>
+
+<?php require base_path('app/views/partials/tool-pro-cta.php'); ?>

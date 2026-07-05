@@ -377,25 +377,6 @@
     </div>
 </section>
 
-<section class="home-tools-cta code-shop-home-cta reveal">
-    <div class="home-tools-cta-copy">
-        <span class="kicker">Digital Code Shop</span>
-        <h2>Launch a camera-first ordering product without starting from zero.</h2>
-        <p>Buy the Photo To Key PHP package: a complete webapp with browser camera upload, backend order flow, VAT and shipping fields, payment hooks and a Core Web Vitals-ready frontend.</p>
-        <div class="button-row">
-            <a class="pill-button" href="/code-shop/photo-to-key-php-website-backend">View Product <i class="fa-solid fa-arrow-right"></i></a>
-            <a class="pill-button ghost" href="/code-shop">Open Code Shop <i class="fa-solid fa-cart-shopping"></i></a>
-        </div>
-    </div>
-    <div class="home-tools-orbit code-shop-orbit" aria-hidden="true">
-        <span><i class="fa-solid fa-camera"></i></span>
-        <span><i class="fa-solid fa-key"></i></span>
-        <span><i class="fa-solid fa-credit-card"></i></span>
-        <span><i class="fa-solid fa-truck"></i></span>
-        <strong>CODE</strong>
-    </div>
-</section>
-
 <section class="home-tools-cta reveal">
     <div class="home-tools-cta-copy">
         <span class="kicker">Growth Lab</span>

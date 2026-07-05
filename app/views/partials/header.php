@@ -133,6 +133,19 @@ $isToolsPath = in_array($currentPath, [
                 <i class="fa-solid fa-user-shield"></i>
             </button>
             <div class="account-popover" hidden>
+                <?php if (!empty($_SESSION['member'])): $hdrMember = $_SESSION['member']; $hdrPro = \App\Models\MemberRepository::isPro($hdrMember); ?>
+                <div class="account-loggedin">
+                    <span class="account-avatar"><?= e(strtoupper(substr((string) ($hdrMember['name'] ?? 'U'), 0, 1))) ?></span>
+                    <h2>Hi, <?= e($hdrMember['name'] ?? 'there') ?></h2>
+                    <p><?= e($hdrMember['email'] ?? '') ?></p>
+                    <span class="account-plan-chip <?= $hdrPro ? 'is-pro' : '' ?>"><?= $hdrPro ? 'Growth Lab Pro' : 'Free account' ?></span>
+                    <a class="pill-button" href="/account/dashboard">Open Dashboard <i class="fa-solid fa-gauge-high"></i></a>
+                    <form method="post" action="/account/logout">
+                        <input type="hidden" name="_csrf" value="<?= e(\App\Core\Security::csrfToken()) ?>">
+                        <button class="pill-button ghost" type="submit">Log out <i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+                    </form>
+                </div>
+                <?php else: ?>
                 <div class="account-tabs" role="tablist" aria-label="Account forms">
                     <button class="is-active" type="button" data-account-tab="login">Login</button>
                     <button type="button" data-account-tab="register">Register</button>
@@ -161,6 +174,7 @@ $isToolsPath = in_array($currentPath, [
                     <button class="pill-button" type="submit">Register <i class="fa-solid fa-user-plus"></i></button>
                 </form>
                 <p class="account-message" role="status" aria-live="polite"></p>
+                <?php endif; ?>
             </div>
         </div>
         <a class="whatsapp-button" href="<?= e($headerContact['whatsapp_url']) ?>" target="_blank" rel="noopener">

@@ -1228,3 +1228,43 @@
 .admin-item-toolbar button:hover { color: #fff; background: rgba(0, 183, 255, .2); }
 .admin-item-toolbar button.danger { color: #ff9db1; background: rgba(255, 77, 129, .1); border-color: rgba(255, 77, 129, .3); margin-left: auto; }
 .admin-item-toolbar button.danger:hover { color: #fff; background: rgba(255, 77, 129, .25); }
+
+/* End-of-page Growth Lab Pro CTA on tool pages */
+.tool-pro-cta { }
+.tool-pro-cta-inner {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 22px 34px;
+    padding: clamp(24px, 3vw, 38px); border-radius: 22px; position: relative; overflow: hidden;
+    border: 1px solid rgba(0, 183, 255, .34);
+    background: linear-gradient(135deg, rgba(9, 20, 40, .96), rgba(20, 12, 40, .94));
+    box-shadow: 0 26px 70px -30px rgba(0, 183, 255, .55), inset 0 1px rgba(255, 255, 255, .06);
+}
+.tool-pro-cta-inner::before {
+    content: ""; position: absolute; inset: -50% 30% auto auto; width: 60%; height: 200%;
+    background: radial-gradient(circle at 70% 30%, rgba(123, 62, 255, .18), transparent 60%);
+    pointer-events: none;
+}
+.tool-pro-cta-copy { flex: 1 1 420px; min-width: 0; position: relative; }
+.tool-pro-cta-copy h2 { margin: 12px 0 8px; font-size: clamp(1.4rem, 2.4vw, 1.9rem); }
+.tool-pro-cta-copy p { color: #b7c7de; line-height: 1.6; margin: 0 0 12px; }
+.tool-pro-cta-points { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.tool-pro-cta-points li { font-size: 13.5px; color: #c8d8ef; }
+.tool-pro-cta-points i { color: #23ff9a; margin-right: 6px; }
+.tool-pro-cta-actions {
+    flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; align-items: stretch;
+    position: relative; min-width: 210px;
+}
+.tool-pro-cta-price { font-size: 34px; font-weight: 800; color: #fff; text-align: center; line-height: 1; margin-bottom: 2px; }
+.tool-pro-cta-price b { font-size: 14px; font-weight: 600; color: #9db4d0; }
+.tool-pro-cta-actions .pill-button { justify-content: center; }
+@media (max-width: 720px) {
+    .tool-pro-cta-actions { width: 100%; }
+}
+
+/* Header account popover — logged-in state */
+.account-loggedin { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 16px; text-align: center; }
+.account-loggedin .account-avatar { width: 46px; height: 46px; font-size: 18px; }
+.account-loggedin h2 { margin: 4px 0 0; font-size: 17px; color: #fff; }
+.account-loggedin p { margin: 0; font-size: 13px; color: #9db4d0; word-break: break-word; }
+.account-loggedin .account-plan-chip { margin: 4px 0 8px; }
+.account-loggedin .pill-button { width: 100%; justify-content: center; }
+.account-loggedin form { width: 100%; }

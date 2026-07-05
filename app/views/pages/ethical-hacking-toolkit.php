@@ -65,3 +65,5 @@
         <article class="cyber-card"><b>4</b><h3>Re-test &amp; monitor</h3><p>Re-scan after each fix. Growth Lab Pro adds continuous monitoring so regressions email you automatically.</p></article>
     </div>
 </section>
+
+<?php require base_path('app/views/partials/tool-pro-cta.php'); ?>

@@ -70,3 +70,5 @@
         </article>
     </section>
 <?php endif; ?>
+
+<?php require base_path('app/views/partials/tool-pro-cta.php'); ?>

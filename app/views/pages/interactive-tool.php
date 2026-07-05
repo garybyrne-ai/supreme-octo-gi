@@ -118,3 +118,5 @@
     <a class="cyber-card glass-feature" href="/serp-checker"><i class="fa-solid fa-ranking-star"></i><h3>SERP Checker</h3><p>Find ranking opportunities.</p></a>
     <a class="cyber-card glass-feature" href="/free-penetration-testing-tools"><i class="fa-solid fa-shield-halved"></i><h3>Security Tools</h3><p>Check technical trust signals.</p></a>
 </section>
+
+<?php require base_path('app/views/partials/tool-pro-cta.php'); ?>

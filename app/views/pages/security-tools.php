@@ -153,3 +153,5 @@
         </div>
     </div>
 </section>
+
+<?php require base_path('app/views/partials/tool-pro-cta.php'); ?>

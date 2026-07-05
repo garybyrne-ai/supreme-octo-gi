@@ -191,3 +191,5 @@ $sparkline = static function (array $positions): string {
         <p class="serp-tracker-note"><i class="fa-solid fa-clock-rotate-left"></i> Positions refresh automatically on a schedule. Re-checking a tracked keyword above also records a fresh reading.</p>
     <?php endif; ?>
 </section>
+
+<?php require base_path('app/views/partials/tool-pro-cta.php'); ?>

@@ -16,13 +16,34 @@ final class Security
             || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
             || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443;
 
+        // Keep members signed in: a 30-day cookie plus a matching GC lifetime so
+        // the session is not dropped by PHP's short default garbage collection.
+        $lifetime = 60 * 60 * 24 * 30; // 30 days
+        @ini_set('session.gc_maxlifetime', (string) $lifetime);
+
         session_start([
             'name' => 'cwm_session',
+            'cookie_lifetime' => $lifetime,
+            'gc_maxlifetime' => $lifetime,
             'cookie_httponly' => true,
             'cookie_samesite' => 'Lax',
             'cookie_secure' => $isHttps,
             'use_strict_mode' => true,
         ]);
+
+        // Slide the cookie expiry forward on activity so active members do not
+        // get logged out mid-session.
+        if (!empty($_SESSION['member']) && !headers_sent()) {
+            $params = session_get_cookie_params();
+            setcookie(session_name() ?: 'cwm_session', session_id(), [
+                'expires' => time() + $lifetime,
+                'path' => $params['path'] ?: '/',
+                'domain' => (string) ($params['domain'] ?? ''),
+                'secure' => $isHttps,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
     }
 
     public static function csrfToken(): string
