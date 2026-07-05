@@ -15,6 +15,7 @@ $adminMenu = [
     'clients' => ['title' => 'Clients', 'icon' => 'fa-handshake'],
     'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags'],
     'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad'],
+    'search-console' => ['title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart'],
     'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question'],
     'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line'],
     'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route'],
@@ -35,6 +36,7 @@ $modulesWithRealUi = [
     'Media Library', 'Support Tickets', 'Forum Members', 'Member Manager', 'Clients',
     'Site Content', 'Ads & Consent', 'Newsletter Offer', 'Mail Settings', 'Payment Settings',
     'Commerce Engine', 'Membership Plans', 'Coupons', 'Theme Settings',
+    'Clients', 'Search Console',
 ];
 $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
 ?>
@@ -446,6 +448,34 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                         <button class="pill-button ghost" type="submit">Save ads.txt <i class="fa-solid fa-floppy-disk"></i></button>
                     </form>
                     <p><small><i class="fa-solid fa-circle-info"></i> AdSense also wants you to place ad units in your pages. Once approved, paste the ad-unit snippet into <a href="/admin/modules/theme">Theme Settings → Script injections</a> or tell me where you want ads and I'll wire the slots.</small></p>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Search Console'): ?>
+            <?php $gscSettings = $gscSettings ?? []; $gscRedirectUri = $gscRedirectUri ?? ''; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/search-console-settings">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>Google Search Console OAuth</h2>
+                    <p>Lets Pro members connect their own Search Console and see queries, clicks, top pages and (via CSV) backlinks. Create OAuth credentials in a Google Cloud project — steps on the right.</p>
+                    <label>OAuth Client ID <input name="client_id" value="<?= e($gscSettings['client_id'] ?? '') ?>" placeholder="1234-abc.apps.googleusercontent.com"></label>
+                    <label>OAuth Client Secret <small>(leave blank to keep the saved secret)</small>
+                        <input name="client_secret" type="password" placeholder="<?= !empty($gscSettings['client_secret']) ? '•••••••• (saved)' : 'GOCSPX-…' ?>"></label>
+                    <label class="checkbox-row"><input type="checkbox" name="enabled" value="1" <?= !empty($gscSettings['enabled']) ? 'checked' : '' ?>> Enable the Search Console integration</label>
+                    <button class="pill-button" type="submit">Save OAuth Settings <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <div class="cyber-card">
+                    <h2>Setup checklist</h2>
+                    <ol class="seo-priority-list">
+                        <li><strong>Create a Google Cloud project</strong><span>console.cloud.google.com → new project.</span></li>
+                        <li><strong>Enable the Search Console API</strong><span>APIs &amp; Services → Library → "Google Search Console API" → Enable.</span></li>
+                        <li><strong>Configure the OAuth consent screen</strong><span>External, add your email as a test user (or publish).</span></li>
+                        <li><strong>Create an OAuth Client ID</strong><span>Credentials → Create → "Web application".</span></li>
+                        <li><strong>Add this exact redirect URI</strong><span class="gsc-redirect-uri"><?= e($gscRedirectUri ?: 'https://yourdomain.com/account/search-console/callback') ?></span></li>
+                        <li><strong>Paste the Client ID &amp; Secret</strong><span>into the form on the left and tick Enable.</span></li>
+                    </ol>
+                    <p><small><i class="fa-solid fa-circle-info"></i> The redirect URI must match character-for-character. Note: Google's API returns queries, clicks and pages — backlinks are imported by members via CSV, as Google does not expose them through the API.</small></p>
                 </div>
             </section>
         <?php endif; ?>

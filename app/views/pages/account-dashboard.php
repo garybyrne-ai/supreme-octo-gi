@@ -17,6 +17,7 @@ $toolMenu = [
     ['group' => 'SEO & Rankings', 'items' => [
         ['/seo-tools', 'fa-chart-line', 'SEO Audit'],
         ['/serp-checker', 'fa-ranking-star', 'SERP Checker'],
+        ['/account/search-console', 'fa-magnifying-glass-chart', 'Search Console'],
     ]],
     ['group' => 'Security', 'items' => [
         ['/tools/security-headers', 'fa-lock', 'Security Headers'],

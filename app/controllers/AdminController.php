@@ -21,6 +21,7 @@ use App\Models\MemberRepository;
 use App\Models\MembershipPlanRepository;
 use App\Models\NewsletterOfferRepository;
 use App\Models\PayPalSettingsRepository;
+use App\Models\SearchConsoleSettingsRepository;
 use App\Models\SupportTicketRepository;
 use App\Models\ToolLeadRepository;
 use App\Services\AuditLogger;
@@ -172,6 +173,7 @@ final class AdminController extends Controller
             ['slug' => 'clients', 'title' => 'Clients', 'icon' => 'fa-handshake', 'summary' => 'Manage the client logo wall and case studies: name, logo image, industry, services, results — shown on the home page and gated portfolio.'],
             ['slug' => 'coupons', 'title' => 'Coupons', 'icon' => 'fa-tags', 'summary' => 'Create discount codes for backlinks, care plans, audits and Speed Rescue — percent or fixed, usage caps and expiry dates.'],
             ['slug' => 'ads', 'title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'summary' => 'Paste your Google AdSense ID, edit ads.txt and the GDPR cookie-consent message. Ads only load after visitors consent.'],
+            ['slug' => 'search-console', 'title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart', 'summary' => 'Set the Google OAuth Client ID & Secret so Pro members can connect Search Console and import queries, clicks and backlinks.'],
             ['slug' => 'faq', 'title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'summary' => 'Edit answers for common sales, delivery and support questions.'],
             ['slug' => 'seo', 'title' => 'SEO Center', 'icon' => 'fa-chart-line', 'summary' => 'Review titles, descriptions, schema signals and crawl priorities.'],
             ['slug' => 'redirects', 'title' => 'Redirect Manager', 'icon' => 'fa-route', 'summary' => 'Plan redirects, campaign URLs and migration-safe route changes.'],
@@ -226,6 +228,7 @@ final class AdminController extends Controller
             'clients' => ['title' => 'Clients', 'icon' => 'fa-handshake', 'actions' => ['Add client logo', 'Edit case study', 'Reorder or hide']],
             'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags', 'actions' => ['Create coupon', 'Set usage cap & expiry', 'Pause or delete codes']],
             'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'actions' => ['Set AdSense ID', 'Edit ads.txt', 'Edit consent message']],
+            'search-console' => ['title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart', 'actions' => ['Set OAuth Client ID', 'Set Client Secret', 'Copy redirect URI']],
             'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'actions' => ['Add answer', 'Update schema FAQ', 'Review sales objections']],
             'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line', 'actions' => ['Audit metadata', 'Preview schema', 'Map internal links']],
             'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route', 'actions' => ['Add redirect', 'Import route map', 'Test status codes']],
@@ -261,6 +264,8 @@ final class AdminController extends Controller
             'coupons' => $slug === 'coupons' ? (new CouponRepository())->all() : [],
             'couponContexts' => CouponRepository::CONTEXTS,
             'adsSettings' => $slug === 'ads' ? (new AdsSettingsRepository())->current() : [],
+            'gscSettings' => $slug === 'search-console' ? (new SearchConsoleSettingsRepository())->current() : [],
+            'gscRedirectUri' => $slug === 'search-console' ? (new \App\Services\SearchConsoleService())->redirectUri() : '',
             'clientList' => $slug === 'clients' ? (new ClientRepository())->all() : [],
             'pageIntroDefs' => $slug === 'content' ? (new SiteContentRepository())->pageIntroDefinitions() : [],
             'catalogProducts' => $slug === 'commerce' ? (new CommerceRepository())->allProducts() : [],
@@ -425,6 +430,21 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/clients');
+    }
+
+    public function updateSearchConsoleSettings(): void
+    {
+        $this->guardAdminPost('/admin/modules/search-console', 'Search Console settings token expired. Please try again.');
+
+        try {
+            (new SearchConsoleSettingsRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Search Console OAuth settings saved.';
+            (new AuditLogger())->log('admin.search_console.updated', ['enabled' => !empty($_POST['enabled'])]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/search-console');
     }
 
     public function updateAdsSettings(): void
