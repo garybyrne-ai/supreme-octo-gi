@@ -550,9 +550,29 @@ final class ToolsController extends Controller
         ];
         $_SESSION['pending_tool_lead'] = ['name' => $name, 'email' => $email];
 
-        (new LeadMailer())->sendCode($email, $name, $code);
-        (new AuditLogger())->log('tools.access_code_sent', ['email' => $email]);
-        $this->redirectToTool('Code sent. Check your email and enter it below.', true);
+        // Capture the lead the moment a code is requested, so it lands in the
+        // backend even if the visitor never verifies (or email delivery fails).
+        try {
+            (new ToolLeadRepository())->store(['name' => $name, 'email' => $email, 'source' => 'tool-access-requested']);
+        } catch (\Throwable) {
+            // non-fatal
+        }
+
+        $sent = false;
+        try {
+            $result = (new LeadMailer())->sendCode($email, $name, $code);
+            $sent = is_array($result) ? (bool) ($result['ok'] ?? false) : (bool) $result;
+        } catch (\Throwable) {
+            $sent = false;
+        }
+        (new AuditLogger())->log('tools.access_code_sent', ['email' => $email, 'sent' => $sent]);
+
+        $this->redirectToTool(
+            $sent
+                ? 'Code sent. Check your email (and spam folder) and enter it below.'
+                : 'We could not email your code right now. Please contact us or create a free account to sign in instead.',
+            $sent
+        );
     }
 
     public function verifyAccessCode(): void

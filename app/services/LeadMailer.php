@@ -10,11 +10,11 @@ final class LeadMailer
 {
     private ?string $lastError = null;
 
-    public function sendCode(string $email, string $name, string $code): void
+    public function sendCode(string $email, string $name, string $code): bool
     {
         $subject = 'Your Crest Web Media tool access code';
         $html = '<p>Hi ' . e($name) . ',</p><p>Your tool access code is <strong style="font-size:22px">' . e($code) . '</strong>.</p><p>This code expires in 15 minutes.</p>';
-        $this->send($email, $subject, $html);
+        return $this->send($email, $subject, $html);
     }
 
     public function sendOffer(string $email, string $name, array $offer): void

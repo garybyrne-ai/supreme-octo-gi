@@ -227,11 +227,22 @@ final class AccountController extends Controller
         ];
         $_SESSION['tool_lead'] = ['name' => $name, 'email' => $email, 'source' => 'account-register', 'verified_at' => time()];
 
-        (new ToolLeadRepository())->store(['name' => $name, 'email' => $email, 'source' => 'account-register']);
-        (new LeadMailer())->sendOffer($email, $name, (new NewsletterOfferRepository())->current());
+        // The account is already saved and the member is logged in. Lead capture
+        // and the welcome email are best-effort — a missing/broken mail server
+        // (no SMTP) must never fail a registration or lose the member record.
+        try {
+            (new ToolLeadRepository())->store(['name' => $name, 'email' => $email, 'source' => 'account-register']);
+        } catch (\Throwable) {
+            // non-fatal
+        }
+        try {
+            (new LeadMailer())->sendOffer($email, $name, (new NewsletterOfferRepository())->current());
+        } catch (\Throwable) {
+            // non-fatal — no SMTP configured is fine; the member is saved regardless.
+        }
         (new AuditLogger())->log('account.registered', ['email' => $email]);
 
-        $this->json(['ok' => true, 'message' => 'Account created. Redirecting to your dashboard…', 'redirect' => '/account/dashboard']);
+        $this->json(['ok' => true, 'message' => 'Account created — you\'re signed in. Redirecting to your dashboard…', 'redirect' => '/account/dashboard']);
     }
 
     private function json(array $payload, int $status = 200): never
