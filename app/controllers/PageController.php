@@ -58,10 +58,54 @@ final class PageController extends Controller
 
     public function portfolio(): void
     {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        $loggedIn = is_array($member) && !empty($member['email']);
+
+        // Detailed case studies are gated to signed-in clients & partners:
+        // they name real clients and their internal results, so we keep them off
+        // the open web to protect client confidentiality and block scrapers.
+        if (!$loggedIn) {
+            $this->render('pages/portfolio-gate', [
+                'title' => 'Client Case Studies (Members Only) | Crest Web Media',
+                'metaDescription' => 'Our detailed client case studies are private to signed-in clients and partners to protect client confidentiality. Sign in or create a free account to view.',
+                'clients' => (new \App\Models\ClientRepository())->activeClients(),
+                'csrf' => Security::csrfToken(),
+                'captcha' => Security::captchaChallenge('account_register'),
+            ]);
+            return;
+        }
+
         $this->render('pages/portfolio', [
-            'title' => 'Portfolio | Crest Web Media',
-            'metaDescription' => 'Featured websites, web applications, e-commerce stores and digital products.',
+            'title' => 'Client Case Studies | Crest Web Media',
+            'metaDescription' => 'Websites, SEO audits and workflow automation delivered for real clients.',
             'portfolio' => $this->content->portfolio(),
+            'clients' => (new \App\Models\ClientRepository())->activeClients(),
+            'memberName' => (string) ($member['name'] ?? ''),
+        ]);
+    }
+
+    public function caseStudy(string $slug): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        $loggedIn = is_array($member) && !empty($member['email']);
+
+        if (!$loggedIn) {
+            $this->redirect('/portfolio');
+        }
+
+        $client = (new \App\Models\ClientRepository())->findBySlug($slug);
+        if ($client === null || empty($client['active'])) {
+            http_response_code(404);
+            $this->render('errors/404', ['title' => 'Case Study Not Found']);
+            return;
+        }
+
+        $this->render('pages/case-study', [
+            'title' => $client['name'] . ' — Case Study | Crest Web Media',
+            'metaDescription' => (string) ($client['summary'] ?? ''),
+            'client' => $client,
         ]);
     }
 

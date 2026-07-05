@@ -12,6 +12,7 @@ $adminMenu = [
     'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping'],
     'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card'],
     'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear'],
+    'clients' => ['title' => 'Clients', 'icon' => 'fa-handshake'],
     'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags'],
     'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad'],
     'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question'],
@@ -309,6 +310,98 @@ $moduleDrafts = $moduleDrafts ?? [];
                     <p>No members yet. When people register at <a href="/account/forms" target="_blank" rel="noopener">/account</a> they will appear here, and you can also create one from the <a href="/admin/modules/membership">Pro Test Account</a> tool.</p>
                 <?php endif; ?>
             </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Clients'): ?>
+            <?php $clientList = $clientList ?? []; ?>
+            <section class="split-section">
+                <form class="cyber-form client-form" method="post" action="/admin/clients">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="original_slug" value="" data-client-original-slug>
+                    <h2>Client / Case Study</h2>
+                    <p>Shown on the home "Our Clients" wall (public) and the gated portfolio (logged-in). Upload the official logo in <a href="/admin/modules/media">Media Library</a>, then paste its path below.</p>
+                    <div class="form-grid two">
+                        <label>Name <input name="name" data-client-field="name" required></label>
+                        <label>Slug <small>(blank = auto)</small> <input name="slug" data-client-field="slug"></label>
+                        <label>Logo image path <input name="logo" data-client-field="logo" placeholder="/assets/images/clients/name.svg"></label>
+                        <label>Website URL <small>(optional)</small> <input name="url" data-client-field="url"></label>
+                        <label>Industry <input name="industry" data-client-field="industry" placeholder="Beauty & Wellness"></label>
+                        <label>Sort order <input name="sort_order" type="number" data-client-field="sort_order" value="100"></label>
+                    </div>
+                    <label>Services <small>(one per line)</small> <textarea name="services" rows="3" data-client-field="services" placeholder="Website Build&#10;Local SEO&#10;Booking Automation"></textarea></label>
+                    <label>Summary <small>(one line, shown on cards)</small> <textarea name="summary" rows="2" data-client-field="summary"></textarea></label>
+                    <label>The challenge <textarea name="challenge" rows="3" data-client-field="challenge"></textarea></label>
+                    <label>What we did <textarea name="work" rows="3" data-client-field="work"></textarea></label>
+                    <label>Results <small>(one per line)</small> <textarea name="results" rows="3" data-client-field="results"></textarea></label>
+                    <div class="checkbox-row">
+                        <label><input type="checkbox" name="active" value="1" checked data-client-field="active"> Active (shown on site)</label>
+                        <label><input type="checkbox" name="featured" value="1" data-client-field="featured"> Featured</label>
+                    </div>
+                    <button class="pill-button" type="submit">Save Client <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <section class="cyber-card membership-plan-list">
+                    <div class="section-heading compact">
+                        <span class="status-chip"><span></span> Showcase</span>
+                        <h2>Clients</h2>
+                    </div>
+                    <?php if (!empty($clientList)): ?>
+                        <div class="membership-plan-grid">
+                            <?php foreach ($clientList as $cl): ?>
+                                <article class="membership-plan-item <?= empty($cl['active']) ? 'is-paused' : '' ?>">
+                                    <header>
+                                        <div>
+                                            <strong><?= e($cl['name']) ?></strong>
+                                            <small><?= e($cl['industry']) ?></small>
+                                        </div>
+                                        <?php if (!empty($cl['logo'])): ?><img src="<?= e($cl['logo']) ?>" alt="" style="max-width:96px;max-height:34px;background:#fff;border-radius:6px;padding:3px"><?php endif; ?>
+                                    </header>
+                                    <div class="membership-plan-flags">
+                                        <em class="pill-status <?= !empty($cl['active']) ? 'is-live' : 'is-paused' ?>"><?= !empty($cl['active']) ? 'Shown' : 'Hidden' ?></em>
+                                        <?php if (!empty($cl['featured'])): ?><em class="pill-status is-feature">Featured</em><?php endif; ?>
+                                    </div>
+                                    <div class="membership-plan-actions">
+                                        <button type="button" class="pill-button ghost" data-edit-client='<?= e(json_encode($cl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>'><i class="fa-solid fa-pen"></i> Edit</button>
+                                        <form method="post" action="/admin/clients/state">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="slug" value="<?= e($cl['slug']) ?>">
+                                            <input type="hidden" name="state" value="<?= !empty($cl['active']) ? 'deactivate' : 'activate' ?>">
+                                            <button class="pill-button ghost" type="submit"><?= !empty($cl['active']) ? 'Hide' : 'Show' ?></button>
+                                        </form>
+                                        <form method="post" action="/admin/clients/state" onsubmit="return confirm('Delete this client?');">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="slug" value="<?= e($cl['slug']) ?>">
+                                            <input type="hidden" name="state" value="delete">
+                                            <button class="pill-button ghost danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p>No clients yet. Add your first one on the left.</p>
+                    <?php endif; ?>
+                </section>
+            </section>
+            <script>
+            (function () {
+                var form = document.querySelector('.client-form');
+                if (!form) { return; }
+                document.querySelectorAll('[data-edit-client]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var c = JSON.parse(btn.getAttribute('data-edit-client'));
+                        var set = function (n, v) { var el = form.querySelector('[data-client-field="' + n + '"]'); if (el) { el.value = v; } };
+                        set('name', c.name || ''); set('slug', c.slug || ''); set('logo', c.logo || '');
+                        set('url', c.url || ''); set('industry', c.industry || ''); set('sort_order', c.sort_order || 100);
+                        set('services', (c.services || []).join('\n')); set('summary', c.summary || '');
+                        set('challenge', c.challenge || ''); set('work', c.work || ''); set('results', (c.results || []).join('\n'));
+                        form.querySelector('[data-client-field="active"]').checked = !!c.active;
+                        form.querySelector('[data-client-field="featured"]').checked = !!c.featured;
+                        form.querySelector('[data-client-original-slug]').value = c.slug || '';
+                        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                });
+            })();
+            </script>
         <?php endif; ?>
 
         <?php if (($module['title'] ?? '') === 'Ads & Consent'): ?>

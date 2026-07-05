@@ -1003,3 +1003,21 @@ document.querySelectorAll('[data-tool-report]').forEach(function (report) {
         showBanner();
     }
 })();
+
+// --- External openers for the header account popover (login/register gate) ---
+(function () {
+    var widget = document.querySelector('[data-account-widget]');
+    if (!widget) { return; }
+    document.querySelectorAll('[data-open-account]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            e.preventDefault();
+            var tab = el.getAttribute('data-open-account');
+            if (tab === 'register' || tab === 'login') {
+                var tabBtn = widget.querySelector('[data-account-tab="' + tab + '"]');
+                if (tabBtn) { tabBtn.click(); }
+            }
+            widget.dispatchEvent(new CustomEvent('account:open'));
+            widget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+})();

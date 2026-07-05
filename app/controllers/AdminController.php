@@ -11,6 +11,7 @@ use App\Models\AdminModuleDraftRepository;
 use App\Models\AdsSettingsRepository;
 use App\Models\BacklinkPlanRepository;
 use App\Models\CarePlanRepository;
+use App\Models\ClientRepository;
 use App\Models\CommerceRepository;
 use App\Models\CouponRepository;
 use App\Models\ContentRepository;
@@ -168,6 +169,7 @@ final class AdminController extends Controller
             ['slug' => 'commerce', 'title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'summary' => 'Sell themes, plugins, templates and services marketplace-style with private ZIP packages, licenses, orders and download grants.'],
             ['slug' => 'membership', 'title' => 'Membership Plans', 'icon' => 'fa-id-card', 'summary' => 'Control every membership tier: price, billing interval, trial, Stripe and PayPal wiring, features and availability.'],
             ['slug' => 'members', 'title' => 'Member Manager', 'icon' => 'fa-users-gear', 'summary' => 'Edit members, upgrade or downgrade Pro access with a calendar expiry date, manage forum posting and remove accounts.'],
+            ['slug' => 'clients', 'title' => 'Clients', 'icon' => 'fa-handshake', 'summary' => 'Manage the client logo wall and case studies: name, logo image, industry, services, results — shown on the home page and gated portfolio.'],
             ['slug' => 'coupons', 'title' => 'Coupons', 'icon' => 'fa-tags', 'summary' => 'Create discount codes for backlinks, care plans, audits and Speed Rescue — percent or fixed, usage caps and expiry dates.'],
             ['slug' => 'ads', 'title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'summary' => 'Paste your Google AdSense ID, edit ads.txt and the GDPR cookie-consent message. Ads only load after visitors consent.'],
             ['slug' => 'faq', 'title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'summary' => 'Edit answers for common sales, delivery and support questions.'],
@@ -221,6 +223,7 @@ final class AdminController extends Controller
             'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'actions' => ['Create marketplace item', 'Attach private ZIP package', 'Review order lifecycle']],
             'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card', 'actions' => ['Create plan', 'Edit pricing and gateways', 'Pause or feature a plan']],
             'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear', 'actions' => ['Edit member', 'Upgrade or downgrade Pro', 'Set access expiry']],
+            'clients' => ['title' => 'Clients', 'icon' => 'fa-handshake', 'actions' => ['Add client logo', 'Edit case study', 'Reorder or hide']],
             'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags', 'actions' => ['Create coupon', 'Set usage cap & expiry', 'Pause or delete codes']],
             'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'actions' => ['Set AdSense ID', 'Edit ads.txt', 'Edit consent message']],
             'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'actions' => ['Add answer', 'Update schema FAQ', 'Review sales objections']],
@@ -258,6 +261,7 @@ final class AdminController extends Controller
             'coupons' => $slug === 'coupons' ? (new CouponRepository())->all() : [],
             'couponContexts' => CouponRepository::CONTEXTS,
             'adsSettings' => $slug === 'ads' ? (new AdsSettingsRepository())->current() : [],
+            'clientList' => $slug === 'clients' ? (new ClientRepository())->all() : [],
             'pageIntroDefs' => $slug === 'content' ? (new SiteContentRepository())->pageIntroDefinitions() : [],
             'catalogProducts' => $slug === 'commerce' ? (new CommerceRepository())->allProducts() : [],
             'intervals' => MembershipPlanRepository::INTERVALS,
@@ -383,6 +387,44 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/content');
+    }
+
+    public function saveClient(): void
+    {
+        $this->guardAdminPost('/admin/modules/clients', 'Client token expired. Please try again.');
+
+        try {
+            $slug = (new ClientRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Client saved.';
+            (new AuditLogger())->log('admin.client.saved', ['slug' => $slug]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/clients');
+    }
+
+    public function clientState(): void
+    {
+        $this->guardAdminPost('/admin/modules/clients', 'Client token expired. Please try again.');
+
+        try {
+            $slug = (string) ($_POST['slug'] ?? '');
+            if (($_POST['state'] ?? '') === 'delete') {
+                (new ClientRepository())->delete($slug);
+                $_SESSION['admin_notice'] = 'Client deleted.';
+                (new AuditLogger())->log('admin.client.deleted', ['slug' => $slug]);
+            } else {
+                $active = ($_POST['state'] ?? '') === 'activate';
+                (new ClientRepository())->setActive($slug, $active);
+                $_SESSION['admin_notice'] = $active ? 'Client shown.' : 'Client hidden.';
+                (new AuditLogger())->log('admin.client.toggled', ['slug' => $slug, 'active' => $active]);
+            }
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/clients');
     }
 
     public function updateAdsSettings(): void

@@ -259,27 +259,27 @@
     </div>
 </section>
 
-<section class="section reveal">
-    <div class="panel-head">
-        <h2>Some Of Our Latest Work</h2>
-        <div class="filters"><button>All</button><button>Websites</button><button>Web Apps</button><button>Mobile Apps</button><button>E-Commerce</button></div>
+<?php $clients = $clients ?? []; ?>
+<?php if (!empty($clients)): ?>
+<section class="section reveal clients-section">
+    <div class="section-heading">
+        <span class="kicker">Trusted By</span>
+        <h2>Brands We've Built, Ranked And Automated</h2>
+        <p>Real websites, SEO audits and business-workflow automation delivered for growing companies across Ireland and beyond.</p>
     </div>
-    <div class="portfolio-grid">
-        <?php foreach ($portfolio as $index => $item): ?>
-            <article class="portfolio-card accent-<?= e($item['accent']) ?>">
-                <div class="portfolio-art <?= !empty($item['image']) ? 'portfolio-shot' : 'art-' . ($index + 1) ?>"<?= !empty($item['image']) ? ' style="--portfolio-image: url(\'' . e(asset('images/portfolio/' . $item['image'])) . '\')"' : '' ?>></div>
-                <h3><?= e($item['title']) ?></h3>
-                <p><?= e($item['summary']) ?></p>
-                <span><i class="fa-solid fa-window-maximize"></i><?= e($item['category']) ?></span>
-                <?php if (!empty($item['url'])): ?>
-                    <a class="small-link portfolio-live-link" href="<?= e($item['url']) ?>" target="_blank" rel="noopener">
-                        Visit site <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    </a>
-                <?php endif; ?>
-            </article>
+    <div class="clients-wall">
+        <?php foreach ($clients as $client): ?>
+            <div class="client-logo-tile" title="<?= e($client['name']) ?> — <?= e($client['industry']) ?>">
+                <img src="<?= e($client['logo']) ?>" alt="<?= e($client['name']) ?> logo" loading="lazy" width="220" height="82">
+            </div>
         <?php endforeach; ?>
     </div>
+    <div class="clients-cta">
+        <a class="pill-button ghost" href="/portfolio">See the case studies <i class="fa-solid fa-arrow-right"></i></a>
+        <small><i class="fa-solid fa-lock"></i> Detailed case studies are private to signed-in clients &amp; partners.</small>
+    </div>
 </section>
+<?php endif; ?>
 
 <section class="section reveal">
     <div class="section-heading left"><h2>What Clients Say</h2></div>

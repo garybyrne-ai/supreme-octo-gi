@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Models\ClientRepository;
 use App\Models\ContentRepository;
 use App\Models\SiteContentRepository;
 use App\Services\SeoService;
@@ -30,6 +31,7 @@ final class HomeController extends Controller
             'technologies' => $content->technologies(),
             'process' => $content->process(),
             'portfolio' => $content->portfolio(),
+            'clients' => (new ClientRepository())->activeClients(),
             'testimonials' => $content->testimonials(),
             'faqs' => $content->faqs(),
             'posts' => array_slice($content->posts(), 0, 3),
