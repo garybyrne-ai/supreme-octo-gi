@@ -467,3 +467,22 @@
     /* Stack the gate to one column so the two forms never sit side by side. */
     .tool-access-gate { grid-template-columns: 1fr !important; }
 }
+
+/* ---------- Enterprise SEO: content analysis + priority fixes ---------- */
+.seo-analysis-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.seo-analysis-note { color: var(--muted); font-size: .9rem; margin: 4px 0 14px; }
+.seo-priority-list { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.seo-priority-list li { line-height: 1.5; }
+.seo-priority-list li strong { display: block; color: var(--text); }
+.seo-priority-list li span { color: var(--muted); font-size: .88rem; }
+.seo-analysis-grid .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 16px; }
+.seo-analysis-grid .tag-cloud span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line);
+    background: rgba(0, 229, 255, .06); font-size: .82rem; color: var(--text);
+}
+.seo-analysis-grid .tag-cloud span b { color: var(--primary); font-size: .74rem; }
+.seo-analysis-grid h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 6px 0 0; }
+.seo-analysis-metrics { display: grid; gap: 8px; margin-top: 10px; }
+.seo-analysis-metrics span { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--line); padding-top: 8px; }
+.seo-analysis-metrics span b { color: var(--text); }

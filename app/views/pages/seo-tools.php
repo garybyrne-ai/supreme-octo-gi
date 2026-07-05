@@ -67,6 +67,48 @@
     </section>
 <?php endif; ?>
 
+<?php if (!empty($seoResult) && (!empty($seoResult['top_terms']) || !empty($seoResult['priority_fixes']))): ?>
+    <section class="tool-results reveal seo-analysis-grid">
+        <?php if (!empty($seoResult['priority_fixes'])): ?>
+        <article class="cyber-card tool-result-card">
+            <h2><i class="fa-solid fa-list-check"></i> Priority Fixes</h2>
+            <p class="seo-analysis-note">The highest-impact issues first — fix these in order.</p>
+            <ol class="seo-priority-list">
+                <?php foreach ($seoResult['priority_fixes'] as $fix): ?>
+                    <li><strong><?= e($fix['label']) ?></strong><span><?= e($fix['advice']) ?></span></li>
+                <?php endforeach; ?>
+            </ol>
+        </article>
+        <?php endif; ?>
+        <article class="cyber-card tool-result-card">
+            <h2><i class="fa-solid fa-magnifying-glass-chart"></i> Content Analysis</h2>
+            <p class="seo-analysis-note">What this page is actually "about" to a search engine — its most prominent terms and phrases.</p>
+            <?php if (!empty($seoResult['top_terms'])): ?>
+                <h3>Top terms</h3>
+                <div class="tag-cloud">
+                    <?php foreach ($seoResult['top_terms'] as $t): ?>
+                        <span><?= e($t['term']) ?> <b><?= e((string) $t['count']) ?></b></span>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <?php if (!empty($seoResult['top_phrases'])): ?>
+                <h3>Top phrases</h3>
+                <div class="tag-cloud">
+                    <?php foreach ($seoResult['top_phrases'] as $t): ?>
+                        <span><?= e($t['term']) ?> <b><?= e((string) $t['count']) ?></b></span>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <div class="seo-analysis-metrics">
+                <span>Readability <b><?= e((string) ($seoResult['readability'] ?? 0)) ?></b> <?= e((string) ($seoResult['reading_label'] ?? '')) ?></span>
+                <span>Page weight <b><?= e((string) ($seoResult['page_weight_kb'] ?? 0)) ?> KB</b></span>
+                <span>Text/HTML ratio <b><?= e((string) ($seoResult['content_ratio'] ?? 0)) ?>%</b></span>
+                <?php if (!empty($seoResult['schema_types'])): ?><span>Schema <b><?= e(implode(', ', array_slice($seoResult['schema_types'], 0, 4))) ?></b></span><?php endif; ?>
+            </div>
+        </article>
+    </section>
+<?php endif; ?>
+
 <section class="tool-workbench reveal" id="seo-local-tools" data-tools-locked="<?= empty($toolLead) ? 'true' : 'false' ?>">
     <div class="cyber-form glass-tool" data-serp-preview-builder>
         <h2>SERP Preview Builder</h2>

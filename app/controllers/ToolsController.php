@@ -657,8 +657,12 @@ final class ToolsController extends Controller
                 'summary' => 'On-page and technical SEO signals for ' . ($keyword !== '' ? '“' . $keyword . '”' : 'this page') . '.',
                 'facts' => [
                     ['label' => 'Words', 'value' => (string) $seoResult['words']],
-                    ['label' => 'Internal links', 'value' => (string) $seoResult['internal_links']],
-                    ['label' => 'External links', 'value' => (string) $seoResult['external_links']],
+                    ['label' => 'Readability', 'value' => $seoResult['readability'] . ' (' . $seoResult['reading_label'] . ')'],
+                    ['label' => 'Schema', 'value' => $seoResult['schema_types'] !== [] ? implode(', ', array_slice($seoResult['schema_types'], 0, 3)) : 'None'],
+                    ['label' => 'Internal / external links', 'value' => $seoResult['internal_links'] . ' / ' . $seoResult['external_links']],
+                    ['label' => 'Images', 'value' => (string) ($seoResult['image_count'] ?? 0)],
+                    ['label' => 'Page weight', 'value' => $seoResult['page_weight_kb'] . ' KB'],
+                    ['label' => 'Content ratio', 'value' => $seoResult['content_ratio'] . '%'],
                     ['label' => 'Keyword density', 'value' => ($seoResult['keyword_density'] ?? 0) . '%'],
                 ],
                 'checks' => $seoResult['checks'],
@@ -1543,62 +1547,192 @@ final class ToolsController extends Controller
 
     private function seoAudit(string $url, string $html, string $keyword): array
     {
-        $text = trim(preg_replace('/\s+/', ' ', strip_tags(preg_replace('#<(script|style|noscript)\b[^>]*>.*?</\1>#is', ' ', $html))) ?? '');
+        $bodyHtml = preg_replace('#<(script|style|noscript|template)\b[^>]*>.*?</\1>#is', ' ', $html) ?? $html;
+        $text = trim((string) preg_replace('/\s+/', ' ', strip_tags($bodyHtml)));
+        $textLower = strtolower($text);
+        $keywordLower = strtolower(trim($keyword));
+
         $title = $this->firstMatch('/<title[^>]*>(.*?)<\/title>/is', $html);
         $description = $this->metaContent($html, 'description');
         $robots = $this->metaContent($html, 'robots');
         $canonical = $this->linkHref($html, 'canonical');
         $h1s = $this->tagTexts($html, 'h1');
         $h2s = $this->tagTexts($html, 'h2');
-        $images = preg_match_all('/<img\b[^>]*>/i', $html, $imageMatches) ? $imageMatches[0] : [];
-        $links = preg_match_all('/<a\b[^>]*href=["\']([^"\']+)["\']/i', $html, $linkMatches) ? $linkMatches[1] : [];
-        $schemaCount = preg_match_all('/<script\b[^>]*type=["\']application\/ld\+json["\']/i', $html);
-        $words = $text === '' ? 0 : str_word_count($text);
-        $keywordCount = $keyword !== '' ? substr_count(strtolower($text), strtolower($keyword)) : 0;
-        $host = parse_url($url, PHP_URL_HOST) ?: '';
-        $internal = 0;
-        $external = 0;
-        foreach ($links as $link) {
-            $linkHost = parse_url($link, PHP_URL_HOST);
-            if ($linkHost === null || $linkHost === false || $linkHost === '' || strtolower((string) $linkHost) === strtolower($host)) {
-                $internal++;
-            } else {
-                $external++;
-            }
-        }
-        $missingAlt = 0;
-        foreach ($images as $image) {
-            if (!preg_match('/\salt=["\'][^"\']+["\']/i', $image)) {
-                $missingAlt++;
+        $h3s = $this->tagTexts($html, 'h3');
+
+        // Full heading sequence for hierarchy analysis.
+        $headingSeq = [];
+        if (preg_match_all('/<h([1-6])\b[^>]*>(.*?)<\/h\1>/is', $html, $hm, PREG_SET_ORDER)) {
+            foreach ($hm as $h) {
+                $headingSeq[] = ['level' => (int) $h[1], 'text' => trim((string) preg_replace('/\s+/', ' ', strip_tags($h[2])))];
             }
         }
 
+        $images = preg_match_all('/<img\b[^>]*>/i', $html, $imgM) ? $imgM[0] : [];
+        $missingAlt = 0;
+        $missingDims = 0;
+        $lazyImages = 0;
+        foreach ($images as $img) {
+            if (!preg_match('/\salt=["\'][^"\']*[^"\'\s][^"\']*["\']/i', $img)) {
+                $missingAlt++;
+            }
+            if (!preg_match('/\swidth=/i', $img) || !preg_match('/\sheight=/i', $img)) {
+                $missingDims++;
+            }
+            if (preg_match('/\sloading=["\']lazy["\']/i', $img)) {
+                $lazyImages++;
+            }
+        }
+
+        // Link analysis: internal/external, nofollow, generic & empty anchors.
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?: '');
+        $internal = 0;
+        $external = 0;
+        $nofollow = 0;
+        $genericAnchors = 0;
+        $emptyAnchors = 0;
+        $generic = ['click here', 'read more', 'here', 'more', 'link', 'this', 'learn more'];
+        if (preg_match_all('/<a\b([^>]*)>(.*?)<\/a>/is', $html, $am, PREG_SET_ORDER)) {
+            foreach ($am as $a) {
+                $attrs = $a[1];
+                if (!preg_match('/href=["\']([^"\']+)["\']/i', $attrs, $hrefM)) {
+                    continue;
+                }
+                $href = trim($hrefM[1]);
+                if ($href === '' || str_starts_with($href, '#') || str_starts_with($href, 'javascript:') || str_starts_with($href, 'mailto:') || str_starts_with($href, 'tel:')) {
+                    continue;
+                }
+                $lh = strtolower((string) parse_url($href, PHP_URL_HOST));
+                if ($lh === '' || $lh === $host) {
+                    $internal++;
+                } else {
+                    $external++;
+                }
+                if (preg_match('/rel=["\'][^"\']*nofollow[^"\']*["\']/i', $attrs)) {
+                    $nofollow++;
+                }
+                $anchor = strtolower(trim((string) preg_replace('/\s+/', ' ', strip_tags($a[2]))));
+                if ($anchor === '') {
+                    $emptyAnchors++;
+                } elseif (in_array($anchor, $generic, true)) {
+                    $genericAnchors++;
+                }
+            }
+        }
+
+        // Structured data: parse JSON-LD @type values.
+        $schemaTypes = [];
+        if (preg_match_all('/<script\b[^>]*type=["\']application\/ld\+json["\'][^>]*>(.*?)<\/script>/is', $html, $sm)) {
+            foreach ($sm[1] as $block) {
+                $decoded = json_decode(trim($block), true);
+                if (is_array($decoded)) {
+                    array_walk_recursive($decoded, static function ($v, $k) use (&$schemaTypes): void {
+                        if ($k === '@type' && is_string($v)) {
+                            $schemaTypes[] = $v;
+                        }
+                    });
+                }
+            }
+        }
+        $schemaTypes = array_values(array_unique($schemaTypes));
+        $schemaCount = count($schemaTypes);
+
+        // Meta / technical signals.
         $ogTitle = $this->metaContent($html, 'og:title');
+        $ogDesc = $this->metaContent($html, 'og:description');
         $ogImage = $this->metaContent($html, 'og:image');
         $twitterCard = $this->metaContent($html, 'twitter:card');
         $hasViewport = (bool) preg_match('/<meta\b[^>]*name=["\']viewport["\']/i', $html);
         $hasLang = (bool) preg_match('/<html\b[^>]*\blang=/i', $html);
+        $hasCharset = (bool) preg_match('/<meta\b[^>]*charset=/i', $html);
         $hasFavicon = (bool) preg_match('/<link\b[^>]*rel=["\'][^"\']*icon[^"\']*["\']/i', $html);
-        $density = $words > 0 && $keyword !== '' ? round(($keywordCount / max(1, $words)) * 100, 2) : 0.0;
+        $hasHreflang = (bool) preg_match('/<link\b[^>]*rel=["\']alternate["\'][^>]*hreflang=/i', $html);
 
-        $checks = [
-            ['label' => 'Title tag length', 'present' => $title !== '' && strlen($title) <= 65, 'value' => $title !== '' ? $title . ' (' . strlen($title) . ' chars)' : 'Missing', 'advice' => 'Write a unique 15–65 character title with the primary keyword near the front.'],
-            ['label' => 'Meta description', 'present' => $description !== '' && strlen($description) <= 165, 'value' => $description !== '' ? $description . ' (' . strlen($description) . ' chars)' : 'Missing', 'advice' => 'Add a compelling 120–160 character meta description with a call to action.'],
-            ['label' => 'Single H1', 'present' => count($h1s) === 1, 'value' => count($h1s) . ' found: ' . implode(' | ', array_slice($h1s, 0, 3)), 'advice' => 'Use exactly one H1 that states the page topic.'],
-            ['label' => 'Content depth', 'present' => $words >= 450, 'value' => $words . ' words', 'advice' => 'Aim for 600+ words of genuinely useful content for competitive terms.'],
-            ['label' => 'Canonical URL', 'present' => $canonical !== '', 'value' => $canonical ?: 'Missing', 'advice' => 'Add a self-referencing canonical link to avoid duplicate-content dilution.'],
-            ['label' => 'Structured data (schema)', 'present' => $schemaCount > 0, 'value' => $schemaCount . ' JSON-LD block(s)', 'advice' => 'Add JSON-LD schema (Organization, Service, FAQ, Breadcrumb) for rich results.'],
-            ['label' => 'Image alt text', 'present' => $missingAlt === 0, 'value' => count($images) . ' images, ' . $missingAlt . ' missing alt text', 'advice' => 'Add descriptive alt text to every meaningful image.'],
-            ['label' => 'Indexability', 'present' => !str_contains(strtolower($robots), 'noindex'), 'value' => $robots ?: 'No noindex directive found', 'advice' => 'Remove any noindex directive if this page should rank.'],
-            ['label' => 'Mobile viewport', 'present' => $hasViewport, 'value' => $hasViewport ? 'Responsive viewport set' : 'Missing viewport meta', 'advice' => 'Add <meta name="viewport" content="width=device-width, initial-scale=1">.'],
-            ['label' => 'Language declared', 'present' => $hasLang, 'value' => $hasLang ? 'html lang attribute present' : 'Missing lang attribute', 'advice' => 'Set a lang attribute on <html> (e.g. lang="en").'],
-            ['label' => 'Favicon', 'present' => $hasFavicon, 'value' => $hasFavicon ? 'Icon link present' : 'Missing', 'advice' => 'Add a favicon / site icon link for brand and trust signals.'],
-            ['label' => 'Open Graph tags', 'present' => $ogTitle !== '' && $ogImage !== '', 'value' => $ogTitle !== '' ? 'og:title + og:image present' : 'Missing Open Graph tags', 'advice' => 'Add og:title, og:description and og:image for rich social sharing.'],
-            ['label' => 'Twitter card', 'present' => $twitterCard !== '', 'value' => $twitterCard !== '' ? $twitterCard : 'Missing', 'advice' => 'Add a twitter:card meta tag (summary_large_image).'],
-            ['label' => 'Keyword usage', 'present' => $keyword === '' || $keywordCount > 0, 'value' => $keyword === '' ? 'No focus keyword provided' : $keywordCount . ' mention(s), ' . $density . '% density', 'advice' => 'Use the focus keyword in the title, H1, first paragraph and naturally in the body.'],
-        ];
+        // Mixed content on HTTPS pages.
+        $isHttps = str_starts_with(strtolower($url), 'https://');
+        $mixed = 0;
+        if ($isHttps && preg_match_all('/(?:src|href)=["\']http:\/\/[^"\']+["\']/i', $html, $mixM)) {
+            $mixed = count($mixM[0]);
+        }
 
-        $score = (int) round((count(array_filter($checks, static fn (array $check): bool => $check['present'])) / count($checks)) * 100);
+        // Content metrics.
+        $words = $text === '' ? 0 : str_word_count($text);
+        $sentences = max(1, preg_match_all('/[.!?]+(\s|$)/', $text));
+        $syllables = $this->countSyllables($text);
+        $flesch = $words > 0
+            ? round(206.835 - 1.015 * ($words / $sentences) - 84.6 * ($syllables / max(1, $words)), 1)
+            : 0.0;
+        $flesch = max(0.0, min(100.0, $flesch));
+        $readLabel = $this->readingEaseLabel($flesch);
+        $htmlBytes = strlen($html);
+        $contentRatio = $htmlBytes > 0 ? round((strlen($text) / $htmlBytes) * 100, 1) : 0.0;
+
+        // First 100 words for "keyword early" checks.
+        $first100 = strtolower(implode(' ', array_slice(preg_split('/\s+/', $text) ?: [], 0, 100)));
+
+        // Keyword prominence.
+        $keywordCount = $keywordLower !== '' ? substr_count($textLower, $keywordLower) : 0;
+        $density = $words > 0 && $keywordLower !== '' ? round(($keywordCount / max(1, $words)) * 100, 2) : 0.0;
+        $kwInTitle = $keywordLower !== '' && str_contains(strtolower($title), $keywordLower);
+        $kwInDesc = $keywordLower !== '' && str_contains(strtolower($description), $keywordLower);
+        $kwInH1 = $keywordLower !== '' && str_contains(strtolower(implode(' ', $h1s)), $keywordLower);
+        $kwInHeads = $keywordLower !== '' && str_contains(strtolower(implode(' ', array_merge($h2s, $h3s))), $keywordLower);
+        $kwInFirst = $keywordLower !== '' && str_contains($first100, $keywordLower);
+        $kwInUrl = $keywordLower !== '' && str_contains(strtolower(str_replace(['-', '_', '%20'], ' ', (string) parse_url($url, PHP_URL_PATH))), $keywordLower);
+
+        // Top terms & phrases (content analysis — the premium bit most tools skip).
+        $topTerms = $this->topTerms($textLower, 1, 10);
+        $topPhrases = $this->topTerms($textLower, 2, 6);
+
+        // URL quality.
+        $path = (string) parse_url($url, PHP_URL_PATH);
+        $urlClean = !preg_match('/[A-Z_]/', $path) && strlen($url) <= 90 && parse_url($url, PHP_URL_QUERY) === null;
+
+        $titleLen = strlen($title);
+        $descLen = strlen($description);
+
+        // ---- Weighted checks (weight: 3 critical, 2 important, 1 minor) ----
+        $c = [];
+        $c[] = ['label' => 'Title tag', 'weight' => 3, 'present' => $title !== '' && $titleLen >= 15 && $titleLen <= 65, 'value' => $title !== '' ? $title . ' (' . $titleLen . ' chars)' : 'Missing', 'advice' => 'Write a unique 15–65 character title with the primary keyword near the front.'];
+        $c[] = ['label' => 'Meta description', 'weight' => 3, 'present' => $description !== '' && $descLen >= 70 && $descLen <= 165, 'value' => $description !== '' ? $descLen . ' chars' : 'Missing', 'advice' => 'Add a compelling 120–160 character meta description with a call to action.'];
+        $c[] = ['label' => 'Exactly one H1', 'weight' => 3, 'present' => count($h1s) === 1, 'value' => count($h1s) . ' H1(s)' . (count($h1s) ? ': ' . implode(' | ', array_slice($h1s, 0, 2)) : ''), 'advice' => 'Use exactly one H1 that states the page topic.'];
+        $c[] = ['label' => 'Heading hierarchy', 'weight' => 2, 'present' => $this->headingHierarchyOk($headingSeq), 'value' => count($headingSeq) . ' headings, ' . (count($h2s)) . ' H2 / ' . count($h3s) . ' H3', 'advice' => 'Start with H1, do not skip levels (H1→H2→H3), and use headings to structure content.'];
+        $c[] = ['label' => 'Content depth', 'weight' => 2, 'present' => $words >= 600, 'value' => $words . ' words', 'advice' => 'Aim for 600+ words of genuinely useful content for competitive terms.'];
+        $c[] = ['label' => 'Readability', 'weight' => 1, 'present' => $flesch >= 45, 'value' => $flesch . ' (' . $readLabel . ')', 'advice' => 'Aim for a Flesch reading ease of 50–70: shorter sentences and simpler words read better and convert better.'];
+        $c[] = ['label' => 'Canonical URL', 'weight' => 2, 'present' => $canonical !== '', 'value' => $canonical ?: 'Missing', 'advice' => 'Add a self-referencing canonical link to avoid duplicate-content dilution.'];
+        $c[] = ['label' => 'Indexable (no noindex)', 'weight' => 3, 'present' => !str_contains(strtolower($robots), 'noindex'), 'value' => $robots !== '' ? $robots : 'No noindex directive', 'advice' => 'Remove any noindex directive if this page should rank.'];
+        $c[] = ['label' => 'Structured data (schema)', 'weight' => 2, 'present' => $schemaCount > 0, 'value' => $schemaCount > 0 ? implode(', ', array_slice($schemaTypes, 0, 6)) : 'None', 'advice' => 'Add JSON-LD schema (Organization, Service, FAQ, Breadcrumb, Article) for rich results.'];
+        $c[] = ['label' => 'Image alt text', 'weight' => 2, 'present' => $missingAlt === 0, 'value' => count($images) . ' images, ' . $missingAlt . ' missing alt', 'advice' => 'Add descriptive alt text to every meaningful image.'];
+        $c[] = ['label' => 'Image dimensions set (CLS)', 'weight' => 1, 'present' => $missingDims === 0, 'value' => $missingDims . ' of ' . count($images) . ' missing width/height', 'advice' => 'Set explicit width and height on images to prevent layout shift (a Core Web Vital).'];
+        $c[] = ['label' => 'HTTPS (no mixed content)', 'weight' => 3, 'present' => $isHttps && $mixed === 0, 'value' => !$isHttps ? 'Not HTTPS' : ($mixed === 0 ? 'Secure, no mixed content' : $mixed . ' insecure http:// resources'), 'advice' => 'Serve over HTTPS and load every asset over https:// to avoid mixed-content warnings.'];
+        $c[] = ['label' => 'Mobile viewport', 'weight' => 3, 'present' => $hasViewport, 'value' => $hasViewport ? 'Set' : 'Missing', 'advice' => 'Add <meta name="viewport" content="width=device-width, initial-scale=1">.'];
+        $c[] = ['label' => 'Charset declared', 'weight' => 1, 'present' => $hasCharset, 'value' => $hasCharset ? 'Set' : 'Missing', 'advice' => 'Declare <meta charset="utf-8"> early in the head.'];
+        $c[] = ['label' => 'Language declared', 'weight' => 1, 'present' => $hasLang, 'value' => $hasLang ? 'html lang set' : 'Missing', 'advice' => 'Set a lang attribute on <html> (e.g. lang="en").'];
+        $c[] = ['label' => 'Favicon', 'weight' => 1, 'present' => $hasFavicon, 'value' => $hasFavicon ? 'Present' : 'Missing', 'advice' => 'Add a favicon / site icon link for brand and trust signals.'];
+        $c[] = ['label' => 'Open Graph (social)', 'weight' => 1, 'present' => $ogTitle !== '' && $ogImage !== '' && $ogDesc !== '', 'value' => $ogTitle !== '' ? 'og:title + image' . ($ogDesc !== '' ? ' + description' : '') : 'Missing', 'advice' => 'Add og:title, og:description and og:image for rich social sharing.'];
+        $c[] = ['label' => 'Twitter card', 'weight' => 1, 'present' => $twitterCard !== '', 'value' => $twitterCard !== '' ? $twitterCard : 'Missing', 'advice' => 'Add a twitter:card meta tag (summary_large_image).'];
+        $c[] = ['label' => 'Descriptive link anchors', 'weight' => 1, 'present' => $genericAnchors === 0 && $emptyAnchors === 0, 'value' => $genericAnchors . ' generic, ' . $emptyAnchors . ' empty of ' . ($internal + $external) . ' links', 'advice' => 'Replace "click here"/"read more" and empty anchors with descriptive, keyword-relevant text.'];
+        $c[] = ['label' => 'Internal linking', 'weight' => 2, 'present' => $internal >= 3, 'value' => $internal . ' internal, ' . $external . ' external', 'advice' => 'Link to at least 3–5 relevant internal pages to spread authority and help crawling.'];
+        $c[] = ['label' => 'Clean URL', 'weight' => 1, 'present' => $urlClean, 'value' => strlen($url) . ' chars' . (preg_match('/[A-Z_]/', $path) ? ', has uppercase/underscore' : '') . (parse_url($url, PHP_URL_QUERY) !== null ? ', has query string' : ''), 'advice' => 'Use short, lowercase, hyphenated URLs without query parameters where possible.'];
+
+        // Keyword-specific checks only when a focus keyword is provided.
+        if ($keywordLower !== '') {
+            $c[] = ['label' => 'Keyword in title', 'weight' => 3, 'present' => $kwInTitle, 'value' => $kwInTitle ? 'Yes' : 'Not found', 'advice' => 'Include the focus keyword in the title tag, ideally near the front.'];
+            $c[] = ['label' => 'Keyword in H1', 'weight' => 2, 'present' => $kwInH1, 'value' => $kwInH1 ? 'Yes' : 'Not found', 'advice' => 'Use the focus keyword naturally in the H1.'];
+            $c[] = ['label' => 'Keyword in first 100 words', 'weight' => 2, 'present' => $kwInFirst, 'value' => $kwInFirst ? 'Yes' : 'Not found', 'advice' => 'Mention the focus keyword early — within the first paragraph.'];
+            $c[] = ['label' => 'Keyword in meta description', 'weight' => 1, 'present' => $kwInDesc, 'value' => $kwInDesc ? 'Yes' : 'Not found', 'advice' => 'Include the focus keyword in the meta description (it bolds in results).'];
+            $c[] = ['label' => 'Keyword in subheadings', 'weight' => 1, 'present' => $kwInHeads, 'value' => $kwInHeads ? 'Yes' : 'Not found', 'advice' => 'Use the keyword or close variants in some H2/H3 subheadings.'];
+            $c[] = ['label' => 'Keyword in URL', 'weight' => 1, 'present' => $kwInUrl, 'value' => $kwInUrl ? 'Yes' : 'Not found', 'advice' => 'Where practical, include the focus keyword in the URL slug.'];
+            $c[] = ['label' => 'Keyword density (0.5–2.5%)', 'weight' => 1, 'present' => $density >= 0.5 && $density <= 2.5, 'value' => $keywordCount . ' uses, ' . $density . '%', 'advice' => 'Keep density natural (about 0.5–2.5%). Over-stuffing hurts; too little misses relevance.'];
+        }
+
+        // Weighted score.
+        $totalWeight = array_sum(array_map(static fn (array $x): int => $x['weight'], $c));
+        $gotWeight = array_sum(array_map(static fn (array $x): int => $x['present'] ? $x['weight'] : 0, $c));
+        $score = $totalWeight > 0 ? (int) round(($gotWeight / $totalWeight) * 100) : 0;
+
+        $failed = array_values(array_filter($c, static fn (array $x): bool => !$x['present']));
+        usort($failed, static fn (array $a, array $b): int => $b['weight'] <=> $a['weight']);
 
         return [
             'score' => $score,
@@ -1610,8 +1744,104 @@ final class ToolsController extends Controller
             'internal_links' => $internal,
             'external_links' => $external,
             'keyword_density' => $density,
-            'checks' => $checks,
+            'checks' => $c,
+            'readability' => $flesch,
+            'reading_label' => $readLabel,
+            'schema_types' => $schemaTypes,
+            'top_terms' => $topTerms,
+            'top_phrases' => $topPhrases,
+            'page_weight_kb' => round($htmlBytes / 1024, 1),
+            'content_ratio' => $contentRatio,
+            'image_count' => count($images),
+            'nofollow_links' => $nofollow,
+            'priority_fixes' => array_slice(array_map(static fn (array $x): array => ['label' => $x['label'], 'advice' => $x['advice']], $failed), 0, 6),
         ];
+    }
+
+    /**
+     * Rough syllable count for a body of text (for Flesch reading ease).
+     */
+    private function countSyllables(string $text): int
+    {
+        $total = 0;
+        foreach (preg_split('/[^a-z]+/i', strtolower($text)) ?: [] as $word) {
+            if ($word === '') {
+                continue;
+            }
+            $word = preg_replace('/e$/', '', $word);
+            $count = preg_match_all('/[aeiouy]+/', (string) $word);
+            $total += max(1, (int) $count);
+        }
+
+        return $total;
+    }
+
+    private function readingEaseLabel(float $score): string
+    {
+        return match (true) {
+            $score >= 80 => 'very easy',
+            $score >= 60 => 'easy',
+            $score >= 50 => 'fairly easy',
+            $score >= 30 => 'difficult',
+            default => 'very difficult',
+        };
+    }
+
+    /**
+     * Top N most-frequent 1- or 2-word terms, excluding common stop words.
+     *
+     * @return array<int, array{term: string, count: int}>
+     */
+    private function topTerms(string $textLower, int $n, int $limit): array
+    {
+        static $stop = null;
+        if ($stop === null) {
+            $stop = array_flip(explode(' ', 'the a an and or but of to in on for with at by from is are was were be been being this that these those it its as we you your our their his her they them he she i me my will can do does did has have had not no yes if then than so such more most very just also into out up down over under about after before between while all any each other some more one two three new get got make made use used using how what why when where who which'));
+        }
+        $tokens = array_values(array_filter(
+            preg_split('/[^a-z0-9]+/', $textLower) ?: [],
+            static fn (string $w): bool => strlen($w) >= 3 && !isset($stop[$w]) && !ctype_digit($w)
+        ));
+
+        $freq = [];
+        $count = count($tokens);
+        for ($i = 0; $i + $n - 1 < $count; $i++) {
+            $gram = implode(' ', array_slice($tokens, $i, $n));
+            $freq[$gram] = ($freq[$gram] ?? 0) + 1;
+        }
+        arsort($freq);
+
+        $out = [];
+        foreach (array_slice($freq, 0, $limit, true) as $term => $ct) {
+            if ($ct < 2) {
+                continue;
+            }
+            $out[] = ['term' => $term, 'count' => $ct];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<int, array{level: int, text: string}> $seq
+     */
+    private function headingHierarchyOk(array $seq): bool
+    {
+        if ($seq === []) {
+            return false;
+        }
+        if ($seq[0]['level'] !== 1) {
+            return false;
+        }
+        $prev = 1;
+        foreach ($seq as $h) {
+            if ($h['level'] - $prev > 1) {
+                return false;
+            }
+            $prev = $h['level'];
+        }
+
+        return true;
     }
 
     private function serpReport(string $keyword, string $targetHost, string $location): array
