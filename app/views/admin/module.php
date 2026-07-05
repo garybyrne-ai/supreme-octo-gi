@@ -15,6 +15,7 @@ $adminMenu = [
     'clients' => ['title' => 'Clients', 'icon' => 'fa-handshake'],
     'referrals' => ['title' => 'Referrals', 'icon' => 'fa-share-nodes'],
     'work-log' => ['title' => 'Client Work Log', 'icon' => 'fa-clipboard-list'],
+    'abandoned-orders' => ['title' => 'Abandoned Orders', 'icon' => 'fa-cart-arrow-down'],
     'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags'],
     'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad'],
     'search-console' => ['title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart'],
@@ -38,7 +39,7 @@ $modulesWithRealUi = [
     'Media Library', 'Support Tickets', 'Forum Members', 'Member Manager', 'Clients',
     'Site Content', 'Ads & Consent', 'Newsletter Offer', 'Mail Settings', 'Payment Settings',
     'Commerce Engine', 'Membership Plans', 'Coupons', 'Theme Settings',
-    'Clients', 'Search Console', 'Referrals', 'Client Work Log',
+    'Clients', 'Search Console', 'Referrals', 'Client Work Log', 'Abandoned Orders',
 ];
 $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
 ?>
@@ -520,6 +521,36 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                     </div>
                 <?php else: ?>
                     <p>No referrals yet. Members get their referral link on their <a href="/account/dashboard">dashboard</a> — share the program to get it going.</p>
+                <?php endif; ?>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Abandoned Orders'): ?>
+            <?php $abandonedOrders = $abandonedOrders ?? []; $abandonedStats = $abandonedStats ?? []; ?>
+            <section class="cyber-card ticket-table-card">
+                <div class="section-heading compact">
+                    <span class="status-chip"><span></span> Recovery</span>
+                    <h2>Abandoned Checkouts</h2>
+                </div>
+                <p>Every row is a code-shop checkout that was started. Buyers who don't pay within the grace period get one recovery email. Schedule <code>/cron/run-abandoned-orders?key=YOUR_KEY</code> (same key as monitoring) to send them automatically.</p>
+                <div class="stat-inline-row">
+                    <span><strong><?= (int) ($abandonedStats['started'] ?? 0) ?></strong> open</span>
+                    <span><strong><?= (int) ($abandonedStats['recovered'] ?? 0) ?></strong> emailed</span>
+                    <span><strong><?= (int) ($abandonedStats['completed'] ?? 0) ?></strong> paid</span>
+                </div>
+                <?php if (!empty($abandonedOrders)): ?>
+                    <div class="ticket-table full">
+                        <?php foreach ($abandonedOrders as $ord): ?>
+                            <div>
+                                <strong><?= e($ord['email'] ?? '') ?></strong>
+                                <span><?= e($ord['title'] ?? '') ?><small><?= e($ord['currency'] ?? 'EUR') ?> <?= e($ord['price'] ?? '') ?> · <?= e($ord['gateway'] ?? '') ?></small></span>
+                                <em><?= e(str_replace('_', ' ', (string) ($ord['status'] ?? 'started'))) ?></em>
+                                <small><?= e(!empty($ord['created_at']) ? gmdate('j M Y H:i', (int) strtotime((string) $ord['created_at'])) : '') ?></small>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p>No checkouts recorded yet. Orders appear here the moment a buyer clicks Card or PayPal checkout on a code-shop product.</p>
                 <?php endif; ?>
             </section>
         <?php endif; ?>

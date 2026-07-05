@@ -645,29 +645,71 @@ final class ToolsController extends Controller
 
         (new AuditLogger())->log('tools.seo_audited', ['host' => parse_url($url, PHP_URL_HOST)]);
         $seoResult = $this->seoAudit($url, $html, $keyword);
+        $report = [
+            'tool' => 'On-Page SEO',
+            'icon' => 'fa-chart-line',
+            'target' => $url,
+            'score' => $seoResult['score'],
+            'summary' => 'On-page and technical SEO signals for ' . ($keyword !== '' ? '“' . $keyword . '”' : 'this page') . '.',
+            'facts' => [
+                ['label' => 'Words', 'value' => (string) $seoResult['words']],
+                ['label' => 'Readability', 'value' => $seoResult['readability'] . ' (' . $seoResult['reading_label'] . ')'],
+                ['label' => 'Schema', 'value' => $seoResult['schema_types'] !== [] ? implode(', ', array_slice($seoResult['schema_types'], 0, 3)) : 'None'],
+                ['label' => 'Internal / external links', 'value' => $seoResult['internal_links'] . ' / ' . $seoResult['external_links']],
+                ['label' => 'Images', 'value' => (string) ($seoResult['image_count'] ?? 0)],
+                ['label' => 'Page weight', 'value' => $seoResult['page_weight_kb'] . ' KB'],
+                ['label' => 'Content ratio', 'value' => $seoResult['content_ratio'] . '%'],
+                ['label' => 'Keyword density', 'value' => ($seoResult['keyword_density'] ?? 0) . '%'],
+            ],
+            'checks' => $seoResult['checks'],
+        ];
+
+        $emailed = $this->emailAuditReport($report, '/seo-tools');
+
         $this->seoTools([
             'targetUrl' => $url,
             'keyword' => $keyword,
             'seoResult' => $seoResult,
-            'report' => [
-                'tool' => 'On-Page SEO',
-                'icon' => 'fa-chart-line',
-                'target' => $url,
-                'score' => $seoResult['score'],
-                'summary' => 'On-page and technical SEO signals for ' . ($keyword !== '' ? '“' . $keyword . '”' : 'this page') . '.',
-                'facts' => [
-                    ['label' => 'Words', 'value' => (string) $seoResult['words']],
-                    ['label' => 'Readability', 'value' => $seoResult['readability'] . ' (' . $seoResult['reading_label'] . ')'],
-                    ['label' => 'Schema', 'value' => $seoResult['schema_types'] !== [] ? implode(', ', array_slice($seoResult['schema_types'], 0, 3)) : 'None'],
-                    ['label' => 'Internal / external links', 'value' => $seoResult['internal_links'] . ' / ' . $seoResult['external_links']],
-                    ['label' => 'Images', 'value' => (string) ($seoResult['image_count'] ?? 0)],
-                    ['label' => 'Page weight', 'value' => $seoResult['page_weight_kb'] . ' KB'],
-                    ['label' => 'Content ratio', 'value' => $seoResult['content_ratio'] . '%'],
-                    ['label' => 'Keyword density', 'value' => ($seoResult['keyword_density'] ?? 0) . '%'],
-                ],
-                'checks' => $seoResult['checks'],
-            ],
+            'report' => $report,
+            'reportEmailed' => $emailed,
         ]);
+    }
+
+    /**
+     * Auto-emails a copy of an audit report to the verified tool-access email,
+     * so the person keeps the findings. Throttled to once per host per 6 hours
+     * (per session) so repeat scans don't spam. Entirely best-effort: a missing
+     * SMTP setup never affects the on-screen result.
+     *
+     * @param array<string, mixed> $report
+     */
+    private function emailAuditReport(array $report, string $toolPath = '/seo-tools'): bool
+    {
+        Security::ensureSession();
+        $email = (string) ($_SESSION['tool_lead']['email'] ?? '');
+        $name = (string) ($_SESSION['tool_lead']['name'] ?? '');
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        $host = (string) (parse_url((string) ($report['target'] ?? ''), PHP_URL_HOST) ?: ($report['target'] ?? ''));
+        $key = strtolower(($report['tool'] ?? '') . '|' . $host);
+        $recent = $_SESSION['audit_emailed'] ?? [];
+        if (isset($recent[$key]) && (time() - (int) $recent[$key]) < 21600) {
+            return false; // already emailed this host recently
+        }
+
+        $reportUrl = rtrim((string) ($this->config['url'] ?? ''), '/') . $toolPath;
+        try {
+            $sent = (new LeadMailer())->sendAuditReport($email, $name, $report, $reportUrl);
+        } catch (\Throwable) {
+            $sent = false;
+        }
+
+        $recent[$key] = time();
+        $_SESSION['audit_emailed'] = $recent;
+
+        return $sent;
     }
 
     public function checkSerp(): void

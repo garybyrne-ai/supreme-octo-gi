@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Security;
 use App\Models\CodeShopRepository;
 use App\Models\PayPalSettingsRepository;
+use App\Models\PendingOrderRepository;
 use App\Services\AuditLogger;
 
 final class CheckoutController extends Controller
@@ -28,6 +29,23 @@ final class CheckoutController extends Controller
             http_response_code(404);
             $this->render('errors/404', ['title' => 'Product Not Found']);
             return;
+        }
+
+        // Record the checkout so a buyer who bounces off the payment page can be
+        // followed up. We prefer a logged-in member's email, then a verified
+        // tool-access email, then an optional email typed into the form.
+        $member = $_SESSION['member'] ?? [];
+        $lead = $_SESSION['tool_lead'] ?? [];
+        $email = strtolower(trim((string) (
+            $member['email'] ?? $lead['email'] ?? ($_POST['email'] ?? '')
+        )));
+        $name = (string) ($member['name'] ?? $lead['name'] ?? '');
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            try {
+                (new PendingOrderRepository())->start($email, $name, $product, $gateway);
+            } catch (\Throwable) {
+                // non-fatal — recovery tracking must never block a real checkout
+            }
         }
 
         if ($gateway === 'paypal') {

@@ -74,6 +74,7 @@ $router->post('/account/search-console/site', [SearchConsoleController::class, '
 $router->post('/account/search-console/backlinks', [SearchConsoleController::class, 'importBacklinks']);
 $router->post('/account/search-console/disconnect', [SearchConsoleController::class, 'disconnect']);
 $router->get('/cron/run-monitors', [CronController::class, 'runMonitors']);
+$router->get('/cron/run-abandoned-orders', [CronController::class, 'runAbandonedOrders']);
 $router->get('/tech-news-feed', [PageController::class, 'techNews']);
 $router->get('/free-penetration-testing-tools', [ToolsController::class, 'index']);
 $router->post('/free-penetration-testing-tools/headers', [ToolsController::class, 'analyzeHeaders']);

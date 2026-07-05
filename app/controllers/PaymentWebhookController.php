@@ -9,6 +9,7 @@ use App\Core\Database;
 use App\Models\CodeShopRepository;
 use App\Models\MemberRepository;
 use App\Models\PayPalSettingsRepository;
+use App\Models\PendingOrderRepository;
 use App\Services\AuditLogger;
 use App\Services\LeadMailer;
 use App\Services\MembershipService;
@@ -119,6 +120,16 @@ final class PaymentWebhookController extends Controller
                     $product,
                     $downloadUrl
                 );
+            }
+
+            // Close out any abandoned-order recovery record for this purchase.
+            try {
+                (new PendingOrderRepository())->markCompleted(
+                    (string) ($purchase['customer_email'] ?? ''),
+                    (string) ($product['slug'] ?? '')
+                );
+            } catch (\Throwable) {
+                // non-fatal
             }
 
             (new AuditLogger())->log('shop.stripe_webhook.purchase_recorded', [

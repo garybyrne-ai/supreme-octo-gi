@@ -781,3 +781,30 @@
     object-fit: cover; vertical-align: -3px; margin-right: 2px;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
 }
+
+/* Feature: checkout email capture, auto audit-email note, abandoned-order stats */
+.checkout-email-label {
+    display: block; text-align: left; font-size: 13px; color: #9db4d0;
+    margin: 0 0 12px; line-height: 1.5;
+}
+.checkout-email-label input {
+    display: block; width: 100%; margin-top: 6px; padding: 11px 14px;
+    background: rgba(3, 8, 20, .7); border: 1px solid rgba(0, 183, 255, .35);
+    border-radius: 10px; color: #f3f8ff; font-size: 14px;
+}
+.checkout-email-label input:focus {
+    outline: none; border-color: #00e5ff; box-shadow: 0 0 0 2px rgba(0, 229, 255, .18);
+}
+.tool-inline-note {
+    display: inline-flex; align-items: center; gap: 8px; margin: 0 0 16px;
+    padding: 10px 16px; border-radius: 999px; font-size: 14px; color: #23ff9a;
+    background: rgba(35, 255, 154, .08); border: 1px solid rgba(35, 255, 154, .3);
+}
+.stat-inline-row {
+    display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 18px;
+}
+.stat-inline-row span {
+    padding: 8px 16px; border-radius: 999px; font-size: 13px; color: #c8d8ef;
+    background: rgba(0, 183, 255, .08); border: 1px solid rgba(0, 183, 255, .22);
+}
+.stat-inline-row strong { color: #fff; font-size: 16px; margin-right: 4px; }

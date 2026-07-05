@@ -28,6 +28,9 @@
         <p>Secure checkout can run through Stripe or PayPal. File purchases are delivered with a 24-hour, one-use download token.</p>
         <form class="checkout-panel-form" method="post" action="/code-shop/<?= e($product['slug']) ?>/checkout">
             <input type="hidden" name="_csrf" value="<?= e($csrf ?? '') ?>">
+            <label class="checkout-email-label">Email for your receipt &amp; download link
+                <input type="email" name="email" placeholder="you@example.com" value="<?= e($_SESSION['member']['email'] ?? $_SESSION['tool_lead']['email'] ?? '') ?>" autocomplete="email">
+            </label>
             <button class="pill-button" type="submit" name="gateway" value="stripe">Card Checkout <i class="fa-solid fa-credit-card"></i></button>
             <button class="pill-button ghost" type="submit" name="gateway" value="paypal">PayPal Checkout <i class="fa-brands fa-paypal"></i></button>
         </form>

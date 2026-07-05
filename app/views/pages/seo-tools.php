@@ -34,7 +34,12 @@
 </section>
 
 <?php if (!empty($report)): ?>
-    <section class="section tool-single-wrap"><?php require base_path('app/views/partials/tool-report.php'); ?></section>
+    <section class="section tool-single-wrap">
+        <?php if (!empty($reportEmailed)): ?>
+            <p class="tool-inline-note"><i class="fa-solid fa-envelope-circle-check"></i> A copy of this report has been emailed to you for your records.</p>
+        <?php endif; ?>
+        <?php require base_path('app/views/partials/tool-report.php'); ?>
+    </section>
 <?php endif; ?>
 
 <?php if (!empty($seoResult)): ?>
