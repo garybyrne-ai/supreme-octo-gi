@@ -50,6 +50,14 @@ final class SiteContentRepository
                 'cta_primary_url' => '/portfolio',
                 'cta_secondary_label' => 'Free Security Tools',
                 'cta_secondary_url' => '/free-penetration-testing-tools',
+                'ticker' => [
+                    '99.9% uptime architecture',
+                    'Core Web Vitals: green',
+                    'A+ security headers',
+                    'GDPR-ready builds',
+                    '300+ projects delivered',
+                    '24/7 monitoring & support',
+                ],
             ],
             'contact' => [
                 'email' => 'ank.kalia@gmail.com',
@@ -139,12 +147,21 @@ final class SiteContentRepository
             $serving[] = ['flag' => $parts[0] ?? '', 'label' => $parts[1] ?? ($parts[0] ?? '')];
         }
 
+        $ticker = [];
+        foreach (preg_split('/\r\n|\r|\n/', (string) ($input['ticker'] ?? '')) ?: [] as $line) {
+            $line = trim(strip_tags($line));
+            if ($line !== '') {
+                $ticker[] = mb_substr($line, 0, 80);
+            }
+        }
+
         $data['hero'] = array_replace($data['hero'], [
             'chip_text' => $this->text($input['chip_text'] ?? '', 120),
             'headline' => $this->richText($input['headline'] ?? '', 300),
             'subheading' => $this->text($input['subheading'] ?? '', 600),
             'serving_label' => $this->text($input['serving_label'] ?? '', 60),
             'serving' => $serving !== [] ? $serving : $data['hero']['serving'],
+            'ticker' => $ticker !== [] ? $ticker : ($data['hero']['ticker'] ?? []),
             'cta_primary_label' => $this->text($input['cta_primary_label'] ?? '', 60),
             'cta_primary_url' => $this->url($input['cta_primary_url'] ?? '', '/portfolio'),
             'cta_secondary_label' => $this->text($input['cta_secondary_label'] ?? '', 60),
@@ -231,6 +248,16 @@ final class SiteContentRepository
             }, $hero['serving'])));
             if ($hero['serving'] === []) {
                 unset($hero['serving']);
+            }
+        }
+
+        if (isset($hero['ticker']) && is_array($hero['ticker'])) {
+            $hero['ticker'] = array_values(array_filter(
+                array_map(static fn ($t): string => trim((string) $t), $hero['ticker']),
+                static fn (string $t): bool => $t !== ''
+            ));
+            if ($hero['ticker'] === []) {
+                unset($hero['ticker']);
             }
         }
 

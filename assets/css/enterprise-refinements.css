@@ -451,3 +451,185 @@
         50% { transform: translateY(-1.5px); }
     }
 }
+
+/* ==========================================================================
+   Enterprise hero upgrade — layered backdrop (aurora orbs + perspective grid
+   + cursor spotlight), staggered entrance, interactive service tiles, 3D tilt
+   with glare on the side panels, HUD corner brackets, proof ticker, button
+   sheen, flag micro-interactions and a scroll cue. All motion respects
+   prefers-reduced-motion; pointer effects only engage on fine pointers.
+   ========================================================================== */
+.hero { position: relative; isolation: isolate; }
+
+/* --- Layered backdrop --- */
+.hero-backdrop { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.hero-orb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .32; }
+.hero-orb.orb-a { width: 420px; height: 420px; top: -120px; left: -90px; background: radial-gradient(circle, rgba(0, 229, 255, .55), transparent 70%); }
+.hero-orb.orb-b { width: 380px; height: 380px; bottom: -110px; right: 6%; background: radial-gradient(circle, rgba(180, 92, 255, .5), transparent 70%); }
+.hero-orb.orb-c { width: 280px; height: 280px; top: 32%; right: 40%; background: radial-gradient(circle, rgba(35, 255, 154, .3), transparent 70%); }
+.hero-gridlines {
+    position: absolute; inset: -45% -12% -12%;
+    background-image:
+        linear-gradient(rgba(0, 229, 255, .06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, .06) 1px, transparent 1px);
+    background-size: 46px 46px;
+    transform: perspective(620px) rotateX(56deg);
+    transform-origin: top center;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, transparent 86%);
+    mask-image: linear-gradient(to bottom, transparent, #000 30%, transparent 86%);
+}
+.hero-spotlight {
+    position: absolute; inset: 0; opacity: 0; transition: opacity .45s ease;
+    background: radial-gradient(620px circle at var(--mx, 50%) var(--my, 38%), rgba(0, 229, 255, .085), transparent 65%);
+}
+.hero.is-spotlit .hero-spotlight { opacity: 1; }
+
+/* --- Interactive service tiles: cursor-tracked glow + icon pop --- */
+.hero-service-grid a { position: relative; overflow: hidden; }
+.hero-service-grid a::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+    background: radial-gradient(150px circle at var(--px, 50%) var(--py, 50%), rgba(0, 229, 255, .17), transparent 65%);
+    transition: opacity .25s ease;
+}
+.hero-service-grid a:hover::after,
+.hero-service-grid a:focus-visible::after { opacity: 1; }
+.hero-service-grid a i { transition: transform .25s cubic-bezier(.2, .8, .2, 1), color .25s ease; }
+.hero-service-grid a:hover i,
+.hero-service-grid a:focus-visible i { transform: scale(1.18) rotate(-5deg); }
+
+/* --- CTA sheen sweep --- */
+.hero .button-row .pill-button { position: relative; overflow: hidden; }
+.hero .button-row .pill-button::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -75%; width: 45%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .3), transparent);
+    transform: skewX(-18deg); pointer-events: none; transition: left .55s ease;
+}
+.hero .button-row .pill-button:hover::after,
+.hero .button-row .pill-button:focus-visible::after { left: 135%; }
+
+/* --- Trust strip flags: lift + wave --- */
+.hero-trust-strip b { transition: transform .2s ease, color .2s ease; }
+.hero-trust-strip b:hover { transform: translateY(-3px); color: var(--primary); }
+.hero-trust-strip .flag { display: inline-block; }
+
+/* --- Proof ticker (backend-editable) --- */
+.hero-ticker {
+    margin-top: 20px; padding-top: 14px; overflow: hidden;
+    border-top: 1px solid var(--line);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+}
+.hero-ticker-track { display: flex; gap: 30px; width: max-content; }
+.hero-ticker-track span {
+    display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+    color: var(--muted); font-size: .76rem; font-weight: 700;
+    letter-spacing: .07em; text-transform: uppercase;
+}
+.hero-ticker-track span i { color: var(--primary); font-size: .68rem; }
+
+/* --- HUD corner brackets on the side panels --- */
+.email-neon-sign, .live-card { position: relative; }
+.hud-corners, .hud-corners::before, .hud-corners::after { position: absolute; pointer-events: none; }
+.hud-corners { inset: 9px; }
+.hud-corners::before, .hud-corners::after { content: ""; width: 15px; height: 15px; border: 2px solid rgba(0, 229, 255, .55); }
+.hud-corners::before { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 7px; }
+.hud-corners::after { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 7px; }
+
+/* --- 3D tilt + glare (engaged by JS on fine pointers only) --- */
+[data-tilt] { transform-style: preserve-3d; }
+[data-tilt].is-tilting { animation: none !important; }
+[data-tilt] .tilt-glare {
+    position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+    background: radial-gradient(330px circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, .13), transparent 60%);
+    transition: opacity .25s ease;
+}
+[data-tilt].is-tilting .tilt-glare { opacity: 1; }
+
+/* --- Blinking cursor after LOCAL TIME --- */
+.live-card > strong::after {
+    content: ""; display: inline-block; width: 2px; height: .95em;
+    margin-left: 7px; vertical-align: -2px; background: var(--primary);
+}
+
+/* --- Scroll cue --- */
+.hero-scroll-cue {
+    position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
+    display: grid; justify-items: center; gap: 5px; z-index: 2;
+    color: var(--muted); text-decoration: none; transition: color .2s ease;
+}
+.hero-scroll-cue:hover { color: var(--primary); }
+.cue-mouse {
+    width: 22px; height: 34px; border: 2px solid var(--line); border-radius: 12px;
+    display: flex; justify-content: center; padding-top: 6px;
+}
+.cue-mouse b { width: 3px; height: 7px; border-radius: 3px; background: var(--primary); }
+.hero-scroll-cue i { font-size: .68rem; }
+
+@media (max-width: 900px) {
+    .hero-orb { display: none; }
+    .hero-scroll-cue { display: none; }
+    .hero-gridlines { opacity: .55; }
+}
+
+/* --- Motion layer (skipped entirely for prefers-reduced-motion) --- */
+@media (prefers-reduced-motion: no-preference) {
+    /* Staggered rise-in of the hero copy on load */
+    .hero-copy > * { opacity: 0; animation: heroRise .7s cubic-bezier(.2, .8, .2, 1) forwards; }
+    .hero-copy > *:nth-child(1) { animation-delay: .05s; }
+    .hero-copy > *:nth-child(2) { animation-delay: .14s; }
+    .hero-copy > *:nth-child(3) { animation-delay: .23s; }
+    .hero-copy > *:nth-child(4) { animation-delay: .32s; }
+    .hero-copy > *:nth-child(5) { animation-delay: .41s; }
+    .hero-copy > *:nth-child(6) { animation-delay: .5s; }
+    .hero-copy > *:nth-child(7) { animation-delay: .59s; }
+    @keyframes heroRise {
+        from { opacity: 0; transform: translateY(18px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Slow hue drift on the aurora orbs + grid pan */
+    .hero-orb { animation: heroOrb 14s ease-in-out infinite alternate; }
+    .hero-orb.orb-b { animation-duration: 18s; animation-delay: -6s; }
+    .hero-orb.orb-c { animation-duration: 22s; animation-delay: -11s; }
+    @keyframes heroOrb {
+        from { transform: translate3d(0, 0, 0) scale(1); }
+        to { transform: translate3d(26px, -20px, 0) scale(1.12); }
+    }
+    .hero-gridlines { animation: heroGridPan 16s linear infinite; }
+    @keyframes heroGridPan {
+        from { background-position: 0 0, 0 0; }
+        to { background-position: 0 46px, 46px 0; }
+    }
+
+    /* Ticker scroll (track holds two copies; -50% loops seamlessly) */
+    .hero-ticker-track { animation: heroTicker 30s linear infinite; }
+    .hero-ticker:hover .hero-ticker-track { animation-play-state: paused; }
+    @keyframes heroTicker { to { transform: translateX(-50%); } }
+
+    /* Smooth tilt easing */
+    [data-tilt] { transition: transform .18s ease-out; }
+    [data-tilt].is-tilting { transition: transform .06s linear; }
+
+    /* Blinking time cursor */
+    .live-card > strong::after { animation: timeBlink 1.1s steps(1) infinite; }
+    @keyframes timeBlink { 50% { opacity: 0; } }
+
+    /* Scroll cue motion */
+    .cue-mouse b { animation: cueDot 1.7s ease-in-out infinite; }
+    @keyframes cueDot {
+        0%, 100% { transform: translateY(0); opacity: 1; }
+        60% { transform: translateY(9px); opacity: .2; }
+    }
+    .hero-scroll-cue i { animation: cueBounce 1.7s ease-in-out infinite; }
+    @keyframes cueBounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(4px); }
+    }
+
+    /* HUD corners breathe softly */
+    .hud-corners::before, .hud-corners::after { animation: hudPulse 3.4s ease-in-out infinite; }
+    @keyframes hudPulse {
+        0%, 100% { border-color: rgba(0, 229, 255, .55); }
+        50% { border-color: rgba(180, 92, 255, .6); }
+    }
+}

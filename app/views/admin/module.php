@@ -337,6 +337,8 @@ $moduleDrafts = $moduleDrafts ?? [];
                     <label>"Serving Clients In" label <input name="serving_label" value="<?= e($scHero['serving_label'] ?? '') ?>"></label>
                     <label>Serving list <small>(one per line, format: flag | label)</small>
                         <textarea name="serving" rows="5"><?= e(implode("\n", $servingLines)) ?></textarea></label>
+                    <label>Hero ticker items <small>(one per line — the scrolling proof strip)</small>
+                        <textarea name="ticker" rows="4"><?= e(implode("\n", is_array($scHero['ticker'] ?? null) ? $scHero['ticker'] : [])) ?></textarea></label>
                     <div class="form-grid two">
                         <label>Primary button label <input name="cta_primary_label" value="<?= e($scHero['cta_primary_label'] ?? '') ?>"></label>
                         <label>Primary button URL <input name="cta_primary_url" value="<?= e($scHero['cta_primary_url'] ?? '') ?>"></label>

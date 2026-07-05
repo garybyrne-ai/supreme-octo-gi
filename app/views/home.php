@@ -1,4 +1,11 @@
-<section class="hero section-bleed">
+<section class="hero section-bleed" data-hero>
+    <div class="hero-backdrop" aria-hidden="true">
+        <span class="hero-orb orb-a"></span>
+        <span class="hero-orb orb-b"></span>
+        <span class="hero-orb orb-c"></span>
+        <span class="hero-gridlines"></span>
+        <span class="hero-spotlight"></span>
+    </div>
     <div class="vertical-social">
         <span>Let's connect</span>
         <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
@@ -32,6 +39,23 @@
             <b><?php if (!empty($svc['flag'])): ?><span class="flag" aria-hidden="true"><?= e($svc['flag']) ?></span> <?php endif; ?><?= e($svc['label'] ?? '') ?></b>
             <?php endforeach; ?>
         </div>
+        <?php
+            $tickerItems = !empty($hero['ticker']) && is_array($hero['ticker']) ? $hero['ticker'] : [
+                '99.9% uptime architecture',
+                'Core Web Vitals: green',
+                'A+ security headers',
+                'GDPR-ready builds',
+                '300+ projects delivered',
+                '24/7 monitoring & support',
+            ];
+        ?>
+        <div class="hero-ticker" aria-hidden="true">
+            <div class="hero-ticker-track">
+                <?php for ($pass = 0; $pass < 2; $pass++): foreach ($tickerItems as $tick): ?>
+                    <span><i class="fa-solid fa-circle-check"></i> <?= e($tick) ?></span>
+                <?php endforeach; endfor; ?>
+            </div>
+        </div>
     </div>
     <?php
         $heroContact = $contact ?? [];
@@ -39,13 +63,15 @@
         $signalLine = $heroContact['signal_line'] ?? 'Dublin + Shimla';
     ?>
     <div class="hero-panels">
-        <a class="email-neon-sign" href="mailto:<?= e($signalEmail) ?>" aria-label="Email <?= e($signalEmail) ?>">
+        <a class="email-neon-sign" data-tilt href="mailto:<?= e($signalEmail) ?>" aria-label="Email <?= e($signalEmail) ?>">
             <span class="signal-label"><b class="live-dot"></b> DIRECT SIGNAL</span>
             <strong><i class="fa-solid fa-circle-check"></i> <?= e($signalEmail) ?></strong>
             <small><i class="fa-solid fa-location-dot"></i> <?= e($signalLine) ?></small>
             <span class="signal-scan" aria-hidden="true"></span>
+            <b class="hud-corners" aria-hidden="true"></b>
+            <span class="tilt-glare" aria-hidden="true"></span>
         </a>
-        <div class="live-card">
+        <div class="live-card" data-tilt>
             <span>LOCAL TIME</span>
             <strong id="localTime">10:30 AM</strong>
             <em><b class="live-dot online"></b> Online &amp; Available</em>
@@ -55,8 +81,14 @@
                 <span class="mountain-front"></span>
                 <span class="hiker"><b class="hiker-pole"></b></span>
             </div>
+            <b class="hud-corners" aria-hidden="true"></b>
+            <span class="tilt-glare" aria-hidden="true"></span>
         </div>
     </div>
+    <a class="hero-scroll-cue" href="#services" aria-label="Scroll to services">
+        <span class="cue-mouse"><b></b></span>
+        <i class="fa-solid fa-chevron-down"></i>
+    </a>
 </section>
 
 <section class="section reveal priority-services" id="services">

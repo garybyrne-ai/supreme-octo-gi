@@ -876,3 +876,57 @@ document.querySelectorAll('[data-tool-report]').forEach(function (report) {
     apply();
     if (printBtn) { printBtn.addEventListener('click', function () { apply(); window.print(); }); }
 });
+
+// --- Enterprise hero interactions: cursor spotlight, tile glow, 3D tilt ---
+(function () {
+    const hero = document.querySelector('[data-hero]');
+    if (!hero) return;
+
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!finePointer) return;
+
+    // Backdrop spotlight follows the cursor across the hero.
+    hero.addEventListener('pointermove', (event) => {
+        const rect = hero.getBoundingClientRect();
+        hero.style.setProperty('--mx', (((event.clientX - rect.left) / rect.width) * 100).toFixed(2) + '%');
+        hero.style.setProperty('--my', (((event.clientY - rect.top) / rect.height) * 100).toFixed(2) + '%');
+        hero.classList.add('is-spotlit');
+    }, { passive: true });
+    hero.addEventListener('pointerleave', () => hero.classList.remove('is-spotlit'));
+
+    // Service tiles: glow tracks the cursor inside each tile.
+    hero.querySelectorAll('.hero-service-grid a').forEach((tile) => {
+        tile.addEventListener('pointermove', (event) => {
+            const rect = tile.getBoundingClientRect();
+            tile.style.setProperty('--px', (event.clientX - rect.left) + 'px');
+            tile.style.setProperty('--py', (event.clientY - rect.top) + 'px');
+        }, { passive: true });
+    });
+
+    // 3D tilt + glare on the DIRECT SIGNAL / LOCAL TIME panels.
+    if (!reducedMotion) {
+        hero.querySelectorAll('[data-tilt]').forEach((card) => {
+            let raf = 0;
+            card.addEventListener('pointermove', (event) => {
+                const rect = card.getBoundingClientRect();
+                const px = (event.clientX - rect.left) / rect.width;
+                const py = (event.clientY - rect.top) / rect.height;
+                cancelAnimationFrame(raf);
+                raf = requestAnimationFrame(() => {
+                    card.classList.add('is-tilting');
+                    card.style.transform =
+                        'perspective(720px) rotateX(' + ((0.5 - py) * 9).toFixed(2) + 'deg)' +
+                        ' rotateY(' + ((px - 0.5) * 11).toFixed(2) + 'deg) translateY(-2px)';
+                    card.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+                    card.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+                });
+            }, { passive: true });
+            card.addEventListener('pointerleave', () => {
+                cancelAnimationFrame(raf);
+                card.classList.remove('is-tilting');
+                card.style.transform = '';
+            });
+        });
+    }
+})();
