@@ -1561,6 +1561,202 @@ final class ContentRepository
                     ['question' => 'Can the same prompt framework be reused?', 'answer' => 'Yes. Once a prompt works well, save it as a template and swap in new details. Reusable prompts are one of the biggest time-savers in day-to-day AI use.'],
                 ],
             ],
+            [
+                'slug' => 'chatgpt-vs-claude-which-should-you-use',
+                'title' => 'ChatGPT vs Claude in 2026: Which AI Should You Actually Use?',
+                'meta' => 'An honest, hands-on comparison of ChatGPT and Claude in 2026 — writing quality, coding, long documents, safety, pricing and privacy — with clear guidance on which to pick for your work.',
+                'category' => 'AI Tools',
+                'focus' => 'ChatGPT vs Claude',
+                'secondary' => ['Claude vs ChatGPT', 'best AI assistant', 'AI writing tool', 'AI for coding'],
+                'excerpt' => 'How ChatGPT and Claude really compare for writing, coding, long documents, safety and price — and a simple way to decide which one deserves your subscription.',
+                'date' => '2026-02-04',
+                'views' => 6600,
+                'sections' => [
+                    ['heading' => 'They are closer than the internet arguments suggest', 'paragraphs' => [
+                        'ChatGPT and Claude are the two assistants most people are choosing between, and the truth is they are both excellent. For everyday questions, drafting and summarising, either will serve you well, and the gap that fans argue about online rarely shows up in ordinary work. So instead of asking which is "smarter", ask which fits the specific things you do most.',
+                        'A quick way to decide without overthinking it: try the exact same real task in both for a week — a page you need to write, a problem you need to reason through, some code you need fixed — and keep the one whose answers you edit the least. Your own work is a better benchmark than anyone else\'s leaderboard.',
+                    ]],
+                    ['heading' => 'Writing and long documents', 'paragraphs' => [
+                        'For writing, many people find Claude\'s default tone more natural and less "AI-flavoured", with a tendency to follow nuanced instructions about voice closely. ChatGPT is highly capable too and very flexible, with a large ecosystem of custom versions for specific styles. If polished, human-sounding prose on the first draft matters most to you, Claude is worth testing head to head.',
+                        'For long documents — contracts, reports, big transcripts — both handle substantial inputs, and this is an area where Claude has traditionally been strong. If your work involves feeding in large files and getting careful, structured summaries back, weigh that capability heavily, because it saves the most time.',
+                    ]],
+                    ['heading' => 'Coding, research and extras', 'paragraphs' => [
+                        'Both are strong coding assistants that will explain errors, write functions and review changes. Developers often keep both open and pick per task. ChatGPT has a broad set of built-in extras — image generation, voice, data analysis and a large plugin-style ecosystem — which makes it a versatile all-rounder for people who want many features in one place.',
+                        'For live research, both offer web-connected modes, but always insist on sources you can click. If image generation and a wide feature set are important to you, ChatGPT\'s breadth is a genuine advantage; if you mainly want the best possible text and document handling, Claude is a focused, excellent choice.',
+                    ]],
+                    ['heading' => 'Safety, privacy and price', 'paragraphs' => [
+                        'Both companies take safety seriously, and both offer settings to control whether your conversations are used to improve their models — worth checking and adjusting on day one. As a universal rule, do not paste passwords, confidential client data or personal information into either, regardless of the settings.',
+                        'On price, both have a capable free tier and a paid plan in a similar range that unlocks higher limits and the newest models. For most individuals the free tier is enough to decide; for daily professional use, one paid plan is easily worth it. There is no need to pay for both unless you genuinely use each for different jobs.',
+                    ]],
+                    ['heading' => 'The simple recommendation', 'paragraphs' => [
+                        'If you want one clear steer: choose Claude if your work is mostly writing, editing and reasoning over long documents and you value a natural tone; choose ChatGPT if you want the widest set of built-in features — images, voice, data tools — in a single subscription. Either way you are getting a genuinely capable assistant.',
+                        'And remember it is not a marriage. Both free tiers are strong, so keep an account on each and route tasks to whichever does them best. The people getting the most from AI in 2026 are rarely loyal to one brand — they are just good at picking the right tool for the job in front of them.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Test both on your real tasks for a week before deciding',
+                    'Keep the one whose answers you edit the least',
+                    'Prefer Claude for natural writing and long-document work',
+                    'Prefer ChatGPT for the widest built-in feature set (images, voice, data)',
+                    'Use both for coding and pick per task',
+                    'Insist on clickable sources in any web-research mode',
+                    'Check and set the data-training/privacy option on day one',
+                    'Never paste passwords, client data or personal information',
+                ],
+                'faq' => [
+                    ['question' => 'Is Claude better than ChatGPT?', 'answer' => 'Neither is universally better. Claude is often preferred for natural writing and long-document handling; ChatGPT offers a wider set of built-in features. Test both on your own tasks and keep the one you edit least.'],
+                    ['question' => 'Which is better for coding, ChatGPT or Claude?', 'answer' => 'Both are strong coding assistants. Many developers keep both and pick per task. Paste the real error and relevant code either way for the fastest, most accurate help.'],
+                    ['question' => 'Do I need to pay for both?', 'answer' => 'Usually not. Both have capable free tiers. If you use each for genuinely different jobs a second subscription can pay off, but most people are well served by one paid plan.'],
+                    ['question' => 'Are ChatGPT and Claude safe for confidential work?', 'answer' => 'Use caution. Adjust each tool\'s data-training setting, and never paste passwords, personal data or confidential client information into either assistant.'],
+                ],
+            ],
+            [
+                'slug' => 'ai-for-small-business-practical-guide',
+                'title' => 'AI for Small Business: 9 Practical Ways to Save Time and Win More Customers',
+                'meta' => 'A grounded, hype-free guide to using AI in a small business — marketing, customer service, admin, sales and content — with realistic examples and the pitfalls to avoid.',
+                'category' => 'AI Automation',
+                'focus' => 'AI for small business',
+                'secondary' => ['small business AI tools', 'AI marketing', 'AI customer service', 'business automation'],
+                'excerpt' => 'Nine realistic, low-cost ways small businesses are using AI in 2026 to save hours and win more customers — plus the mistakes that waste time and money.',
+                'date' => '2026-03-20',
+                'views' => 5200,
+                'sections' => [
+                    ['heading' => 'Start with your most repetitive task', 'paragraphs' => [
+                        'The businesses getting real value from AI are not the ones chasing every shiny tool — they are the ones who picked one painful, repetitive task and fixed it. Before anything else, write down where your week actually goes. The best first AI project is almost always the boring thing you do over and over: the same emails, the same quotes, the same reports, the same social posts.',
+                        'Fixing one repetitive task well beats dabbling in ten. It proves the value, builds your confidence, and frees the time you need to tackle the next one. Treat AI as a series of small, specific wins rather than a magic transformation, and it will actually stick.',
+                    ]],
+                    ['heading' => 'Marketing and content', 'paragraphs' => [
+                        'AI is a genuine force multiplier for small-business marketing. Use it to turn one idea into a week of social posts, to draft newsletters and blog posts, to write and rewrite website copy, and to generate simple graphics. The key is that you provide the real substance — your offers, your results, your voice — and AI handles the drafting and repurposing.',
+                        'A word of caution: do not publish raw AI output. Search engines and customers can both tell when content is generic and unedited. Use AI for the first draft, then add your genuine expertise, local knowledge and specific examples. That human layer is what makes the content rank and convert.',
+                    ]],
+                    ['heading' => 'Customer service and sales', 'paragraphs' => [
+                        'On the service side, a well-set-up website chatbot can answer common questions around the clock, qualify enquiries, and hand off to you with a tidy summary — so you only spend time on the conversations that matter. AI can also draft replies to reviews and support emails, keeping your tone consistent even when you are busy.',
+                        'For sales, use AI to summarise call notes into next steps, draft tailored follow-up emails, and keep your customer records tidy. The goal is not to remove the human relationship that small businesses win on — it is to remove the admin around it so you can spend more time actually talking to customers.',
+                    ]],
+                    ['heading' => 'Admin, finance and operations', 'paragraphs' => [
+                        'A lot of small-business time disappears into admin, and this is where AI quietly shines. Turn a messy voice note into a clean task list, summarise long documents, draft standard operating procedures, extract data from invoices, and get plain-English answers to "how do I…" questions about your tools. Even spreadsheet formulas that used to mean asking for help are now a quick AI question.',
+                        'The trick is to keep humans in the loop for anything that involves money or a legal commitment. AI is a fast, tireless assistant, not a decision-maker. Use it to prepare, draft and organise — and keep the final sign-off with a person who understands the stakes.',
+                    ]],
+                    ['heading' => 'Avoid the common mistakes', 'paragraphs' => [
+                        'Three mistakes waste the most time and money. First, tool overload — subscribing to a dozen apps you never master; pick a few and go deep. Second, publishing unedited AI content that reads as generic and hurts your brand. Third, and most serious, pasting confidential customer data into free tools without checking the privacy terms.',
+                        'Get those right and the upside is real: most small businesses can reclaim several hours a week and present far more professionally, at very little cost. Start with one repetitive task, add your human judgement on top, protect your data, and let the wins compound from there.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Map where your week goes and pick one repetitive task to fix first',
+                    'Use AI for first drafts of marketing content, then add real expertise',
+                    'Never publish raw, unedited AI content',
+                    'Set up a website chatbot to answer FAQs and qualify leads 24/7',
+                    'Summarise calls and draft follow-ups to cut sales admin',
+                    'Use AI for document summaries, SOPs and data extraction',
+                    'Keep a human sign-off on anything involving money or legal commitments',
+                    'Do not paste confidential customer data into free tools',
+                ],
+                'faq' => [
+                    ['question' => 'How can a small business start using AI?', 'answer' => 'Pick the single most repetitive task you do — the same emails, quotes or posts — and use AI to handle it well. One solid win beats dabbling in many tools, and it builds momentum for the next.'],
+                    ['question' => 'Is AI content bad for SEO?', 'answer' => 'Raw, unedited AI content often is, because it reads as generic. AI-assisted content that you edit with real expertise, examples and local knowledge can rank well. The human layer is what matters.'],
+                    ['question' => 'Can AI replace customer service?', 'answer' => 'It can handle common questions and qualify enquiries around the clock, but the winning approach for small businesses is AI for the repetitive parts and humans for the conversations that build relationships.'],
+                    ['question' => 'What is the biggest AI mistake small businesses make?', 'answer' => 'Tool overload and publishing unedited output are common, but the most serious is pasting confidential customer data into free tools without checking the privacy terms.'],
+                ],
+            ],
+            [
+                'slug' => 'kali-linux-top-tools-overview',
+                'title' => 'The Kali Linux Toolkit Explained: What the Main Tool Categories Actually Do',
+                'meta' => 'A beginner-friendly overview of the main Kali Linux tool categories — reconnaissance, scanning, web testing, passwords and reporting — with an ethical, authorised-use-only framing.',
+                'category' => 'Security',
+                'focus' => 'Kali Linux tools',
+                'secondary' => ['Kali Linux tools overview', 'penetration testing tools', 'ethical hacking tools', 'security testing categories'],
+                'excerpt' => 'What the main Kali Linux tool categories are for — recon, scanning, web testing, passwords and reporting — explained plainly and framed strictly for authorised, ethical use.',
+                'date' => '2026-04-28',
+                'views' => 6800,
+                'sections' => [
+                    ['heading' => 'First, the ethics — because they are not optional', 'paragraphs' => [
+                        'This is an educational overview of what Kali\'s tool categories are for, so you can understand security testing and build a defensive mindset. It is not a how-to for attacking anything. The rule from our beginner guide still applies and always will: only ever use these tools against systems you own or have explicit written permission to test. Anything else is a crime, full stop.',
+                        'Understanding these categories makes you a better defender, whether you run a business or want a security career. Knowing how sites are probed tells you what to harden; knowing how passwords are attacked tells you why length and uniqueness matter. Learn the concepts in your own lab, and use them to protect, not to intrude.',
+                    ]],
+                    ['heading' => 'Reconnaissance and information gathering', 'paragraphs' => [
+                        'The first phase of any authorised test is reconnaissance — legally gathering publicly available information about a target you are permitted to assess. Tools in this category map out domains, subdomains, DNS records, public email addresses and technologies in use. It is the digital equivalent of a surveyor studying a building before any work begins.',
+                        'For defenders, this is a wake-up call about your own "attack surface": the more of your infrastructure is needlessly exposed, the more an attacker has to work with. Reviewing what your organisation reveals publicly — and reducing it — is one of the cheapest security improvements available.',
+                    ]],
+                    ['heading' => 'Scanning and web-application testing', 'paragraphs' => [
+                        'Scanning tools check which services and ports are reachable on a system and probe for known weaknesses, while web-application tools look specifically at how a website handles input, authentication and sessions. Together they help an authorised tester answer "where could this be broken, and how badly?" against a system they are allowed to assess.',
+                        'The defensive lesson is direct: most findings come down to out-of-date software, misconfigurations and unvalidated input. Keeping systems patched, closing services you do not use, and validating everything a user can submit removes the majority of what these tools would otherwise find.',
+                    ]],
+                    ['heading' => 'Passwords, wireless and exploitation frameworks', 'paragraphs' => [
+                        'Kali includes tools for testing password strength, assessing the security of wireless networks you own, and structured frameworks that security professionals use to safely verify whether a known weakness is genuinely exploitable in a controlled test. These are powerful, which is exactly why authorisation and a contained lab are non-negotiable.',
+                        'What they teach defenders is priceless: they are the reason security people insist on long, unique passwords and multi-factor authentication, strong wireless encryption, and prompt patching. Seeing why weak controls fall over quickly is the most persuasive argument there is for doing the basics properly.',
+                    ]],
+                    ['heading' => 'Reporting is the part clients actually pay for', 'paragraphs' => [
+                        'The tool that matters most in a professional engagement is not flashy at all: it is the report. A real penetration test ends with a clear, prioritised, plain-English document explaining what was found, how serious each issue is, and exactly how to fix it. Running tools is the easy part; communicating risk so a business can act on it is the skill.',
+                        'If you are learning, practise writing up every exercise in your lab as if for a client. That habit — documenting findings, ranking them by real business impact, and recommending fixes — is what separates someone who runs scripts from a security professional people hire. It is also, not coincidentally, exactly how we approach the responsible security reviews we offer.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Only use security tools against systems you own or are authorised to test',
+                    'Learn the categories to improve your defences, not to intrude',
+                    'Reduce your public attack surface found in reconnaissance',
+                    'Patch software and close unused services to cut scan findings',
+                    'Validate all user input to prevent web-application weaknesses',
+                    'Enforce long, unique passwords and multi-factor authentication',
+                    'Use strong wireless encryption on networks you own',
+                    'Practise writing clear, prioritised reports for every lab exercise',
+                ],
+                'faq' => [
+                    ['question' => 'What are the main categories of Kali Linux tools?', 'answer' => 'Broadly: reconnaissance/information gathering, scanning, web-application testing, password and wireless testing, exploitation frameworks, and reporting. Each maps to a phase of an authorised security assessment.'],
+                    ['question' => 'Is learning Kali tools useful for defence?', 'answer' => 'Very. Understanding how systems are probed and how weak controls fail tells you exactly what to harden — patching, input validation, strong passwords, MFA and reducing public exposure.'],
+                    ['question' => 'Can I use these tools on any website to test it?', 'answer' => 'No. Testing a system you do not own or lack written permission for is illegal regardless of intent. Practise only in your own lab or on sanctioned training platforms.'],
+                    ['question' => 'What skill matters most in penetration testing?', 'answer' => 'Reporting. Clearly explaining what was found, how serious it is, and how to fix it is what businesses pay for — running the tools is the easy part.'],
+                ],
+            ],
+            [
+                'slug' => 'crypto-security-basics-protect-your-wallet',
+                'title' => 'Crypto Security Basics: How to Protect Your Wallet From the Most Common Scams',
+                'meta' => 'A plain-English guide to keeping cryptocurrency safe: hot vs cold wallets, seed-phrase rules, spotting the most common scams, and the security habits that actually protect your funds.',
+                'category' => 'Security',
+                'focus' => 'crypto security basics',
+                'secondary' => ['protect crypto wallet', 'crypto scams', 'seed phrase security', 'cryptocurrency safety'],
+                'excerpt' => 'The security habits that actually keep cryptocurrency safe — wallet types, seed-phrase rules, and how to recognise the scams that catch people out most often.',
+                'date' => '2026-01-30',
+                'views' => 7000,
+                'sections' => [
+                    ['heading' => 'The one idea that changes everything: you are the bank', 'paragraphs' => [
+                        'The most important thing to understand about cryptocurrency is that there is usually no one to call. With a bank, a fraudulent transaction can often be reversed. With most crypto, transactions are final and irreversible, and if you lose access to your wallet, no support line can restore it. That is the trade-off for control: you get full ownership, and full responsibility.',
+                        'This is not a reason to avoid crypto — it is a reason to take security seriously from day one. The good news is that a small number of habits protect against the overwhelming majority of losses. Get these right and you remove most of the risk that catches beginners out.',
+                    ]],
+                    ['heading' => 'Hot wallets, cold wallets, and what to keep where', 'paragraphs' => [
+                        'A "hot" wallet is connected to the internet — a phone or browser app. It is convenient for small, everyday amounts but more exposed. A "cold" wallet is a hardware device that keeps your keys offline; it is the gold standard for storing anything you are not actively using. A simple rule works well: keep spending money in a hot wallet and savings in cold storage.',
+                        'Treat a hardware wallet like a safe for your long-term holdings. Buy it new and directly from the official manufacturer — never second-hand or from a marketplace reseller, as tampered devices are a known scam. Setting one up takes fifteen minutes and is the single biggest upgrade to your crypto security.',
+                    ]],
+                    ['heading' => 'Your seed phrase is everything — protect it like it', 'paragraphs' => [
+                        'When you create a wallet you are given a recovery phrase, usually twelve or twenty-four words. Whoever has those words controls the funds, completely. So the rules are absolute: write it on paper (or steel), store it offline in a safe place, and never type it into a website, a phone photo, a cloud note, an email or a chat. No legitimate service will ever ask you to enter your seed phrase.',
+                        'Consider a second copy in a separate secure location in case of fire or loss, and never store it digitally where malware or a cloud breach could reach it. Losing the phrase means losing the funds; someone else seeing it means the same. This single point is where most catastrophic, unrecoverable losses happen.',
+                    ]],
+                    ['heading' => 'The scams that catch people out', 'paragraphs' => [
+                        'Most crypto theft is not sophisticated hacking — it is old-fashioned deception. Watch for: fake support staff who message you first (real support never does) and ask for your seed phrase; "giveaways" that ask you to send crypto to receive more back (always a scam); fake wallet or exchange apps and phishing sites with a slightly misspelled address; and romance or investment "opportunities" that pressure you to move funds quickly.',
+                        'The defence is a healthy suspicion of urgency and of anyone contacting you first. Slow down, verify web addresses character by character, bookmark the real sites you use, and remember the golden rule: nobody legitimate will ever need your seed phrase or private key. If a deal sounds too good to be true, it is.',
+                    ]],
+                    ['heading' => 'A practical security routine', 'paragraphs' => [
+                        'Put it together into habits. Use a hardware wallet for savings and a reputable hot wallet for spending. Protect every exchange account with a strong, unique password and app-based two-factor authentication (an authenticator app, not SMS, which can be hijacked). Double-check every address before sending — malware can swap a copied address for an attacker\'s.',
+                        'Finally, keep your device itself clean: update your phone and computer, avoid installing dubious browser extensions, and be cautious with public Wi-Fi for anything sensitive. None of this is complicated, but together it puts you ahead of the vast majority of people who lose crypto — almost always to a preventable mistake rather than an unstoppable attack.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Understand that most crypto transactions are final and irreversible',
+                    'Keep spending funds in a hot wallet, savings in a cold (hardware) wallet',
+                    'Buy hardware wallets new, only from the official manufacturer',
+                    'Write your seed phrase offline; never type or photograph it',
+                    'Store a backup of the seed phrase in a second secure location',
+                    'Never share your seed phrase — no real service will ask for it',
+                    'Use app-based 2FA (not SMS) on every exchange account',
+                    'Verify every address before sending; beware urgency and unsolicited contact',
+                ],
+                'faq' => [
+                    ['question' => 'What is the safest way to store cryptocurrency?', 'answer' => 'For anything beyond spending money, a hardware (cold) wallet bought new from the official manufacturer is the safest option, with the recovery phrase stored offline and never entered online.'],
+                    ['question' => 'What is a seed phrase and why does it matter?', 'answer' => 'It is the 12- or 24-word recovery phrase that controls your wallet. Anyone who has it controls your funds, so it must be stored offline and never typed into any website, app, photo or message.'],
+                    ['question' => 'What are the most common crypto scams?', 'answer' => 'Fake support asking for your seed phrase, "send crypto to get more back" giveaways, fake apps and phishing sites, and pressured investment or romance schemes. Legitimate parties never contact you first for your keys.'],
+                    ['question' => 'Is SMS two-factor authentication safe for crypto?', 'answer' => 'It is better than nothing but weaker than an authenticator app, because SMS can be hijacked via SIM-swap attacks. Use an app-based authenticator on every exchange account where possible.'],
+                ],
+            ],
         ]);
     }
 
