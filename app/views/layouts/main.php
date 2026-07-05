@@ -8,6 +8,16 @@ $cmsFooterCloseInjections = '';
 $cmsCustomCssLinks = '';
 $cmsCustomJsScripts = '';
 
+$adsRepo = new \App\Models\AdsSettingsRepository();
+$adsSettings = $adsRepo->current();
+$adsenseClient = $adsRepo->adsenseClient();
+$analyticsId = $adsRepo->analyticsId();
+$adsActive = $adsRepo->adsActive();
+// Consent is granted only after the visitor accepts. Server-side we read the
+// cookie so ad/analytics scripts render on the very first paint for returning
+// visitors who already accepted (no flash, no extra round-trip).
+$consentGranted = ($_COOKIE['cwm_consent'] ?? '') === 'granted';
+
 if (is_file(base_path('config/installed.php'))) {
     try {
         $cmsTypographyStyle = (new \App\Services\TypographyEngine())->cachedStyleBlock();
@@ -50,6 +60,30 @@ if (is_file(base_path('config/installed.php'))) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
     <?= $cmsTypographyStyle ?>
     <?= $cmsCustomCssLinks ?>
+    <?php if ($adsActive || $analyticsId !== ''): ?>
+    <script>
+        // Google Consent Mode v2 — default everything to denied (GDPR-safe,
+        // cookieless) until the visitor accepts. The banner flips these to
+        // granted on Accept.
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+            ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+            analytics_storage: 'denied', functionality_storage: 'granted', security_storage: 'granted',
+            wait_for_update: 500
+        });
+        <?php if ($consentGranted): ?>
+        gtag('consent', 'update', { ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted', analytics_storage: 'granted' });
+        <?php endif; ?>
+    </script>
+    <?php endif; ?>
+    <?php if ($consentGranted && $adsActive): ?>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<?= e($adsenseClient) ?>" crossorigin="anonymous"></script>
+    <?php endif; ?>
+    <?php if ($consentGranted && $analyticsId !== ''): ?>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?= e($analyticsId) ?>"></script>
+    <script>gtag('js', new Date()); gtag('config', '<?= e($analyticsId) ?>', { anonymize_ip: true });</script>
+    <?php endif; ?>
     <?= $cmsHeadInjections ?>
     <?php if (!empty($schema)): ?>
         <script type="application/ld+json"><?= $schema ?></script>
@@ -66,6 +100,7 @@ if (is_file(base_path('config/installed.php'))) {
     </main>
     <?php require base_path('app/views/partials/footer.php'); ?>
 </div>
+<?php require base_path('app/views/partials/cookie-consent.php'); ?>
 <?= $cmsFooterCloseInjections ?>
 <script src="<?= asset('js/app.js') ?>" defer></script>
 <?= $cmsCustomJsScripts ?>

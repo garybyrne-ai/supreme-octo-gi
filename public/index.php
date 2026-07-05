@@ -95,7 +95,7 @@ if ($isGet) {
 // centralised in Router::sendSecurityHeaders() so every routed response — the
 // only responses PHP controls — is hardened from one place.
 
-if (!$isInstalled && !str_starts_with($requestPath, '/install') && !str_starts_with($requestPath, '/assets')) {
+if (!$isInstalled && !str_starts_with($requestPath, '/install') && !str_starts_with($requestPath, '/assets') && $requestPath !== '/ads.txt') {
     header('Location: /install', true, 302);
     exit;
 }

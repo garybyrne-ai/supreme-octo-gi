@@ -256,6 +256,13 @@ final class PageController extends Controller
         ]);
     }
 
+    public function adsTxt(): void
+    {
+        header('Content-Type: text/plain; charset=utf-8');
+        header('Cache-Control: public, max-age=3600');
+        echo (new \App\Models\AdsSettingsRepository())->adsTxt();
+    }
+
     public function legal(): void
     {
         $path = trim((string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');

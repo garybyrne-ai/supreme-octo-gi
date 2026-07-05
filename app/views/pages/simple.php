@@ -22,11 +22,27 @@
         <article class="cyber-card"><h3>Commercial Mindset</h3><p>Design, code, SEO and performance choices are tied to qualified leads, trust and revenue.</p></article>
     </section>
 <?php elseif ($variant === 'legal'): ?>
+    <?php $legalContact = $contact ?? []; $legalEmail = $legalContact['email'] ?? 'ank.kalia@gmail.com'; ?>
     <section class="section narrow reveal">
-        <h2>Plain-English Policy</h2>
-        <p>This starter policy explains how Crest Web Media handles enquiries, project data, analytics and operational records. Replace this copy with jurisdiction-specific legal text before production launch.</p>
-        <p>Contact form submissions are used to respond to enquiries. Admin and security events may be logged with IP address, device information and timestamps to protect the platform.</p>
-        <p>Cookies may be used for session security, analytics and preference storage. Users can request access, correction or deletion of personal data by contacting ank.kalia@gmail.com or calling +91 88948 67819.</p>
+        <h2>How we handle your data</h2>
+        <p>Crest Web Media respects your privacy. This page explains what data we collect, why, the cookies we use, and the rights you have under the GDPR and similar laws. If anything is unclear, email <a href="mailto:<?= e($legalEmail) ?>"><?= e($legalEmail) ?></a>.</p>
+
+        <h3>Information we collect</h3>
+        <p>When you submit a contact, order, support or tool form we collect the details you provide (such as name, email and website) to respond to and fulfil your request. For security we may log IP address, device information and timestamps on admin and security events to protect the platform.</p>
+
+        <h3>Cookies we use</h3>
+        <p><strong>Essential cookies</strong> (always on) keep the site secure — your session, login and CSRF protection. They store no marketing data and cannot be switched off without breaking the site.</p>
+        <p><strong>Analytics &amp; advertising cookies</strong> (optional) are used only if you accept them in our cookie banner. When enabled, we use <strong>Google Analytics</strong> to understand traffic and <strong>Google AdSense</strong> to show ads. These may set cookies and process data as described in <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener nofollow">Google's policies</a>. Until you accept, we apply Google Consent Mode with all advertising and analytics storage <em>denied</em>, so nothing non-essential runs.</p>
+        <p>You can change your choice at any time using the <a href="#" data-open-consent>cookie settings</a> button (bottom-left of every page).</p>
+
+        <h3>Google AdSense &amp; third-party ads</h3>
+        <p>If ads are enabled, third-party vendors including Google use cookies to serve ads based on prior visits to this and other websites. Google's use of advertising cookies enables it and its partners to serve ads based on your visits. You can opt out of personalised advertising via <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener nofollow">Google Ads Settings</a>, or opt out of some third-party vendors at <a href="https://www.aboutads.info" target="_blank" rel="noopener nofollow">aboutads.info</a>.</p>
+
+        <h3>Your rights</h3>
+        <p>You can request access to, correction of, or deletion of your personal data, withdraw consent, or object to processing. To exercise any right, email <a href="mailto:<?= e($legalEmail) ?>"><?= e($legalEmail) ?></a> and we will respond within 30 days.</p>
+
+        <h3>Data retention &amp; sharing</h3>
+        <p>We keep enquiry and order data only as long as needed to serve you and meet legal obligations, then delete it. We do not sell your personal data. We share it only with processors needed to run the service (for example payment providers when you buy, and Google if you accept analytics/ads).</p>
     </section>
 <?php endif; ?>
 

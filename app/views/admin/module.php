@@ -13,6 +13,7 @@ $adminMenu = [
     'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card'],
     'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear'],
     'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags'],
+    'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad'],
     'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question'],
     'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line'],
     'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route'],
@@ -307,6 +308,40 @@ $moduleDrafts = $moduleDrafts ?? [];
                 <?php else: ?>
                     <p>No members yet. When people register at <a href="/account/forms" target="_blank" rel="noopener">/account</a> they will appear here, and you can also create one from the <a href="/admin/modules/membership">Pro Test Account</a> tool.</p>
                 <?php endif; ?>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Ads & Consent'): ?>
+            <?php $adsSettings = $adsSettings ?? []; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/ads-settings">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>Google AdSense &amp; Analytics</h2>
+                    <p>Ads and analytics only load <strong>after</strong> a visitor accepts cookies (Google Consent Mode v2), so the site stays GDPR-compliant. Leave blank to keep them off.</p>
+                    <label>AdSense Publisher ID <small>(from AdSense → Account → looks like ca-pub-…)</small>
+                        <input name="adsense_client" value="<?= e($adsSettings['adsense_client'] ?? '') ?>" placeholder="ca-pub-1234567890123456"></label>
+                    <label>Google Analytics 4 ID <small>(optional — looks like G-XXXXXXXXXX)</small>
+                        <input name="analytics_id" value="<?= e($adsSettings['analytics_id'] ?? '') ?>" placeholder="G-XXXXXXXXXX"></label>
+                    <label class="checkbox-row"><input type="checkbox" name="ads_enabled" value="1" <?= !empty($adsSettings['ads_enabled']) ? 'checked' : '' ?>> Enable ads on the site (needs a valid AdSense ID above)</label>
+                    <label>Cookie consent message <small>(shown in the banner)</small>
+                        <textarea name="consent_message" rows="3"><?= e($adsSettings['consent_message'] ?? '') ?></textarea></label>
+                    <button class="pill-button" type="submit">Save Ads &amp; Consent <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <div class="cyber-card">
+                    <h2>ads.txt</h2>
+                    <p>Served live at <a href="/ads.txt" target="_blank" rel="noopener">/ads.txt</a>. AdSense requires this file with your publisher line — copy it from AdSense → Sites → "Get code".</p>
+                    <form class="cyber-form" method="post" action="/admin/ads-settings">
+                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                        <input type="hidden" name="adsense_client" value="<?= e($adsSettings['adsense_client'] ?? '') ?>">
+                        <input type="hidden" name="analytics_id" value="<?= e($adsSettings['analytics_id'] ?? '') ?>">
+                        <input type="hidden" name="ads_enabled" value="<?= !empty($adsSettings['ads_enabled']) ? '1' : '' ?>">
+                        <input type="hidden" name="consent_message" value="<?= e($adsSettings['consent_message'] ?? '') ?>">
+                        <label>ads.txt contents
+                            <textarea name="ads_txt" rows="7" style="font-family:monospace"><?= e($adsSettings['ads_txt'] ?? '') ?></textarea></label>
+                        <button class="pill-button ghost" type="submit">Save ads.txt <i class="fa-solid fa-floppy-disk"></i></button>
+                    </form>
+                    <p><small><i class="fa-solid fa-circle-info"></i> AdSense also wants you to place ad units in your pages. Once approved, paste the ad-unit snippet into <a href="/admin/modules/theme">Theme Settings → Script injections</a> or tell me where you want ads and I'll wire the slots.</small></p>
+                </div>
             </section>
         <?php endif; ?>
 

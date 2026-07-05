@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Database;
 use App\Core\Security;
 use App\Models\AdminModuleDraftRepository;
+use App\Models\AdsSettingsRepository;
 use App\Models\BacklinkPlanRepository;
 use App\Models\CarePlanRepository;
 use App\Models\CommerceRepository;
@@ -168,6 +169,7 @@ final class AdminController extends Controller
             ['slug' => 'membership', 'title' => 'Membership Plans', 'icon' => 'fa-id-card', 'summary' => 'Control every membership tier: price, billing interval, trial, Stripe and PayPal wiring, features and availability.'],
             ['slug' => 'members', 'title' => 'Member Manager', 'icon' => 'fa-users-gear', 'summary' => 'Edit members, upgrade or downgrade Pro access with a calendar expiry date, manage forum posting and remove accounts.'],
             ['slug' => 'coupons', 'title' => 'Coupons', 'icon' => 'fa-tags', 'summary' => 'Create discount codes for backlinks, care plans, audits and Speed Rescue — percent or fixed, usage caps and expiry dates.'],
+            ['slug' => 'ads', 'title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'summary' => 'Paste your Google AdSense ID, edit ads.txt and the GDPR cookie-consent message. Ads only load after visitors consent.'],
             ['slug' => 'faq', 'title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'summary' => 'Edit answers for common sales, delivery and support questions.'],
             ['slug' => 'seo', 'title' => 'SEO Center', 'icon' => 'fa-chart-line', 'summary' => 'Review titles, descriptions, schema signals and crawl priorities.'],
             ['slug' => 'redirects', 'title' => 'Redirect Manager', 'icon' => 'fa-route', 'summary' => 'Plan redirects, campaign URLs and migration-safe route changes.'],
@@ -220,6 +222,7 @@ final class AdminController extends Controller
             'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card', 'actions' => ['Create plan', 'Edit pricing and gateways', 'Pause or feature a plan']],
             'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear', 'actions' => ['Edit member', 'Upgrade or downgrade Pro', 'Set access expiry']],
             'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags', 'actions' => ['Create coupon', 'Set usage cap & expiry', 'Pause or delete codes']],
+            'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'actions' => ['Set AdSense ID', 'Edit ads.txt', 'Edit consent message']],
             'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'actions' => ['Add answer', 'Update schema FAQ', 'Review sales objections']],
             'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line', 'actions' => ['Audit metadata', 'Preview schema', 'Map internal links']],
             'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route', 'actions' => ['Add redirect', 'Import route map', 'Test status codes']],
@@ -254,6 +257,7 @@ final class AdminController extends Controller
             'carePlans' => $slug === 'content' ? (new CarePlanRepository())->all() : [],
             'coupons' => $slug === 'coupons' ? (new CouponRepository())->all() : [],
             'couponContexts' => CouponRepository::CONTEXTS,
+            'adsSettings' => $slug === 'ads' ? (new AdsSettingsRepository())->current() : [],
             'pageIntroDefs' => $slug === 'content' ? (new SiteContentRepository())->pageIntroDefinitions() : [],
             'catalogProducts' => $slug === 'commerce' ? (new CommerceRepository())->allProducts() : [],
             'intervals' => MembershipPlanRepository::INTERVALS,
@@ -379,6 +383,21 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/content');
+    }
+
+    public function updateAdsSettings(): void
+    {
+        $this->guardAdminPost('/admin/modules/ads', 'Ads settings token expired. Please try again.');
+
+        try {
+            (new AdsSettingsRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Ads & consent settings saved.';
+            (new AuditLogger())->log('admin.ads_settings.updated', ['enabled' => !empty($_POST['ads_enabled'])]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/ads');
     }
 
     public function saveCarePlan(): void

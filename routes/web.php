@@ -97,6 +97,8 @@ $router->get('/before-after-speed-simulator', [ToolsController::class, 'speedSim
 $router->get('/ai-automation-finder', [ToolsController::class, 'automationFinder']);
 $router->get('/support', [SupportController::class, 'index']);
 $router->post('/support/tickets', [SupportController::class, 'store']);
+$router->get('/ads.txt', [PageController::class, 'adsTxt']);
+$router->post('/admin/ads-settings', [AdminController::class, 'updateAdsSettings']);
 $router->get('/privacy-policy', [PageController::class, 'legal']);
 $router->get('/cookie-policy', [PageController::class, 'legal']);
 $router->get('/terms-and-conditions', [PageController::class, 'legal']);

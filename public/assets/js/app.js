@@ -930,3 +930,76 @@ document.querySelectorAll('[data-tool-report]').forEach(function (report) {
         });
     }
 })();
+
+// --- GDPR cookie consent (Google Consent Mode v2) ---
+(function () {
+    var banner = document.getElementById('cookieConsent');
+    var reopen = document.getElementById('cookieReopen');
+    if (!banner) { return; }
+
+    var readCookie = function (name) {
+        return document.cookie.split('; ').reduce(function (acc, c) {
+            var parts = c.split('=');
+            return parts[0] === name ? decodeURIComponent(parts[1] || '') : acc;
+        }, '');
+    };
+    var setCookie = function (name, value) {
+        var oneYear = 60 * 60 * 24 * 365;
+        var secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = name + '=' + encodeURIComponent(value) + '; Max-Age=' + oneYear + '; Path=/; SameSite=Lax' + secure;
+    };
+
+    var gtagSafe = function () {
+        if (typeof window.gtag === 'function') { window.gtag.apply(window, arguments); }
+    };
+
+    var injectAdsense = function () {
+        var client = banner.getAttribute('data-adsense');
+        if (!client || document.querySelector('script[data-adsense-loader]')) { return; }
+        var s = document.createElement('script');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        s.setAttribute('data-adsense-loader', '1');
+        s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(client);
+        document.head.appendChild(s);
+    };
+
+    var showBanner = function () { banner.hidden = false; if (reopen) { reopen.hidden = true; } };
+    var hideBanner = function () { banner.hidden = true; if (reopen) { reopen.hidden = false; } };
+
+    var accept = function () {
+        setCookie('cwm_consent', 'granted');
+        gtagSafe('consent', 'update', {
+            ad_storage: 'granted', ad_user_data: 'granted',
+            ad_personalization: 'granted', analytics_storage: 'granted'
+        });
+        injectAdsense();
+        hideBanner();
+    };
+    var reject = function () {
+        setCookie('cwm_consent', 'denied');
+        gtagSafe('consent', 'update', {
+            ad_storage: 'denied', ad_user_data: 'denied',
+            ad_personalization: 'denied', analytics_storage: 'denied'
+        });
+        hideBanner();
+    };
+
+    banner.querySelectorAll('[data-consent]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            btn.getAttribute('data-consent') === 'accept' ? accept() : reject();
+        });
+    });
+    if (reopen) { reopen.addEventListener('click', showBanner); }
+    // Let a link anywhere (e.g. cookie policy page) reopen the chooser.
+    document.querySelectorAll('[data-open-consent]').forEach(function (el) {
+        el.addEventListener('click', function (e) { e.preventDefault(); showBanner(); });
+    });
+
+    var choice = readCookie('cwm_consent');
+    if (choice === 'granted' || choice === 'denied') {
+        hideBanner();
+    } else {
+        showBanner();
+    }
+})();

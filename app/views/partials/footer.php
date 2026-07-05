@@ -92,7 +92,9 @@ $techNews = (new \App\Services\TechNewsService())->items();
     <section class="footer-statusbar">
         <span>&copy; <?= date('Y') ?> Crest Web Media</span>
         <a href="/privacy-policy">Privacy</a>
+        <a href="/cookie-policy">Cookies</a>
         <a href="/terms-and-conditions">Terms</a>
+        <a href="#" data-open-consent>Cookie settings</a>
         <span>Remote studio. Global delivery. Written-first support.</span>
     </section>
 </footer>
