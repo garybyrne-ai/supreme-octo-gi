@@ -226,8 +226,12 @@ final class ContentRepository
             ],
         ];
 
+        // Admin-editable: once services are managed in the backend, use those;
+        // otherwise fall back to the defaults defined above.
+        $services = (new ServiceContentRepository())->resolve($services);
+
         return array_map(function (array $service): array {
-            $service['visuals'] = $this->serviceVisuals($service['slug']);
+            $service['visuals'] = $this->serviceVisuals((string) ($service['slug'] ?? ''));
             return $service;
         }, $services);
     }
@@ -1173,22 +1177,26 @@ final class ContentRepository
 
     public function testimonials(): array
     {
-        return [
+        $defaults = [
             ['name' => 'Liam OConnor', 'role' => 'CEO, TravelGrid', 'country' => 'Global', 'flag' => 'GL', 'quote' => 'Crest Web Media took the time to understand what our customers needed before touching the design. The finished website feels faster, clearer and far more professional, and the enquiry quality improved because the pages finally explain our offer properly.'],
             ['name' => 'Sarah Johnson', 'role' => 'Founder, FinTechOS', 'country' => 'Global', 'flag' => 'GL', 'quote' => 'The web application build was handled with real care. We had dashboards, user flows, forms and admin details that needed to work cleanly, and everything was explained without technical drama. It felt like working with someone who cared about the product, not just the code.'],
             ['name' => 'Thomas Muller', 'role' => 'Owner, StyleHaus', 'country' => 'Global', 'flag' => 'GL', 'quote' => 'Our store used to look fine but it did not guide people to buy. Crest Web Media tightened the layout, improved performance and made the product pages easier to trust. The site now feels more premium, and customers tell us checkout is much smoother.'],
             ['name' => 'David Byrne', 'role' => 'CTO, TechSecure', 'country' => 'Global', 'flag' => 'GL', 'quote' => 'The security review was practical and easy to act on. Instead of just sending a scary report, they showed us what mattered, what could wait and how to fix the risks properly. It gave our team confidence before pushing the next release live.'],
         ];
+
+        return (new TestimonialRepository())->resolve($defaults);
     }
 
     public function faqs(): array
     {
-        return [
+        $defaults = [
             ['question' => 'Where does Crest Web Media work?', 'answer' => 'Crest Web Media works remotely with clients in Ireland, the UK, the USA and Europe, with written-first communication through email, WhatsApp and support tickets.'],
             ['question' => 'Can you build the website, CMS and backend together?', 'answer' => 'Yes. Projects can include public pages, custom PHP/MySQL admin workflows, media management, blog publishing, SEO controls, payment settings and secure user access.'],
             ['question' => 'Do you handle security and performance?', 'answer' => 'Yes. Forms, uploads, sessions, headers, cache behaviour, Core Web Vitals and hosting constraints are reviewed during delivery, with deeper penetration testing available as a dedicated service.'],
             ['question' => 'Can AI be integrated into an existing website?', 'answer' => 'Yes. AI can support lead qualification, CRM updates, support triage, content operations, summaries and internal workflows without forcing a full rebuild.'],
         ];
+
+        return (new FaqContentRepository())->resolve($defaults);
     }
 
     public function pricing(): array

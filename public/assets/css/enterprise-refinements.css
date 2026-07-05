@@ -1199,3 +1199,32 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2300e5ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 16px center;
 }
+
+/* Admin editable content lists (Services / Testimonials / FAQ managers) */
+.admin-editable-panel .admin-editable-list { display: grid; gap: 10px; margin-top: 14px; }
+.admin-edit-item {
+    border: 1px solid rgba(0, 183, 255, .18); border-radius: 12px;
+    background: rgba(3, 8, 20, .5); overflow: hidden;
+}
+.admin-edit-item > summary {
+    display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 13px 16px;
+    font-weight: 700; color: #eaf2ff; list-style: none;
+}
+.admin-edit-item > summary::-webkit-details-marker { display: none; }
+.admin-edit-item > summary::after { content: "\f078"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-left: auto; font-size: 12px; color: #7fa8c9; transition: transform .2s ease; }
+.admin-edit-item[open] > summary::after { transform: rotate(180deg); }
+.admin-edit-item > summary i { color: var(--primary, #00e5ff); }
+.admin-edit-item > summary small { color: #8fa5be; font-weight: 500; font-size: 12px; }
+.admin-edit-item .cyber-form { padding: 4px 16px 8px; }
+.admin-item-actions { margin-top: 6px; }
+.admin-item-toolbar {
+    display: flex; gap: 8px; padding: 0 16px 14px; align-items: center;
+}
+.admin-item-toolbar form { display: inline; }
+.admin-item-toolbar button {
+    width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
+    color: #9fe6ff; background: rgba(0, 183, 255, .1); border: 1px solid rgba(0, 183, 255, .28);
+}
+.admin-item-toolbar button:hover { color: #fff; background: rgba(0, 183, 255, .2); }
+.admin-item-toolbar button.danger { color: #ff9db1; background: rgba(255, 77, 129, .1); border-color: rgba(255, 77, 129, .3); margin-left: auto; }
+.admin-item-toolbar button.danger:hover { color: #fff; background: rgba(255, 77, 129, .25); }

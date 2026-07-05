@@ -41,6 +41,7 @@ $modulesWithRealUi = [
     'Site Content', 'Ads & Consent', 'Newsletter Offer', 'Mail Settings', 'Payment Settings',
     'Commerce Engine', 'Membership Plans', 'Coupons', 'Theme Settings',
     'Clients', 'Search Console', 'Referrals', 'Client Work Log', 'Abandoned Orders', 'AI Assistant',
+    'Services Manager', 'Testimonials', 'FAQ Manager',
 ];
 $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
 ?>
@@ -501,6 +502,173 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                         <p>No entries yet. Post your first client update on the left.</p>
                     <?php endif; ?>
                 </section>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Services Manager'): ?>
+            <?php $servicesList = $servicesList ?? []; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="type" value="service">
+                    <h2>Add a service</h2>
+                    <p>Services appear on the home page and the Services page, and each gets its own detail page at <code>/services/{slug}</code>.</p>
+                    <label>Title <input name="title" required placeholder="Website Development"></label>
+                    <label>Slug <small>(optional — auto-generated from the title)</small>
+                        <input name="slug" placeholder="website-development"></label>
+                    <label>Summary <textarea name="summary" rows="3" placeholder="One or two sentences describing the service."></textarea></label>
+                    <label>Icon <small>(Font Awesome class)</small>
+                        <input name="icon" value="fa-solid fa-screwdriver-wrench"></label>
+                    <label>Tags <small>(one per line or comma-separated)</small>
+                        <textarea name="tags" rows="3" placeholder="PHP 8 Architecture&#10;Custom CMS&#10;Edge-Speed UX"></textarea></label>
+                    <button class="pill-button" type="submit">Add Service <i class="fa-solid fa-plus"></i></button>
+                </form>
+                <div class="cyber-card admin-editable-panel">
+                    <h2>Services (<?= count($servicesList) ?>)</h2>
+                    <p>Click a service to edit it. Reorder with the arrows; changes go live immediately.</p>
+                    <div class="admin-editable-list">
+                        <?php foreach ($servicesList as $svc): ?>
+                            <details class="admin-edit-item">
+                                <summary><i class="<?= e($svc['icon'] ?? 'fa-solid fa-screwdriver-wrench') ?>"></i> <strong><?= e($svc['title'] ?? '') ?></strong><small><?= e($svc['slug'] ?? '') ?></small></summary>
+                                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                    <input type="hidden" name="type" value="service">
+                                    <input type="hidden" name="id" value="<?= e($svc['id'] ?? '') ?>">
+                                    <div class="form-grid two">
+                                        <label>Title <input name="title" value="<?= e($svc['title'] ?? '') ?>" required></label>
+                                        <label>Slug <input name="slug" value="<?= e($svc['slug'] ?? '') ?>"></label>
+                                    </div>
+                                    <label>Summary <textarea name="summary" rows="3"><?= e($svc['summary'] ?? '') ?></textarea></label>
+                                    <label>Icon <input name="icon" value="<?= e($svc['icon'] ?? '') ?>"></label>
+                                    <label>Tags <small>(one per line)</small><textarea name="tags" rows="3"><?= e(implode("\n", (array) ($svc['tags'] ?? []))) ?></textarea></label>
+                                    <div class="admin-item-actions">
+                                        <button class="pill-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                                    </div>
+                                </form>
+                                <div class="admin-item-toolbar">
+                                    <?php foreach (['up' => 'fa-arrow-up', 'down' => 'fa-arrow-down'] as $dir => $ic): ?>
+                                        <form method="post" action="/admin/content-item/move">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="service"><input type="hidden" name="id" value="<?= e($svc['id'] ?? '') ?>"><input type="hidden" name="dir" value="<?= $dir ?>">
+                                            <button type="submit" title="Move <?= $dir ?>"><i class="fa-solid <?= $ic ?>"></i></button>
+                                        </form>
+                                    <?php endforeach; ?>
+                                    <form method="post" action="/admin/content-item/delete" onsubmit="return confirm('Delete this service?');">
+                                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="service"><input type="hidden" name="id" value="<?= e($svc['id'] ?? '') ?>">
+                                        <button type="submit" class="danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </details>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Testimonials'): ?>
+            <?php $testimonialsList = $testimonialsList ?? []; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="type" value="testimonial">
+                    <h2>Add a testimonial</h2>
+                    <p>Client quotes shown on the home page and Testimonials page.</p>
+                    <div class="form-grid two">
+                        <label>Name <input name="name" required placeholder="Jane Murphy"></label>
+                        <label>Role / company <input name="role" placeholder="Founder, Acme Ltd"></label>
+                    </div>
+                    <div class="form-grid two">
+                        <label>Country <input name="country" placeholder="Ireland"></label>
+                        <label>Flag code <small>(2 letters, e.g. IE)</small><input name="flag" placeholder="IE" maxlength="4"></label>
+                    </div>
+                    <label>Quote <textarea name="quote" rows="4" required></textarea></label>
+                    <button class="pill-button" type="submit">Add Testimonial <i class="fa-solid fa-plus"></i></button>
+                </form>
+                <div class="cyber-card admin-editable-panel">
+                    <h2>Testimonials (<?= count($testimonialsList) ?>)</h2>
+                    <div class="admin-editable-list">
+                        <?php foreach ($testimonialsList as $t): ?>
+                            <details class="admin-edit-item">
+                                <summary><i class="fa-solid fa-comment-dots"></i> <strong><?= e($t['name'] ?? '') ?></strong><small><?= e($t['role'] ?? '') ?></small></summary>
+                                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                    <input type="hidden" name="type" value="testimonial">
+                                    <input type="hidden" name="id" value="<?= e($t['id'] ?? '') ?>">
+                                    <div class="form-grid two">
+                                        <label>Name <input name="name" value="<?= e($t['name'] ?? '') ?>" required></label>
+                                        <label>Role / company <input name="role" value="<?= e($t['role'] ?? '') ?>"></label>
+                                    </div>
+                                    <div class="form-grid two">
+                                        <label>Country <input name="country" value="<?= e($t['country'] ?? '') ?>"></label>
+                                        <label>Flag code <input name="flag" value="<?= e($t['flag'] ?? '') ?>" maxlength="4"></label>
+                                    </div>
+                                    <label>Quote <textarea name="quote" rows="4" required><?= e($t['quote'] ?? '') ?></textarea></label>
+                                    <div class="admin-item-actions">
+                                        <button class="pill-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                                    </div>
+                                </form>
+                                <div class="admin-item-toolbar">
+                                    <?php foreach (['up' => 'fa-arrow-up', 'down' => 'fa-arrow-down'] as $dir => $ic): ?>
+                                        <form method="post" action="/admin/content-item/move">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="testimonial"><input type="hidden" name="id" value="<?= e($t['id'] ?? '') ?>"><input type="hidden" name="dir" value="<?= $dir ?>">
+                                            <button type="submit" title="Move <?= $dir ?>"><i class="fa-solid <?= $ic ?>"></i></button>
+                                        </form>
+                                    <?php endforeach; ?>
+                                    <form method="post" action="/admin/content-item/delete" onsubmit="return confirm('Delete this testimonial?');">
+                                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="testimonial"><input type="hidden" name="id" value="<?= e($t['id'] ?? '') ?>">
+                                        <button type="submit" class="danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </details>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'FAQ Manager'): ?>
+            <?php $faqList = $faqList ?? []; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="type" value="faq">
+                    <h2>Add a FAQ</h2>
+                    <p>Questions and answers on the FAQ page (also emitted as FAQ schema for search engines).</p>
+                    <label>Question <input name="question" required></label>
+                    <label>Answer <textarea name="answer" rows="4" required></textarea></label>
+                    <button class="pill-button" type="submit">Add FAQ <i class="fa-solid fa-plus"></i></button>
+                </form>
+                <div class="cyber-card admin-editable-panel">
+                    <h2>FAQs (<?= count($faqList) ?>)</h2>
+                    <div class="admin-editable-list">
+                        <?php foreach ($faqList as $f): ?>
+                            <details class="admin-edit-item">
+                                <summary><i class="fa-solid fa-circle-question"></i> <strong><?= e($f['question'] ?? '') ?></strong></summary>
+                                <form class="cyber-form" method="post" action="/admin/content-item/save">
+                                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                    <input type="hidden" name="type" value="faq">
+                                    <input type="hidden" name="id" value="<?= e($f['id'] ?? '') ?>">
+                                    <label>Question <input name="question" value="<?= e($f['question'] ?? '') ?>" required></label>
+                                    <label>Answer <textarea name="answer" rows="4" required><?= e($f['answer'] ?? '') ?></textarea></label>
+                                    <div class="admin-item-actions">
+                                        <button class="pill-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                                    </div>
+                                </form>
+                                <div class="admin-item-toolbar">
+                                    <?php foreach (['up' => 'fa-arrow-up', 'down' => 'fa-arrow-down'] as $dir => $ic): ?>
+                                        <form method="post" action="/admin/content-item/move">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="faq"><input type="hidden" name="id" value="<?= e($f['id'] ?? '') ?>"><input type="hidden" name="dir" value="<?= $dir ?>">
+                                            <button type="submit" title="Move <?= $dir ?>"><i class="fa-solid <?= $ic ?>"></i></button>
+                                        </form>
+                                    <?php endforeach; ?>
+                                    <form method="post" action="/admin/content-item/delete" onsubmit="return confirm('Delete this FAQ?');">
+                                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="type" value="faq"><input type="hidden" name="id" value="<?= e($f['id'] ?? '') ?>">
+                                        <button type="submit" class="danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </details>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </section>
         <?php endif; ?>
 

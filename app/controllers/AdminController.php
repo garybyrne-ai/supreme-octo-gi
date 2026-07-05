@@ -216,6 +216,8 @@ final class AdminController extends Controller
             $this->redirect('/admin');
         }
 
+        $content = new ContentRepository();
+
         $modules = [
             'blog' => ['title' => 'Blog Manager', 'icon' => 'fa-newspaper', 'actions' => ['Create SEO article', 'Edit post metadata', 'Review categories']],
             'portfolio' => ['title' => 'Portfolio Manager', 'icon' => 'fa-layer-group', 'actions' => ['Add project', 'Update case study', 'Tune category filters']],
@@ -267,6 +269,9 @@ final class AdminController extends Controller
             'siteMembers' => $slug === 'members' ? (new MemberRepository())->recent(200) : [],
             'membershipPlans' => $slug === 'membership' ? (new MembershipPlanRepository())->all() : [],
             'siteContent' => $slug === 'content' ? (new SiteContentRepository())->all() : [],
+            'servicesList' => $slug === 'services' ? (new \App\Models\ServiceContentRepository())->ensureSeeded($content->services()) : [],
+            'testimonialsList' => $slug === 'testimonials' ? (new \App\Models\TestimonialRepository())->ensureSeeded($content->testimonials()) : [],
+            'faqList' => $slug === 'faq' ? (new \App\Models\FaqContentRepository())->ensureSeeded($content->faqs()) : [],
             'backlinkPlans' => $slug === 'content' ? (new BacklinkPlanRepository())->all() : [],
             'carePlans' => $slug === 'content' ? (new CarePlanRepository())->all() : [],
             'coupons' => $slug === 'coupons' ? (new CouponRepository())->all() : [],
@@ -490,6 +495,60 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/search-console');
+    }
+
+    /**
+     * WordPress-style CRUD for the editable content collections (services,
+     * testimonials, FAQs). One handler, dispatched by a `type` field.
+     */
+    public function saveContentItem(): void
+    {
+        [$type, $repo, $module] = $this->resolveContentType((string) ($_POST['type'] ?? ''));
+        $this->guardAdminPost('/admin/modules/' . $module, ucfirst($type) . ' token expired. Please try again.');
+
+        try {
+            $repo->upsert($_POST);
+            $_SESSION['admin_notice'] = ucfirst($type) . ' saved.';
+            (new AuditLogger())->log('admin.content.saved', ['type' => $type]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/' . $module);
+    }
+
+    public function deleteContentItem(): void
+    {
+        [$type, $repo, $module] = $this->resolveContentType((string) ($_POST['type'] ?? ''));
+        $this->guardAdminPost('/admin/modules/' . $module, ucfirst($type) . ' token expired. Please try again.');
+
+        $repo->delete((string) ($_POST['id'] ?? ''));
+        $_SESSION['admin_notice'] = ucfirst($type) . ' removed.';
+        (new AuditLogger())->log('admin.content.deleted', ['type' => $type]);
+
+        $this->redirect('/admin/modules/' . $module);
+    }
+
+    public function moveContentItem(): void
+    {
+        [$type, $repo, $module] = $this->resolveContentType((string) ($_POST['type'] ?? ''));
+        $this->guardAdminPost('/admin/modules/' . $module, ucfirst($type) . ' token expired. Please try again.');
+
+        $repo->move((string) ($_POST['id'] ?? ''), (string) ($_POST['dir'] ?? 'up') === 'down' ? 'down' : 'up');
+
+        $this->redirect('/admin/modules/' . $module);
+    }
+
+    /**
+     * @return array{0: string, 1: \App\Models\EditableContentRepository, 2: string}
+     */
+    private function resolveContentType(string $type): array
+    {
+        return match ($type) {
+            'testimonial' => ['testimonial', new \App\Models\TestimonialRepository(), 'testimonials'],
+            'faq' => ['faq', new \App\Models\FaqContentRepository(), 'faq'],
+            default => ['service', new \App\Models\ServiceContentRepository(), 'services'],
+        };
     }
 
     public function updateAiSettings(): void
