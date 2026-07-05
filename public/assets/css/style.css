@@ -1,16 +1,4 @@
-@font-face {
-    font-family: "Oxanium";
-    font-style: normal;
-    font-weight: 400 800;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "Raleway";
-    font-style: normal;
-    font-weight: 400 800;
-    font-display: swap;
-}
+/* Oxanium & Raleway are loaded from Google Fonts in the layout <head>. */
 
 :root {
     --bg: #02040c;
@@ -3058,6 +3046,107 @@ h3 {
     cursor: pointer;
 }
 
+.module-action-grid button:hover,
+.module-action-grid button.is-active {
+    color: #041018;
+    border-color: rgba(15, 255, 193, 0.72);
+    background: linear-gradient(135deg, rgba(15, 255, 193, 0.94), rgba(0, 207, 255, 0.86));
+    box-shadow: 0 18px 42px rgba(0, 207, 255, 0.18), inset 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.admin-action-panels {
+    display: grid;
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.admin-action-panel {
+    display: none;
+    border-color: rgba(0, 207, 255, 0.26);
+    background:
+        radial-gradient(circle at 12% 0%, rgba(0, 207, 255, 0.13), transparent 34%),
+        radial-gradient(circle at 88% 12%, rgba(180, 92, 255, 0.14), transparent 32%),
+        rgba(3, 7, 15, 0.8);
+}
+
+.admin-action-panel.is-active {
+    display: grid;
+}
+
+.admin-action-heading {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.admin-action-heading h2 {
+    margin: 8px 0 8px;
+}
+
+.admin-action-heading p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.admin-action-log {
+    display: grid;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.admin-log-list {
+    display: grid;
+    gap: 12px;
+}
+
+.admin-log-list article {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 18px;
+    align-items: start;
+    padding: 16px;
+    border: 1px solid rgba(0, 207, 255, 0.18);
+    border-radius: 8px;
+    background: rgba(4, 9, 18, 0.68);
+}
+
+.admin-log-list strong,
+.admin-log-list span,
+.admin-log-list p {
+    overflow-wrap: anywhere;
+}
+
+.admin-log-list strong {
+    display: block;
+    color: var(--text);
+}
+
+.admin-log-list span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.admin-log-list em {
+    justify-self: end;
+    padding: 7px 10px;
+    color: var(--accent);
+    border: 1px solid rgba(15, 255, 193, 0.3);
+    border-radius: 999px;
+    background: rgba(15, 255, 193, 0.08);
+    font-style: normal;
+    font-weight: 900;
+    text-transform: capitalize;
+}
+
+.admin-log-list p {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--muted);
+}
+
 .price-card strong {
     display: block;
     margin: 20px 0;
@@ -4780,6 +4869,74 @@ h3 {
     min-height: 230px;
 }
 
+.scan-meter {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 2px 14px;
+    align-items: center;
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid rgba(15, 255, 193, .28);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(15, 255, 193, .10), rgba(0, 207, 255, .08));
+}
+
+.scan-meter strong {
+    grid-row: span 2;
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    color: #031014;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--accent), var(--primary));
+    font-family: var(--font-display);
+    font-size: 26px;
+    box-shadow: 0 0 28px rgba(0, 229, 255, .22);
+}
+
+.scan-meter span {
+    color: var(--text);
+    font-weight: 900;
+}
+
+.scan-meter small {
+    color: var(--muted);
+}
+
+.growth-lab-upgrade {
+    margin: 18px 0 36px;
+}
+
+.growth-lab-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px 24px;
+    align-items: center;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(0, 229, 255, .16), transparent 36%),
+        radial-gradient(circle at 88% 10%, rgba(180, 92, 255, .16), transparent 34%),
+        rgba(4, 8, 18, .78);
+}
+
+.growth-lab-card .kicker,
+.growth-lab-card h2,
+.growth-lab-card p {
+    grid-column: 1;
+}
+
+.growth-lab-card p {
+    margin: 0;
+}
+
+.growth-lab-actions {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    display: grid;
+    gap: 12px;
+    min-width: 260px;
+}
+
 .interactive-home-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
 }
@@ -5261,6 +5418,7 @@ h3 {
     .tool-workbench,
     .tool-results,
     .tool-access-gate,
+    .growth-lab-card,
     .interactive-suite,
     .form-grid.two,
     .result-metrics,
@@ -5273,8 +5431,21 @@ h3 {
     .tool-workbench,
     .tool-results,
     .tool-access-gate,
+    .growth-lab-card,
     .interactive-suite {
         gap: 14px;
+    }
+
+    .growth-lab-card .kicker,
+    .growth-lab-card h2,
+    .growth-lab-card p,
+    .growth-lab-actions {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    .growth-lab-actions {
+        min-width: 0;
     }
 
     .tool-grid .cyber-card,
@@ -6848,6 +7019,85 @@ h3 {
     }
 }
 
+@media (max-width: 900px) {
+    .admin-migration-panel {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+
+    .admin-migration-panel .pill-button {
+        width: 100%;
+    }
+}
+
+/* Final mobile overlay fix: menu/login must open as full app panels, not collapsed strips. */
+@media (max-width: 900px) {
+    body.nav-open #siteNav.nav,
+    #siteNav.nav.is-open {
+        position: fixed !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        left: 10px !important;
+        right: 10px !important;
+        top: calc(78px + env(safe-area-inset-top)) !important;
+        bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+        width: auto !important;
+        height: calc(100vh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+        height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+        min-height: 360px !important;
+        max-height: calc(100vh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+        max-height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+        padding: 14px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        z-index: 7000 !important;
+    }
+
+    #siteNav.nav.is-open .nav-item,
+    body.nav-open #siteNav.nav .nav-item,
+    #siteNav.nav.is-open > a,
+    body.nav-open #siteNav.nav > a,
+    #siteNav.nav.is-open .mobile-nav-account-link,
+    body.nav-open #siteNav.nav .mobile-nav-account-link {
+        flex: 0 0 auto !important;
+        min-height: 48px !important;
+        width: 100% !important;
+    }
+
+    body.account-open .account-widget.is-open .account-popover:not([hidden]) {
+        position: fixed !important;
+        display: block !important;
+        left: 10px !important;
+        right: 10px !important;
+        top: calc(78px + env(safe-area-inset-top)) !important;
+        bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+        width: auto !important;
+        height: calc(100vh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+        height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+        min-height: 360px !important;
+        max-height: calc(100vh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+        max-height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+        padding: 16px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        z-index: 7200 !important;
+    }
+
+    body.account-open .account-widget.is-open .account-form.is-active {
+        display: grid !important;
+    }
+}
+
 /* Final font map: keep older/mobile selectors from falling back after caching. */
 body,
 p,
@@ -7037,81 +7287,114 @@ button,
     }
 }
 
-@media (max-width: 900px) {
-    .admin-migration-panel {
-        grid-template-columns: 1fr;
-        align-items: start;
-    }
-
-    .admin-migration-panel .pill-button {
-        width: 100%;
-    }
+.mail-test-form {
+    display: grid;
+    gap: 14px;
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, .10);
 }
 
-/* Final mobile overlay fix: menu/login must open as full app panels, not collapsed strips. */
+.mail-test-form label {
+    display: grid;
+    gap: 8px;
+    color: #dce8f7;
+    font-weight: 800;
+}
+
+.mail-test-form input {
+    width: 100%;
+    min-height: 48px;
+    color: var(--text);
+    border: 1px solid rgba(0, 207, 255, .24);
+    border-radius: 14px;
+    padding: 0 14px;
+    background: rgba(0, 0, 0, .24);
+    outline: none;
+}
+
 @media (max-width: 900px) {
-    body.nav-open #siteNav.nav,
-    #siteNav.nav.is-open {
+    .site-header {
+        position: sticky;
+        top: calc(6px + env(safe-area-inset-top));
+        z-index: 4000;
+        grid-template-columns: minmax(0, 1fr) auto;
+        overflow: visible !important;
+    }
+
+    .site-header:has(.account-widget.is-open),
+    .site-header:has(.nav.is-open),
+    body.nav-open .site-header,
+    body.account-open .site-header {
+        z-index: 5000;
+    }
+
+    .nav {
+        display: none !important;
+    }
+
+    .nav.is-open,
+    body.nav-open .nav {
         position: fixed !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 8px !important;
+        display: grid !important;
+        grid-auto-rows: min-content;
+        align-content: start;
+        gap: 8px;
         left: 10px !important;
         right: 10px !important;
-        top: calc(78px + env(safe-area-inset-top)) !important;
+        top: calc(82px + env(safe-area-inset-top)) !important;
         bottom: calc(92px + env(safe-area-inset-bottom)) !important;
-        width: auto !important;
-        height: calc(100vh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-        height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-        min-height: 360px !important;
-        max-height: calc(100vh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-        max-height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-        padding: 14px !important;
+        z-index: 4600 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
+        padding: 14px !important;
+        border-radius: 26px;
         opacity: 1 !important;
         visibility: visible !important;
         pointer-events: auto !important;
         transform: none !important;
-        z-index: 7000 !important;
     }
 
-    #siteNav.nav.is-open .nav-item,
-    body.nav-open #siteNav.nav .nav-item,
-    #siteNav.nav.is-open > a,
-    body.nav-open #siteNav.nav > a,
-    #siteNav.nav.is-open .mobile-nav-account-link,
-    body.nav-open #siteNav.nav .mobile-nav-account-link {
-        flex: 0 0 auto !important;
-        min-height: 48px !important;
-        width: 100% !important;
+    .nav.is-open a,
+    .nav.is-open .nav-item > a,
+    .nav.is-open .mobile-nav-account-link {
+        flex: 0 0 auto;
+        min-height: 48px;
     }
 
-    body.account-open .account-widget.is-open .account-popover:not([hidden]) {
+    .account-widget {
+        position: static !important;
+    }
+
+    .account-popover {
+        display: none;
+    }
+
+    .account-widget.is-open .account-popover {
         position: fixed !important;
         display: block !important;
         left: 10px !important;
         right: 10px !important;
-        top: calc(78px + env(safe-area-inset-top)) !important;
+        top: calc(82px + env(safe-area-inset-top)) !important;
         bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+        z-index: 5200 !important;
         width: auto !important;
-        height: calc(100vh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-        height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-        min-height: 360px !important;
-        max-height: calc(100vh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-        max-height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-        padding: 16px !important;
+        max-width: none !important;
+        max-height: none !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        pointer-events: auto !important;
-        transform: none !important;
-        z-index: 7200 !important;
+        border-radius: 26px;
     }
 
-    body.account-open .account-widget.is-open .account-form.is-active {
-        display: grid !important;
+    body.account-open .nav,
+    body.account-open .mobile-app-dock {
+        pointer-events: none;
+    }
+
+    body.account-open .account-popover {
+        pointer-events: auto;
     }
 }

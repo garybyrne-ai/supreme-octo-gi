@@ -14,7 +14,7 @@ return [
     'admin_email' => $installed['site']['admin_email'] ?? 'ank.kalia@gmail.com',
     'monitor_cron_key' => getenv('MONITOR_CRON_KEY') ?: ($installed['site']['monitor_cron_key'] ?? ''),
     'security' => [
-        'csp' => "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com data:; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests",
+        'csp' => "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests",
         'rate_limit_attempts' => 5,
         'rate_limit_window_minutes' => 15,
     ],
