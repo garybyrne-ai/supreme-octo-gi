@@ -1034,3 +1034,76 @@
 .portal-tool-head { display: flex; align-items: flex-start; gap: 14px; }
 .portal-tool-title { flex: 1; min-width: 0; }
 .portal-guide-intro { margin: 0 0 8px; font-size: 12.5px; color: #8fa5be; }
+
+/* Enterprise SERP checker + rank tracker */
+.container-narrow { max-width: 900px; margin: 0 auto 6px; }
+.serp-metrics {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px;
+}
+.serp-metric {
+    padding: 16px 18px; border-radius: 14px; text-align: center;
+    background: rgba(7, 16, 32, .7); border: 1px solid rgba(0, 183, 255, .2);
+}
+.serp-metric span { display: block; font-size: 12px; color: #9db4d0; margin-bottom: 6px; }
+.serp-metric strong { font-size: 22px; color: #fff; }
+.serp-metric.tier-excellent { border-color: rgba(35, 255, 154, .5); }
+.serp-metric.tier-excellent strong { color: #23ff9a; }
+.serp-metric.tier-good strong { color: #7fffd0; }
+.serp-metric.tier-fair strong { color: #ffc66f; }
+.serp-metric.tier-critical { border-color: rgba(255, 107, 139, .45); }
+.serp-metric.tier-critical strong { color: #ff6b8b; }
+.serp-competitors { padding: 20px; border-radius: 14px; margin-bottom: 16px; }
+.serp-competitors h3 { margin: 0 0 12px; font-size: 16px; color: #fff; }
+.serp-competitors h3 i { color: #ff6b8b; margin-right: 6px; }
+.serp-comp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.serp-comp-chips span {
+    font-size: 13px; padding: 6px 12px; border-radius: 999px; color: #ffd7e2;
+    background: rgba(255, 107, 139, .1); border: 1px solid rgba(255, 107, 139, .3);
+}
+.serp-competitors p { margin: 0; font-size: 13px; color: #9db4d0; }
+.serp-track-form {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    padding: 14px 18px; border-radius: 12px;
+    background: rgba(0, 229, 255, .06); border: 1px solid rgba(0, 229, 255, .25);
+}
+.serp-track-form span { font-size: 13px; color: #9db4d0; }
+.serp-track-upsell { font-size: 14px; color: #9db4d0; }
+.serp-track-upsell a { color: #00e5ff; }
+
+.serp-tracker-empty { padding: 20px; border-radius: 14px; color: #9db4d0; font-size: 14px; }
+.serp-tracker-table { display: grid; gap: 6px; }
+.serp-tracker-head, .serp-tracker-row {
+    display: grid; grid-template-columns: 2fr 1.4fr .8fr .6fr .7fr 1.1fr .4fr;
+    gap: 10px; align-items: center;
+}
+.serp-tracker-head {
+    padding: 6px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #7f95ad;
+}
+.serp-tracker-row {
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(7, 16, 32, .6); border: 1px solid rgba(255, 255, 255, .07);
+    font-size: 14px; color: #c8d8ef;
+}
+.serp-tr-kw { font-weight: 700; color: #fff; }
+.serp-tr-dom { color: #8fa5be; font-size: 13px; word-break: break-word; }
+.serp-delta.up { color: #23ff9a; }
+.serp-delta.down { color: #ff6b8b; }
+.serp-delta.flat { color: #9db4d0; }
+.serp-spark { display: block; }
+.serp-tr-spark.tier-excellent { color: #23ff9a; }
+.serp-tr-spark.tier-fair { color: #ffc66f; }
+.serp-tr-spark.tier-critical { color: #ff6b8b; }
+.serp-tr-remove {
+    background: none; border: 0; color: #7f95ad; cursor: pointer; font-size: 15px; padding: 4px;
+}
+.serp-tr-remove:hover { color: #ff6b8b; }
+.serp-tracker-note { margin-top: 14px; font-size: 13px; color: #9db4d0; }
+.serp-tracker-note i { color: #00e5ff; margin-right: 6px; }
+@media (max-width: 720px) {
+    .serp-tracker-head { display: none; }
+    .serp-tracker-row {
+        grid-template-columns: 1fr 1fr; gap: 6px 12px;
+    }
+    .serp-tr-kw { grid-column: 1 / -1; }
+    .serp-tr-dom { grid-column: 1 / -1; }
+}

@@ -75,6 +75,7 @@ $router->post('/account/search-console/backlinks', [SearchConsoleController::cla
 $router->post('/account/search-console/disconnect', [SearchConsoleController::class, 'disconnect']);
 $router->get('/cron/run-monitors', [CronController::class, 'runMonitors']);
 $router->get('/cron/run-abandoned-orders', [CronController::class, 'runAbandonedOrders']);
+$router->get('/cron/run-rank-tracker', [CronController::class, 'runRankTracker']);
 $router->get('/tech-news-feed', [PageController::class, 'techNews']);
 $router->get('/ethical-hacking-toolkit', [ToolsController::class, 'ethicalHackingToolkit']);
 $router->post('/ethical-hacking-toolkit/exposure', [ToolsController::class, 'analyzeExposure']);
@@ -100,6 +101,7 @@ $router->get('/seo-tools', [ToolsController::class, 'seoTools']);
 $router->post('/seo-tools/audit', [ToolsController::class, 'auditSeo']);
 $router->get('/serp-checker', [ToolsController::class, 'serpChecker']);
 $router->post('/serp-checker/check', [ToolsController::class, 'checkSerp']);
+$router->post('/serp-checker/track', [ToolsController::class, 'trackKeyword']);
 $router->get('/ai-content-assistant', [ToolsController::class, 'contentAssistant']);
 $router->post('/ai-content-assistant/generate', [ToolsController::class, 'generateContent']);
 $router->get('/ai-website-growth-consultant', [ToolsController::class, 'growthConsultant']);

@@ -43,10 +43,20 @@ final class ToolsController extends Controller
 
     public function serpChecker(array $data = []): void
     {
+        Security::ensureSession();
+        $isPro = MemberRepository::isPro($_SESSION['member'] ?? null);
+        $email = (string) ($_SESSION['tool_lead']['email'] ?? $_SESSION['member']['email'] ?? '');
+        $tracked = ($isPro && $email !== '') ? (new \App\Models\RankTrackerRepository())->forEmail($email) : [];
+
         $this->render('pages/serp-checker', array_replace([
-            'title' => 'Free SERP Checker | Crest Web Media',
-            'metaDescription' => 'Free SERP checker for keyword visibility, ranking position, competitor pages and search result opportunities.',
+            'title' => 'Enterprise SERP Checker & Rank Tracker | Crest Web Media',
+            'metaDescription' => 'Enterprise-grade SERP checker and rank tracker: live keyword position, visibility tier, estimated CTR, competitors ranking above you, and position history tracked over time for Growth Lab Pro members.',
+            'trackedKeywords' => $tracked,
+            'serpIsPro' => $isPro,
+            'serpNotice' => $_SESSION['serp_notice'] ?? null,
+            'serpError' => $_SESSION['serp_error'] ?? null,
         ], $this->toolAccessData(), $data));
+        unset($_SESSION['serp_notice'], $_SESSION['serp_error']);
     }
 
     public function securityHeaders(array $data = []): void
@@ -415,11 +425,11 @@ final class ToolsController extends Controller
                 'accent' => 'cyan',
             ],
             [
-                'title' => 'SERP Checker',
+                'title' => 'SERP Checker & Rank Tracker',
                 'url' => '/serp-checker',
                 'icon' => 'fa-solid fa-ranking-star',
                 'category' => 'Rankings',
-                'summary' => 'Review keyword visibility, competitor pages and ranking opportunities before planning content or campaigns.',
+                'summary' => 'Live keyword position with visibility tier, estimated CTR and competitors above you — then track keywords and watch positions move over time (Pro).',
                 'accent' => 'violet',
             ],
             [
@@ -764,14 +774,79 @@ final class ToolsController extends Controller
         }
 
         $report = $this->serpReport($keyword, $target, $location);
+        $analysis = $this->serpAnalysis($report['position'] ?? null, $report['results'] ?? [], $target);
         (new AuditLogger())->log('tools.serp_checked', ['keyword' => $keyword, 'target' => $target, 'location' => $location]);
+
+        // If a Pro member already tracks this exact keyword+domain, fold this
+        // reading straight into their history so the checker doubles as a tracker.
+        $email = (string) ($_SESSION['tool_lead']['email'] ?? $_SESSION['member']['email'] ?? '');
+        if (MemberRepository::isPro($_SESSION['member'] ?? null) && $email !== '') {
+            $repo = new \App\Models\RankTrackerRepository();
+            foreach ($repo->forEmail($email) as $entry) {
+                if (strcasecmp((string) $entry['keyword'], $keyword) === 0
+                    && (string) $entry['domain'] === preg_replace('/^www\./', '', strtolower($target))) {
+                    $repo->recordCheck($email, (string) $entry['id'], $report['position'] ?? null);
+                    break;
+                }
+            }
+        }
 
         $this->serpChecker([
             'keyword' => $keyword,
             'domain' => $target,
             'location' => $location,
             'serpResult' => $report,
+            'serpAnalysis' => $analysis,
         ]);
+    }
+
+    public function trackKeyword(): void
+    {
+        Security::ensureSession();
+        if (!$this->hasToolAccess()) {
+            $this->serpChecker(['accessError' => 'Register and verify your email to track rankings.']);
+            return;
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['serp_error'] = 'Your secure form token expired. Please try again.';
+            $this->redirect('/serp-checker');
+        }
+
+        $email = (string) ($_SESSION['tool_lead']['email'] ?? $_SESSION['member']['email'] ?? '');
+        if (!MemberRepository::isPro($_SESSION['member'] ?? null) || $email === '') {
+            $_SESSION['serp_error'] = 'The rank tracker is a Growth Lab Pro feature. Upgrade to track keywords over time.';
+            $this->redirect('/tools-pricing');
+        }
+
+        // Remove a tracked keyword.
+        if (!empty($_POST['remove_id'])) {
+            (new \App\Models\RankTrackerRepository())->delete($email, (string) $_POST['remove_id']);
+            $_SESSION['serp_notice'] = 'Keyword removed from your tracker.';
+            $this->redirect('/serp-checker');
+        }
+
+        $keyword = trim((string) ($_POST['keyword'] ?? ''));
+        $domain = $this->normalizePublicHost((string) ($_POST['domain'] ?? ''));
+        $location = trim((string) ($_POST['location'] ?? 'Ireland'));
+        if (strlen($keyword) < 2 || $domain === null) {
+            $_SESSION['serp_error'] = 'Enter a keyword and a valid public domain to track.';
+            $this->redirect('/serp-checker');
+        }
+
+        try {
+            $repo = new \App\Models\RankTrackerRepository();
+            $entry = $repo->add($email, $keyword, $domain, $location);
+            // Take an immediate first reading so the tracker isn't empty.
+            $report = $this->serpReport($keyword, $domain, $location);
+            $repo->recordCheck($email, (string) $entry['id'], $report['position'] ?? null);
+            (new AuditLogger())->log('tools.rank_tracked', ['keyword' => $keyword, 'domain' => $domain]);
+            $_SESSION['serp_notice'] = 'Now tracking “' . $keyword . '”. We will refresh its position automatically.';
+        } catch (\Throwable $exception) {
+            $_SESSION['serp_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/serp-checker');
     }
 
     public function ethicalHackingTools(array $data = []): void
@@ -2354,6 +2429,20 @@ final class ToolsController extends Controller
         return true;
     }
 
+    /**
+     * Public wrapper used by the rank-tracker cron to fetch just the organic
+     * position for a keyword/domain. Returns null when the domain is not found.
+     */
+    public function rankFor(string $keyword, string $domain, string $location): ?int
+    {
+        $host = $this->normalizePublicHost($domain);
+        if ($host === null || trim($keyword) === '') {
+            return null;
+        }
+
+        return $this->serpReport($keyword, $host, $location)['position'] ?? null;
+    }
+
     private function serpReport(string $keyword, string $targetHost, string $location): array
     {
         // Prefer a real SERP API (ZenSERP) when a key is configured; otherwise
@@ -2511,6 +2600,75 @@ final class ToolsController extends Controller
         $notes[] = count($results) >= 5 ? 'Review title patterns from the top 5 results before writing or revising the page title.' : 'SERP returned limited results; run again later or try a more specific keyword.';
         $notes[] = 'Build a dedicated page for the exact keyword, add FAQ schema, strengthen internal links and compare headings against ranking pages.';
         return $notes;
+    }
+
+    /**
+     * Enterprise SERP analysis: visibility tier, an estimated organic CTR for
+     * the position (industry-standard curve), the competitors ranking above the
+     * target, and how many of the target's own pages appear in the top 10.
+     *
+     * @param array<int, array<string, mixed>> $results
+     * @return array<string, mixed>
+     */
+    private function serpAnalysis(?int $position, array $results, string $targetHost): array
+    {
+        $normalizedTarget = preg_replace('/^www\./', '', strtolower($targetHost));
+        $presence = 0;
+        $competitorsAbove = [];
+        foreach ($results as $index => $result) {
+            $host = (string) ($result['host'] ?? '');
+            $isTarget = $host === $normalizedTarget || str_ends_with($host, '.' . $normalizedTarget);
+            if ($isTarget) {
+                $presence++;
+            } elseif ($position === null || ($index + 1) < $position) {
+                if ($host !== '' && !in_array($host, $competitorsAbove, true)) {
+                    $competitorsAbove[] = $host;
+                }
+            }
+        }
+
+        if ($position === null) {
+            $tier = 'Not in top 10';
+            $tierClass = 'critical';
+        } elseif ($position <= 3) {
+            $tier = 'Top 3';
+            $tierClass = 'excellent';
+        } elseif ($position <= 5) {
+            $tier = 'Top 5';
+            $tierClass = 'good';
+        } else {
+            $tier = 'Page 1';
+            $tierClass = 'fair';
+        }
+
+        $score = 0;
+        if ($position !== null) {
+            $score = (int) round((11 - min(10, $position)) / 10 * 88) + min(12, ($presence - 1) * 6);
+        }
+
+        return [
+            'tier' => $tier,
+            'tier_class' => $tierClass,
+            'position' => $position,
+            'est_ctr' => $this->ctrForPosition($position),
+            'presence' => $presence,
+            'competitors_above' => array_slice($competitorsAbove, 0, 5),
+            'visibility_score' => max(0, min(100, $score)),
+        ];
+    }
+
+    /**
+     * Estimated organic click-through rate for a SERP position (aggregated
+     * industry averages). Returned as a percentage string; '—' when unranked.
+     */
+    private function ctrForPosition(?int $position): string
+    {
+        if ($position === null) {
+            return '—';
+        }
+        $curve = [1 => 27.6, 2 => 15.8, 3 => 11.0, 4 => 8.4, 5 => 6.3, 6 => 4.7, 7 => 3.5, 8 => 2.8, 9 => 2.3, 10 => 2.0];
+
+        return number_format($curve[$position] ?? 1.0, 1) . '%';
     }
 
     private function firstMatch(string $pattern, string $html): string

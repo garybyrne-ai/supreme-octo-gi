@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Controllers\ToolsController;
 use App\Core\Controller;
 use App\Models\PendingOrderRepository;
+use App\Models\RankTrackerRepository;
 use App\Services\AuditLogger;
 use App\Services\LeadMailer;
 use App\Services\MonitorService;
@@ -78,6 +80,45 @@ final class CronController extends Controller
 
         $summary = ['due' => count($due), 'emailed' => $sent];
         (new AuditLogger())->log('cron.abandoned_orders.run', $summary);
+
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        echo json_encode(['ok' => true] + $summary);
+    }
+
+    /**
+     * Refreshes the organic position of every tracked keyword that is due.
+     * Point a daily scheduled task at /cron/run-rank-tracker?key=YOUR_KEY.
+     */
+    public function runRankTracker(): void
+    {
+        $configured = (string) ($this->config['monitor_cron_key'] ?? '');
+        $provided = (string) ($_GET['key'] ?? $_SERVER['HTTP_X_CRON_KEY'] ?? '');
+
+        if ($configured === '' || !hash_equals($configured, $provided)) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+
+        $repo = new RankTrackerRepository();
+        $tools = new ToolsController($this->config);
+        $due = $repo->due();
+        $checked = 0;
+        // Bound outbound work per run so the cron stays fast.
+        foreach (array_slice($due, 0, 40) as $item) {
+            try {
+                $position = $tools->rankFor($item['keyword'], $item['domain'], $item['location']);
+            } catch (\Throwable) {
+                continue;
+            }
+            $repo->recordCheck($item['email'], $item['id'], $position);
+            $checked++;
+        }
+
+        $summary = ['due' => count($due), 'checked' => $checked];
+        (new AuditLogger())->log('cron.rank_tracker.run', $summary);
 
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
