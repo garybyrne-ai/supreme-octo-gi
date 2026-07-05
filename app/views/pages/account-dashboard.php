@@ -183,6 +183,27 @@ $toolMenu = [
             <?php endif; ?>
         </section>
 
+        <?php $referral = $referral ?? ['code' => '', 'count' => 0]; ?>
+        <?php if (!empty($referral['code'])): ?>
+        <?php
+            $refBase = rtrim((string) ($config['url'] ?? ''), '/');
+            if ($refBase === '') { $refBase = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . (string) ($_SERVER['HTTP_HOST'] ?? 'crestwebmedia.com'); }
+            $refLink = $refBase . '/?ref=' . $referral['code'];
+        ?>
+        <section class="cyber-card account-panel referral-panel">
+            <div class="section-heading compact left">
+                <span class="status-chip"><span></span> Earn 20%</span>
+                <h2>Refer &amp; earn</h2>
+            </div>
+            <p>Share your link. When someone you refer becomes a Growth Lab Pro member, you earn <strong>20% recurring commission</strong> for as long as they stay subscribed.</p>
+            <div class="referral-link-row">
+                <input type="text" readonly value="<?= e($refLink) ?>" id="referralLink" aria-label="Your referral link">
+                <button type="button" class="pill-button" data-copy-target="#referralLink">Copy link <i class="fa-solid fa-copy"></i></button>
+            </div>
+            <p class="referral-count"><i class="fa-solid fa-user-group"></i> <strong><?= e((string) $referral['count']) ?></strong> referred so far · your code: <strong><?= e($referral['code']) ?></strong></p>
+        </section>
+        <?php endif; ?>
+
         <section class="cyber-card account-panel">
             <div class="section-heading compact left">
                 <span class="status-chip"><span></span> Quick access</span>

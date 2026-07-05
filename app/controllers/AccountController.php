@@ -48,6 +48,7 @@ final class AccountController extends Controller
             'monitorTypes' => MonitorRepository::TYPES,
             'plans' => (new MembershipPlanRepository())->activePlans(),
             'planRepo' => new MembershipPlanRepository(),
+            'referral' => (new \App\Models\ReferralRepository())->statsFor($email, (string) ($member['name'] ?? '')),
             'csrf' => Security::csrfToken(),
             'notice' => $_SESSION['account_notice'] ?? null,
             'error' => $_SESSION['account_error'] ?? null,
@@ -239,6 +240,17 @@ final class AccountController extends Controller
             (new LeadMailer())->sendOffer($email, $name, (new NewsletterOfferRepository())->current());
         } catch (\Throwable) {
             // non-fatal — no SMTP configured is fine; the member is saved regardless.
+        }
+        // Attribute the referral if this signup arrived via a ref link.
+        $refCode = strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', (string) ($_COOKIE['cwm_ref'] ?? '')));
+        if ($refCode !== '') {
+            try {
+                if ((new \App\Models\ReferralRepository())->record($refCode, $email)) {
+                    (new AuditLogger())->log('referral.recorded', ['code' => $refCode, 'referred' => $email]);
+                }
+            } catch (\Throwable) {
+                // non-fatal
+            }
         }
         (new AuditLogger())->log('account.registered', ['email' => $email]);
 

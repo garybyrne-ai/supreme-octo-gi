@@ -13,6 +13,7 @@ $adminMenu = [
     'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card'],
     'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear'],
     'clients' => ['title' => 'Clients', 'icon' => 'fa-handshake'],
+    'referrals' => ['title' => 'Referrals', 'icon' => 'fa-share-nodes'],
     'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags'],
     'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad'],
     'search-console' => ['title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart'],
@@ -36,7 +37,7 @@ $modulesWithRealUi = [
     'Media Library', 'Support Tickets', 'Forum Members', 'Member Manager', 'Clients',
     'Site Content', 'Ads & Consent', 'Newsletter Offer', 'Mail Settings', 'Payment Settings',
     'Commerce Engine', 'Membership Plans', 'Coupons', 'Theme Settings',
-    'Clients', 'Search Console',
+    'Clients', 'Search Console', 'Referrals',
 ];
 $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
 ?>
@@ -449,6 +450,31 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                     </form>
                     <p><small><i class="fa-solid fa-circle-info"></i> AdSense also wants you to place ad units in your pages. Once approved, paste the ad-unit snippet into <a href="/admin/modules/theme">Theme Settings → Script injections</a> or tell me where you want ads and I'll wire the slots.</small></p>
                 </div>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Referrals'): ?>
+            <?php $referralEvents = $referralEvents ?? []; ?>
+            <section class="cyber-card ticket-table-card">
+                <div class="section-heading compact">
+                    <span class="status-chip"><span></span> 20% Program</span>
+                    <h2>Referral Activity</h2>
+                </div>
+                <p>Each row is a member who signed up through someone's referral link. Pay the referrer 20% recurring once the referred member becomes a paying Growth Lab Pro subscriber (check Member Manager for their plan).</p>
+                <?php if (!empty($referralEvents)): ?>
+                    <div class="ticket-table full">
+                        <?php foreach ($referralEvents as $ev): ?>
+                            <div>
+                                <strong><?= e($ev['referrer_email'] ?? '') ?></strong>
+                                <span>referred <?= e($ev['referred_email'] ?? '') ?><small>code <?= e($ev['code'] ?? '') ?></small></span>
+                                <em><?= e(str_replace('_', ' ', (string) ($ev['status'] ?? 'signed up'))) ?></em>
+                                <small><?= e(!empty($ev['created_at']) ? gmdate('j M Y', (int) strtotime((string) $ev['created_at'])) : '') ?></small>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p>No referrals yet. Members get their referral link on their <a href="/account/dashboard">dashboard</a> — share the program to get it going.</p>
+                <?php endif; ?>
             </section>
         <?php endif; ?>
 

@@ -1021,3 +1021,30 @@ document.querySelectorAll('[data-tool-report]').forEach(function (report) {
         });
     });
 })();
+
+// --- Referral capture: store ?ref=CODE in a 30-day cookie for attribution ---
+(function () {
+    try {
+        var ref = new URLSearchParams(window.location.search).get('ref');
+        if (!ref) { return; }
+        ref = ref.replace(/[^A-Za-z0-9]/g, '').slice(0, 20);
+        if (!ref) { return; }
+        var secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = 'cwm_ref=' + ref + '; Max-Age=' + (60 * 60 * 24 * 30) + '; Path=/; SameSite=Lax' + secure;
+    } catch (e) {}
+})();
+
+// --- Generic copy-to-clipboard for [data-copy-target] buttons ---
+(function () {
+    document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var el = document.querySelector(btn.getAttribute('data-copy-target'));
+            if (!el) { return; }
+            el.select && el.select();
+            try { navigator.clipboard.writeText(el.value || el.textContent); } catch (e) { try { document.execCommand('copy'); } catch (e2) {} }
+            var original = btn.innerHTML;
+            btn.innerHTML = 'Copied! <i class="fa-solid fa-check"></i>';
+            window.setTimeout(function () { btn.innerHTML = original; }, 1800);
+        });
+    });
+})();

@@ -471,3 +471,15 @@
 
 .coupon-row-actions { display: inline-flex; gap: 6px; }
 .coupon-row-actions form { margin: 0; }
+
+/* ---------- Referral panel (member dashboard) ---------- */
+.referral-panel p { color: var(--muted); }
+.referral-link-row { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+.referral-link-row input {
+    flex: 1 1 260px; min-width: 0; padding: 12px 14px; border-radius: 10px;
+    border: 1px solid var(--line); background: rgba(2, 6, 16, .7); color: var(--primary);
+    font-family: monospace; font-size: .85rem;
+}
+.referral-count { color: var(--muted); font-size: .9rem; }
+.referral-count i { color: var(--primary); }
+.referral-count strong { color: var(--text); }
