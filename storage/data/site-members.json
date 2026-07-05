@@ -1,8 +1,1 @@
-[
-    {
-        "id": "x",
-        "name": "Ann",
-        "email": "a@b.com",
-        "password_hash": "h"
-    }
-]
+[{"id":"x","name":"Ann","email":"a@b.com","password_hash":"h"}]
