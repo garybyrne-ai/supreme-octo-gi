@@ -795,6 +795,7 @@ final class ToolsController extends Controller
         return [
             [
                 'category' => 'Recon & OSINT',
+                'color' => '#00e5ff',
                 'items' => [
                     [
                         'name' => 'Nmap',
@@ -822,6 +823,7 @@ final class ToolsController extends Controller
             ],
             [
                 'category' => 'Web Application Testing',
+                'color' => '#ff6b8b',
                 'items' => [
                     [
                         'name' => 'OWASP ZAP',
@@ -904,6 +906,7 @@ final class ToolsController extends Controller
             ],
             [
                 'category' => 'Password & Authentication',
+                'color' => '#ffc66f',
                 'items' => [
                     [
                         'name' => 'John the Ripper',
@@ -942,6 +945,7 @@ final class ToolsController extends Controller
             ],
             [
                 'category' => 'Network & Traffic',
+                'color' => '#23ff9a',
                 'items' => [
                     [
                         'name' => 'Wireshark',
@@ -969,6 +973,7 @@ final class ToolsController extends Controller
             ],
             [
                 'category' => 'Platforms & Distros',
+                'color' => '#b18cff',
                 'items' => [
                     [
                         'name' => 'Kali Linux',
