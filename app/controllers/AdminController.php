@@ -634,10 +634,12 @@ final class AdminController extends Controller
             if ($id === '') {
                 throw new \RuntimeException('A member id is required.');
             }
+            $passwordReset = trim((string) ($_POST['password'] ?? '')) !== '';
             $member = (new MemberRepository())->adminUpdate($id, $_POST);
             $tier = MemberRepository::isPro($member) ? 'Pro' : 'Free';
-            $_SESSION['admin_notice'] = 'Member “' . ($member['email'] ?? '') . '” saved (' . $tier . ').';
-            (new AuditLogger())->log('admin.member.updated', ['id' => $id, 'plan' => $_POST['plan'] ?? '']);
+            $_SESSION['admin_notice'] = 'Member “' . ($member['email'] ?? '') . '” saved (' . $tier . ')'
+                . ($passwordReset ? ' — password reset. Share the new password with the member.' : '.');
+            (new AuditLogger())->log('admin.member.updated', ['id' => $id, 'plan' => $_POST['plan'] ?? '', 'password_reset' => $passwordReset]);
         } catch (\Throwable $exception) {
             $_SESSION['admin_error'] = $exception->getMessage();
         }

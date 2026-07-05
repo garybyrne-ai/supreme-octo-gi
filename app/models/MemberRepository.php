@@ -231,6 +231,15 @@ final class MemberRepository
             if ($newEmail !== '') {
                 $member['email'] = $newEmail;
             }
+            // Optional password reset — only when a new password is supplied.
+            $newPassword = (string) ($data['password'] ?? '');
+            if ($newPassword !== '') {
+                if (strlen($newPassword) < 10) {
+                    throw new \RuntimeException('New password must be at least 10 characters.');
+                }
+                $member['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
+                $member['password_reset_at'] = gmdate('c');
+            }
             $member['forum_verified'] = !empty($data['forum_verified']);
 
             if ($plan === 'pro') {

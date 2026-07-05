@@ -311,6 +311,9 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                                             <input name="expires_at" type="datetime-local" value="<?= e($endsInput) ?>">
                                         </label>
                                     </div>
+                                    <label>Reset password <small>(leave blank to keep current — min 10 chars)</small>
+                                        <input name="password" type="text" autocomplete="off" placeholder="Type a new password to reset it">
+                                    </label>
                                     <label class="member-check"><input type="checkbox" name="forum_verified" value="1" <?= !empty($sm['forum_verified']) ? 'checked' : '' ?>> Allow forum posting</label>
                                     <div class="member-card-actions">
                                         <button class="pill-button" type="submit">Save Member <i class="fa-solid fa-floppy-disk"></i></button>
