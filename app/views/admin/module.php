@@ -27,6 +27,16 @@ $adminMenu = [
 ];
 $moduleSlug = $moduleSlug ?? trim((string) basename((string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH)));
 $moduleDrafts = $moduleDrafts ?? [];
+
+// Modules that ship a real editor (lists + forms) below. For these we show the
+// editor first and hide the generic "console / save-action / action-log"
+// scaffolding, which otherwise buries the real UI and looks like the whole page.
+$modulesWithRealUi = [
+    'Media Library', 'Support Tickets', 'Forum Members', 'Member Manager', 'Clients',
+    'Site Content', 'Ads & Consent', 'Newsletter Offer', 'Mail Settings', 'Payment Settings',
+    'Commerce Engine', 'Membership Plans', 'Coupons', 'Theme Settings',
+];
+$hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
 ?>
 <section class="admin-shell">
     <aside class="admin-sidebar">
@@ -60,11 +70,15 @@ $moduleDrafts = $moduleDrafts ?? [];
             <a class="pill-button ghost" href="/admin/dashboard"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
         </header>
 
+        <?php if (!empty($notice)): ?><div class="notice success"><?= e($notice) ?></div><?php endif; ?>
+        <?php if (!empty($error)): ?><div class="notice error"><?= e($error) ?></div><?php endif; ?>
+
+        <?php if (!$hasRealUi): ?>
         <section class="admin-module-detail cyber-card">
             <span class="module-orbit large"><i class="fa-solid <?= e($module['icon']) ?>"></i></span>
             <div>
                 <h2><?= e($module['title']) ?> Console</h2>
-                <p>This screen is connected and ready for the next CRUD layer: tables, forms, media uploads and publish workflows can plug in here without changing the public website.</p>
+                <p>This module doesn't have a dedicated editor yet — use the action panel below to log the update you want, and it will be built into a full editor next.</p>
             </div>
             <div class="module-action-grid">
                 <?php foreach ($module['actions'] as $index => $action): ?>
@@ -74,9 +88,6 @@ $moduleDrafts = $moduleDrafts ?? [];
                 <?php endforeach; ?>
             </div>
         </section>
-
-        <?php if (!empty($notice)): ?><div class="notice success"><?= e($notice) ?></div><?php endif; ?>
-        <?php if (!empty($error)): ?><div class="notice error"><?= e($error) ?></div><?php endif; ?>
 
         <section class="admin-action-panels" aria-label="<?= e($module['title']) ?> actions">
             <?php foreach ($module['actions'] as $index => $action): ?>
@@ -136,6 +147,7 @@ $moduleDrafts = $moduleDrafts ?? [];
                 <p>No saved backend actions yet. Pick a command above, add the update, and save it here.</p>
             <?php endif; ?>
         </section>
+        <?php endif; /* !$hasRealUi */ ?>
 
         <?php if (($module['title'] ?? '') === 'Media Library'): ?>
             <section class="media-library-panel">
