@@ -177,6 +177,7 @@ final class AdminController extends Controller
             ['slug' => 'coupons', 'title' => 'Coupons', 'icon' => 'fa-tags', 'summary' => 'Create discount codes for backlinks, care plans, audits and Speed Rescue — percent or fixed, usage caps and expiry dates.'],
             ['slug' => 'ads', 'title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'summary' => 'Paste your Google AdSense ID, edit ads.txt and the GDPR cookie-consent message. Ads only load after visitors consent.'],
             ['slug' => 'search-console', 'title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart', 'summary' => 'Set the Google OAuth Client ID & Secret so Pro members can connect Search Console and import queries, clicks and backlinks.'],
+            ['slug' => 'ai-settings', 'title' => 'AI Assistant', 'icon' => 'fa-robot', 'summary' => 'Optionally connect an OpenAI or Anthropic API key so the AI content assistant generates live copy. Without a key it uses built-in templates.'],
             ['slug' => 'faq', 'title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'summary' => 'Edit answers for common sales, delivery and support questions.'],
             ['slug' => 'seo', 'title' => 'SEO Center', 'icon' => 'fa-chart-line', 'summary' => 'Review titles, descriptions, schema signals and crawl priorities.'],
             ['slug' => 'redirects', 'title' => 'Redirect Manager', 'icon' => 'fa-route', 'summary' => 'Plan redirects, campaign URLs and migration-safe route changes.'],
@@ -235,6 +236,7 @@ final class AdminController extends Controller
             'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags', 'actions' => ['Create coupon', 'Set usage cap & expiry', 'Pause or delete codes']],
             'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'actions' => ['Set AdSense ID', 'Edit ads.txt', 'Edit consent message']],
             'search-console' => ['title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart', 'actions' => ['Set OAuth Client ID', 'Set Client Secret', 'Copy redirect URI']],
+            'ai-settings' => ['title' => 'AI Assistant', 'icon' => 'fa-robot', 'actions' => ['Choose provider', 'Set API key', 'Enable live output']],
             'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'actions' => ['Add answer', 'Update schema FAQ', 'Review sales objections']],
             'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line', 'actions' => ['Audit metadata', 'Preview schema', 'Map internal links']],
             'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route', 'actions' => ['Add redirect', 'Import route map', 'Test status codes']],
@@ -278,6 +280,8 @@ final class AdminController extends Controller
             'workLogTypes' => \App\Models\ClientPortalRepository::TYPES,
             'abandonedOrders' => $slug === 'abandoned-orders' ? (new \App\Models\PendingOrderRepository())->recent(80) : [],
             'abandonedStats' => $slug === 'abandoned-orders' ? (new \App\Models\PendingOrderRepository())->stats() : [],
+            'aiSettings' => $slug === 'ai-settings' ? (new \App\Models\AiSettingsRepository())->current() : [],
+            'aiProviders' => \App\Models\AiSettingsRepository::PROVIDERS,
             'pageIntroDefs' => $slug === 'content' ? (new SiteContentRepository())->pageIntroDefinitions() : [],
             'catalogProducts' => $slug === 'commerce' ? (new CommerceRepository())->allProducts() : [],
             'intervals' => MembershipPlanRepository::INTERVALS,
@@ -485,6 +489,21 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/search-console');
+    }
+
+    public function updateAiSettings(): void
+    {
+        $this->guardAdminPost('/admin/modules/ai-settings', 'AI settings token expired. Please try again.');
+
+        try {
+            $saved = (new \App\Models\AiSettingsRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'AI content assistant settings saved.';
+            (new AuditLogger())->log('admin.ai_settings.updated', ['provider' => $saved['provider'], 'enabled' => $saved['enabled']]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/ai-settings');
     }
 
     public function updateAdsSettings(): void

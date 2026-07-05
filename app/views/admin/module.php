@@ -19,6 +19,7 @@ $adminMenu = [
     'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags'],
     'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad'],
     'search-console' => ['title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart'],
+    'ai-settings' => ['title' => 'AI Assistant', 'icon' => 'fa-robot'],
     'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question'],
     'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line'],
     'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route'],
@@ -39,7 +40,7 @@ $modulesWithRealUi = [
     'Media Library', 'Support Tickets', 'Forum Members', 'Member Manager', 'Clients',
     'Site Content', 'Ads & Consent', 'Newsletter Offer', 'Mail Settings', 'Payment Settings',
     'Commerce Engine', 'Membership Plans', 'Coupons', 'Theme Settings',
-    'Clients', 'Search Console', 'Referrals', 'Client Work Log', 'Abandoned Orders',
+    'Clients', 'Search Console', 'Referrals', 'Client Work Log', 'Abandoned Orders', 'AI Assistant',
 ];
 $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
 ?>
@@ -579,6 +580,42 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                         <li><strong>Paste the Client ID &amp; Secret</strong><span>into the form on the left and tick Enable.</span></li>
                     </ol>
                     <p><small><i class="fa-solid fa-circle-info"></i> The redirect URI must match character-for-character. Note: Google's API returns queries, clicks and pages — backlinks are imported by members via CSV, as Google does not expose them through the API.</small></p>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'AI Assistant'): ?>
+            <?php $aiSettings = $aiSettings ?? []; $aiProviders = $aiProviders ?? ['openai', 'anthropic']; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/ai-settings">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>AI Content Assistant</h2>
+                    <p>Optional. Connect an OpenAI or Anthropic key and the <a href="/ai-content-assistant">content assistant</a> generates live copy. Leave it off and it uses high-quality built-in templates — the tool works either way.</p>
+                    <label>Provider
+                        <select name="provider">
+                            <?php foreach ($aiProviders as $p): ?>
+                                <option value="<?= e($p) ?>" <?= (($aiSettings['provider'] ?? 'openai') === $p) ? 'selected' : '' ?>><?= e(ucfirst($p)) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <label>API Key <small>(leave blank to keep the saved key)</small>
+                        <input name="api_key" type="password" placeholder="<?= !empty($aiSettings['api_key']) ? '•••••••• (saved)' : 'sk-… or your Anthropic key' ?>">
+                    </label>
+                    <label>Model <small>(optional — sensible default per provider)</small>
+                        <input name="model" value="<?= e($aiSettings['model'] ?? '') ?>" placeholder="gpt-4o-mini / claude-haiku-4-5-20251001">
+                    </label>
+                    <label class="checkbox-row"><input type="checkbox" name="enabled" value="1" <?= !empty($aiSettings['enabled']) ? 'checked' : '' ?>> Use the live AI provider (needs a key)</label>
+                    <button class="pill-button" type="submit">Save AI Settings <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <div class="cyber-card">
+                    <h2>How it works</h2>
+                    <ol class="seo-priority-list">
+                        <li><strong>No key needed to start</strong><span>The assistant ships with template-based copy for 8 content types.</span></li>
+                        <li><strong>Add a key for live output</strong><span>OpenAI (platform.openai.com) or Anthropic (console.anthropic.com).</span></li>
+                        <li><strong>Keys are stored server-side</strong><span>and never sent to the browser or exposed in page source.</span></li>
+                        <li><strong>Cost control</strong><span>Free members get 3 generations/day; Pro is unlimited. Live calls use small, low-cost models by default.</span></li>
+                    </ol>
+                    <p><small><i class="fa-solid fa-shield-halved"></i> Status: <strong><?= !empty($aiSettings['enabled']) && !empty($aiSettings['api_key']) ? 'Live provider connected' : 'Using built-in templates' ?></strong></small></p>
                 </div>
             </section>
         <?php endif; ?>

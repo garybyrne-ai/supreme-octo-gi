@@ -1048,3 +1048,18 @@ document.querySelectorAll('[data-tool-report]').forEach(function (report) {
         });
     });
 })();
+
+// --- AI content assistant: copy the preceding [data-copy-source] text ---
+(function () {
+    document.querySelectorAll('[data-copy-prev]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var source = btn.parentElement && btn.parentElement.querySelector('[data-copy-source]');
+            if (!source) { return; }
+            var text = source.textContent || '';
+            try { navigator.clipboard.writeText(text); } catch (e) { try { document.execCommand('copy'); } catch (e2) {} }
+            var original = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+            window.setTimeout(function () { btn.innerHTML = original; }, 1500);
+        });
+    });
+})();

@@ -25,11 +25,14 @@ $toolMenu = [
         ['/tools/tls-ssl', 'fa-certificate', 'TLS / SSL'],
         ['/tools/security-txt', 'fa-file-shield', 'security.txt'],
     ]],
+    ['group' => 'Content & AI', 'items' => [
+        ['/ai-content-assistant', 'fa-wand-magic-sparkles', 'Content Assistant'],
+        ['/ai-website-growth-consultant', 'fa-brain', 'AI Growth'],
+    ]],
     ['group' => 'Intelligence', 'items' => [
         ['/tools/tech-stack', 'fa-microchip', 'Tech Stack'],
         ['/instant-website-quote-calculator', 'fa-calculator', 'Quote Calculator'],
         ['/ppc-roi-calculator', 'fa-bullseye', 'PPC ROI'],
-        ['/ai-website-growth-consultant', 'fa-brain', 'AI Growth'],
     ]],
     ['group' => 'Account', 'items' => [
         ['/membership', 'fa-id-card', 'Membership'],

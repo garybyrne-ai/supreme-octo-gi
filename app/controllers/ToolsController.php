@@ -423,6 +423,14 @@ final class ToolsController extends Controller
                 'accent' => 'violet',
             ],
             [
+                'title' => 'AI Content Assistant',
+                'url' => '/ai-content-assistant',
+                'icon' => 'fa-solid fa-wand-magic-sparkles',
+                'category' => 'Content',
+                'summary' => 'Generate SEO meta descriptions, title tags, blog outlines, FAQs, product copy, social posts and CTAs from a single keyword.',
+                'accent' => 'violet',
+            ],
+            [
                 'title' => 'Security Headers Checker',
                 'url' => '/tools/security-headers',
                 'icon' => 'fa-solid fa-lock',
@@ -755,6 +763,63 @@ final class ToolsController extends Controller
             'domain' => $target,
             'location' => $location,
             'serpResult' => $report,
+        ]);
+    }
+
+    public function contentAssistant(array $data = []): void
+    {
+        $this->render('pages/content-assistant', array_replace([
+            'title' => 'AI Content Assistant | Crest Web Media',
+            'metaDescription' => 'Generate SEO meta descriptions, title tags, blog outlines, FAQs, product copy, social posts and CTAs in seconds with the Crest Web Media AI content assistant.',
+            'contentTypes' => \App\Services\ContentAssistantService::TYPES,
+            'contentTones' => \App\Services\ContentAssistantService::TONES,
+            'aiLive' => (new \App\Models\AiSettingsRepository())->isLive(),
+        ], $this->toolAccessData(), $data));
+    }
+
+    public function generateContent(): void
+    {
+        if (!$this->hasToolAccess()) {
+            $this->contentAssistant(['accessError' => 'Register and verify your email to use the AI content assistant.']);
+            return;
+        }
+
+        if (Security::hitRateLimit('content_assistant', 15, 900)) {
+            http_response_code(429);
+            $this->contentAssistant(['error' => 'Too many generations. Please wait a few minutes and try again.']);
+            return;
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            http_response_code(419);
+            $this->contentAssistant(['error' => 'Your secure form token expired. Please try again.']);
+            return;
+        }
+
+        $type = (string) ($_POST['type'] ?? 'meta_description');
+        $topic = trim((string) ($_POST['topic'] ?? ''));
+        if (strlen($topic) < 3 || strlen($topic) > 160) {
+            http_response_code(422);
+            $this->contentAssistant(['error' => 'Enter a topic or keyword between 3 and 160 characters.']);
+            return;
+        }
+
+        if (!$this->consumeFreeScan('content_assistant')) {
+            http_response_code(402);
+            $this->contentAssistant(['error' => $this->growthLabLimitMessage()]);
+            return;
+        }
+
+        $result = (new \App\Services\ContentAssistantService())->generate($type, $topic, [
+            'tone' => (string) ($_POST['tone'] ?? 'Professional'),
+            'audience' => (string) ($_POST['audience'] ?? ''),
+            'keyword' => (string) ($_POST['keyword'] ?? ''),
+        ]);
+        (new AuditLogger())->log('tools.content_generated', ['type' => $result['type'], 'source' => $result['source']]);
+
+        $this->contentAssistant([
+            'contentResult' => $result,
+            'contentInput' => ['type' => $type, 'topic' => $topic, 'tone' => (string) ($_POST['tone'] ?? 'Professional'), 'audience' => (string) ($_POST['audience'] ?? ''), 'keyword' => (string) ($_POST['keyword'] ?? '')],
         ]);
     }
 
