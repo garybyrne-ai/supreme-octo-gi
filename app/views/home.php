@@ -100,11 +100,12 @@
 </section>
 
 <section class="section reveal growth-cta" id="growth-lab" aria-labelledby="growth-cta-title">
+    <?php $growthCta = $growthCta ?? []; ?>
     <div class="growth-cta-glow" aria-hidden="true"></div>
     <div class="growth-cta-head">
-        <span class="status-chip"><span></span> Growth Lab Pro · Tools Membership</span>
-        <h2 id="growth-cta-title">Register Free. Go Pro. <span>Own Your Website's Growth.</span></h2>
-        <p>Create a free account to unlock the toolkit &mdash; then upgrade to the Tools Membership for unlimited audits, white-label reports and always-on monitoring. Built to pay for itself with a single won client.</p>
+        <span class="status-chip"><span></span> <?= e($growthCta['chip_text'] ?? 'Growth Lab Pro · Tools Membership') ?></span>
+        <h2 id="growth-cta-title"><?= strip_tags((string) ($growthCta['headline'] ?? 'Register Free. Go Pro. <span>Own Your Website\'s Growth.</span>'), '<span>') ?></h2>
+        <p><?= e($growthCta['subheading'] ?? 'Create a free account to unlock the toolkit — then upgrade to the Tools Membership for unlimited audits, white-label reports and always-on monitoring. Built to pay for itself with a single won client.') ?></p>
     </div>
 
     <div class="growth-cta-grid">

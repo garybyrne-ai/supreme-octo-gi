@@ -340,6 +340,7 @@ final class AdminController extends Controller
             $repo = new SiteContentRepository();
             match ($section) {
                 'hero' => $repo->saveHero($_POST),
+                'growth-cta' => $repo->saveGrowthCta($_POST),
                 'contact' => $repo->saveContact($_POST),
                 'page-intros' => $repo->savePageIntros($_POST),
                 default => throw new \RuntimeException('Unknown content section.'),

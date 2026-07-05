@@ -624,6 +624,7 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
             <?php
                 $sc = $siteContent ?? [];
                 $scHero = $sc['hero'] ?? [];
+                $scGrowth = $sc['growth_cta'] ?? [];
                 $scContact = $sc['contact'] ?? [];
                 $scIntros = $sc['page_intros'] ?? [];
                 $introDefs = $pageIntroDefs ?? [];
@@ -657,6 +658,16 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                         <label>Secondary button URL <input name="cta_secondary_url" value="<?= e($scHero['cta_secondary_url'] ?? '') ?>"></label>
                     </div>
                     <button class="pill-button" type="submit">Save Hero <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <form class="cyber-form" method="post" action="/admin/content/growth-cta">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>Tools Membership CTA</h2>
+                    <p>The Growth Lab Pro call-to-action below the home hero. The perk cards, pricing and buttons stay fixed — edit the eyebrow, headline and subcopy here.</p>
+                    <label>Eyebrow / chip text <input name="chip_text" value="<?= e($scGrowth['chip_text'] ?? '') ?>"></label>
+                    <label>Headline <small>(use &lt;span&gt;…&lt;/span&gt; to highlight words)</small>
+                        <textarea name="headline" rows="2"><?= e($scGrowth['headline'] ?? '') ?></textarea></label>
+                    <label>Subcopy <textarea name="subheading" rows="4"><?= e($scGrowth['subheading'] ?? '') ?></textarea></label>
+                    <button class="pill-button" type="submit">Save Membership CTA <i class="fa-solid fa-floppy-disk"></i></button>
                 </form>
                 <form class="cyber-form" method="post" action="/admin/content/contact">
                     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">

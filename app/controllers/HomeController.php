@@ -24,6 +24,7 @@ final class HomeController extends Controller
             'title' => 'Crest Web Media | Websites, Apps, SEO And AI Workflow Systems',
             'metaDescription' => 'Crest Web Media builds enterprise-style websites, PHP platforms, apps, SEO systems, API integrations and AI workflows for clients in Ireland, the UK, the USA and Europe.',
             'hero' => (new SiteContentRepository())->hero(),
+            'growthCta' => (new SiteContentRepository())->growthCta(),
             'contact' => $content->contact(),
             'stats' => $content->stats(),
             'services' => $homepageServices,

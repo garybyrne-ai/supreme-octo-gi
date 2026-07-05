@@ -60,6 +60,11 @@ final class SiteContentRepository
                     '24/7 monitoring & support',
                 ],
             ],
+            'growth_cta' => [
+                'chip_text' => 'Growth Lab Pro · Tools Membership',
+                'headline' => 'Register Free. Go Pro. <span>Own Your Website\'s Growth.</span>',
+                'subheading' => 'Create a free account to unlock the toolkit — then upgrade to the Tools Membership for unlimited audits, white-label reports and always-on monitoring. Built to pay for itself with a single won client.',
+            ],
             'contact' => [
                 'email' => 'ank.kalia@gmail.com',
                 'phone' => '+918894867819',
@@ -93,9 +98,18 @@ final class SiteContentRepository
 
         return [
             'hero' => array_replace($defaults['hero'], is_array($saved['hero'] ?? null) ? $this->cleanHero($saved['hero']) : []),
+            'growth_cta' => array_replace($defaults['growth_cta'], is_array($saved['growth_cta'] ?? null) ? array_intersect_key($saved['growth_cta'], $defaults['growth_cta']) : []),
             'contact' => array_replace($defaults['contact'], is_array($saved['contact'] ?? null) ? $this->cleanContact($saved['contact']) : []),
             'page_intros' => is_array($saved['page_intros'] ?? null) ? $saved['page_intros'] : [],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function growthCta(): array
+    {
+        return $this->all()['growth_cta'];
     }
 
     /**
@@ -167,6 +181,18 @@ final class SiteContentRepository
             'cta_primary_url' => $this->url($input['cta_primary_url'] ?? '', '/portfolio'),
             'cta_secondary_label' => $this->text($input['cta_secondary_label'] ?? '', 60),
             'cta_secondary_url' => $this->url($input['cta_secondary_url'] ?? '', '/free-penetration-testing-tools'),
+        ]);
+
+        $this->persist($data);
+    }
+
+    public function saveGrowthCta(array $input): void
+    {
+        $data = $this->all();
+        $data['growth_cta'] = array_replace($data['growth_cta'], [
+            'chip_text' => $this->text($input['chip_text'] ?? '', 120),
+            'headline' => $this->richText($input['headline'] ?? '', 200),
+            'subheading' => $this->text($input['subheading'] ?? '', 600),
         ]);
 
         $this->persist($data);
