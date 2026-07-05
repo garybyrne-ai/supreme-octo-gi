@@ -65,6 +65,54 @@
     </aside>
 </section>
 
+<?php if (($tool['mode'] ?? '') === 'security-badge'): ?>
+<section class="section narrow reveal badge-embed-section">
+    <div class="cyber-card badge-embed-card">
+        <span class="kicker">Free — Embed On Your Website</span>
+        <h2>Show visitors your site is security checked</h2>
+        <p>Copy this snippet into your footer. The badge is free, loads fast, and links back to your live security profile. Pick the grade your site earned above.</p>
+        <div class="badge-embed-controls">
+            <label>Badge grade
+                <select id="badgeEmbedGrade">
+                    <option value="A">A — Excellent</option>
+                    <option value="B">B — Good</option>
+                    <option value="C">C — Fair</option>
+                    <option value="D">D — Needs work</option>
+                </select>
+            </label>
+            <span class="badge-embed-preview"><img id="badgeEmbedPreview" src="/badge.svg?grade=A" alt="Security checked by Crest Web Media" width="178" height="40" loading="lazy"></span>
+        </div>
+        <textarea id="badgeEmbedCode" class="badge-embed-code" rows="3" readonly spellcheck="false"></textarea>
+        <button type="button" class="pill-button" id="badgeEmbedCopy">Copy Embed Code <i class="fa-solid fa-copy"></i></button>
+        <small>Honesty rule: only display the grade your website actually scored in the <a href="/tools/security-headers">security scan</a>. We spot-check embedded badges.</small>
+    </div>
+</section>
+<script>
+(function () {
+    var grade = document.getElementById('badgeEmbedGrade');
+    var code = document.getElementById('badgeEmbedCode');
+    var preview = document.getElementById('badgeEmbedPreview');
+    var copy = document.getElementById('badgeEmbedCopy');
+    if (!grade || !code) { return; }
+    var base = window.location.origin;
+    var build = function () {
+        var g = grade.value;
+        preview.src = '/badge.svg?grade=' + g;
+        code.value = '<a href="' + base + '/tools/security-headers?ref=badge" rel="noopener" title="Website security checked by Crest Web Media">'
+            + '<img src="' + base + '/badge.svg?grade=' + g + '" alt="Security grade ' + g + ' — checked by Crest Web Media" width="178" height="40" loading="lazy"></a>';
+    };
+    grade.addEventListener('change', build);
+    copy.addEventListener('click', function () {
+        code.select();
+        try { navigator.clipboard.writeText(code.value); } catch (e) { document.execCommand('copy'); }
+        copy.innerHTML = 'Copied! <i class="fa-solid fa-check"></i>';
+        window.setTimeout(function () { copy.innerHTML = 'Copy Embed Code <i class="fa-solid fa-copy"></i>'; }, 1800);
+    });
+    build();
+})();
+</script>
+<?php endif; ?>
+
 <section class="tool-grid featured-tool-grid reveal">
     <a class="cyber-card glass-feature" href="/seo-tools"><i class="fa-solid fa-chart-line"></i><h3>SEO Audit</h3><p>Check pages before building campaigns.</p></a>
     <a class="cyber-card glass-feature" href="/serp-checker"><i class="fa-solid fa-ranking-star"></i><h3>SERP Checker</h3><p>Find ranking opportunities.</p></a>

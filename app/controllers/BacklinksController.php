@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Security;
 use App\Models\BacklinkPlanRepository;
+use App\Models\CouponRepository;
 use App\Models\SupportTicketRepository;
 use App\Services\AuditLogger;
 
@@ -62,6 +63,7 @@ final class BacklinksController extends Controller
         $planSlug = (string) ($_POST['plan'] ?? '');
         $keywords = trim((string) ($_POST['keywords'] ?? ''));
         $notes = trim((string) ($_POST['notes'] ?? ''));
+        $couponCode = trim((string) ($_POST['coupon'] ?? ''));
 
         $plan = null;
         foreach (self::plans() as $candidate) {
@@ -71,22 +73,43 @@ final class BacklinksController extends Controller
             }
         }
 
+        $old = ['name' => $name, 'email' => $email, 'website' => $website, 'keywords' => $keywords, 'notes' => $notes, 'plan' => $planSlug, 'coupon' => $couponCode];
+
         if (strlen($name) < 2 || !filter_var($email, FILTER_VALIDATE_EMAIL) || $website === '' || $plan === null) {
             http_response_code(422);
             $this->index([
                 'error' => 'Enter a valid name, email, website and choose a plan.',
                 'captcha' => Security::refreshCaptcha('backlinks_order'),
-                'old' => ['name' => $name, 'email' => $email, 'website' => $website, 'keywords' => $keywords, 'notes' => $notes, 'plan' => $planSlug],
+                'old' => $old,
             ]);
             return;
         }
 
+        // Optional coupon: validate for backlinks and record on the ticket.
+        $couponLine = '';
+        $coupons = new CouponRepository();
+        if ($couponCode !== '') {
+            $check = $coupons->validate($couponCode, 'backlinks');
+            if (!($check['ok'] ?? false)) {
+                http_response_code(422);
+                $this->index([
+                    'error' => $check['message'] ?: 'That coupon code is not valid.',
+                    'captcha' => Security::refreshCaptcha('backlinks_order'),
+                    'old' => $old,
+                ]);
+                return;
+            }
+            $applied = $coupons->applyToPrice($check['coupon'], (string) $plan['price']);
+            $couponLine = sprintf("\nCoupon: %s (%s) — %s -> %s", $check['coupon']['code'], $applied['label'], $applied['original'], $applied['discounted']);
+        }
+
         $message = sprintf(
-            "Backlink order\nPlan: %s (%s — %s)\nWebsite: %s\nTarget keywords: %s\nNotes: %s",
+            "Backlink order\nPlan: %s (%s — %s)\nWebsite: %s%s\nTarget keywords: %s\nNotes: %s",
             $plan['name'],
             $plan['price'],
             strip_tags((string) $plan['links']),
             $website,
+            $couponLine,
             $keywords !== '' ? $keywords : '(none provided)',
             $notes !== '' ? $notes : '(none)'
         );
@@ -101,7 +124,11 @@ final class BacklinksController extends Controller
             'user_agent' => substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 500),
         ]);
 
-        $logger->log('backlinks.order_created', ['reference' => $reference, 'plan' => $plan['slug'], 'email' => $email]);
+        if ($couponLine !== '') {
+            $coupons->redeem($couponCode);
+        }
+
+        $logger->log('backlinks.order_created', ['reference' => $reference, 'plan' => $plan['slug'], 'email' => $email, 'coupon' => $couponCode !== '' ? strtoupper($couponCode) : null]);
 
         $this->index([
             'success' => 'Order received — reference ' . $reference . '. We will email you a secure payment link and confirm the plan within one business day.',

@@ -410,3 +410,64 @@
 .member-delete-form { margin: 0; }
 .member-delete-form .pill-button.danger { color: var(--danger); border-color: rgba(255, 77, 129, .4); }
 @media (max-width: 480px) { .member-card-grid { grid-template-columns: 1fr; } }
+
+/* ==========================================================================
+   Productized offers — Care Plans value ladder, audit coverage grid, Speed
+   Rescue guarantee box and the embeddable security badge card.
+   ========================================================================== */
+.care-ladder { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.care-ladder-step {
+    position: relative; border: 1px solid var(--line); border-radius: 16px;
+    background: rgba(6, 12, 24, .55); padding: 24px 22px 22px; display: grid; gap: 10px;
+    align-content: start;
+}
+.care-ladder-step em {
+    font-style: normal; font-family: var(--font-display); font-weight: 800; font-size: 1.5rem;
+    color: var(--primary);
+}
+.care-ladder-step.is-mid { border-color: rgba(0, 229, 255, .45); }
+.care-ladder-step.is-top { border-color: rgba(180, 92, 255, .5); }
+.care-ladder-step.is-top em { color: var(--secondary); }
+.care-ladder-step strong { font-family: var(--font-display); font-size: 1.05rem; }
+.care-ladder-step p { color: var(--muted); margin: 0; font-size: .92rem; line-height: 1.6; }
+
+.care-includes { text-align: center; }
+.care-includes h2 { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.care-includes h2 i { color: var(--primary); }
+.care-includes p { color: var(--muted); max-width: 640px; margin: 8px auto 0; }
+
+.audit-includes-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.audit-includes-grid article {
+    border: 1px solid var(--line); border-radius: 14px; background: rgba(6, 12, 24, .5);
+    padding: 18px; display: grid; gap: 7px; align-content: start;
+    transition: transform .2s ease, border-color .2s ease;
+}
+.audit-includes-grid article:hover { transform: translateY(-3px); border-color: var(--primary); }
+.audit-includes-grid article i { color: var(--primary); font-size: 1.15rem; }
+.audit-includes-grid article strong { font-family: var(--font-display); }
+.audit-includes-grid article span { color: var(--muted); font-size: .86rem; line-height: 1.55; }
+
+.speed-guarantee { text-align: center; border-color: rgba(35, 255, 154, .4); }
+.speed-guarantee h2 { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.speed-guarantee h2 i { color: var(--accent); }
+.speed-guarantee p { max-width: 640px; margin: 10px auto; }
+.speed-guarantee small { color: var(--muted); display: block; max-width: 640px; margin: 0 auto; line-height: 1.6; }
+
+.badge-embed-card { display: grid; gap: 14px; }
+.badge-embed-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 18px; }
+.badge-embed-controls label { display: grid; gap: 6px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.badge-embed-controls select {
+    padding: 10px 13px; border-radius: 10px; border: 1px solid var(--line);
+    background: rgba(2, 6, 16, .7); color: var(--text); font-family: inherit;
+}
+.badge-embed-preview { display: inline-flex; padding: 6px; border-radius: 10px; background: rgba(2, 6, 16, .5); }
+.badge-embed-code {
+    width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: rgba(2, 6, 16, .75); color: var(--primary); font-family: monospace; font-size: .8rem;
+    resize: vertical;
+}
+.badge-embed-card small { color: var(--muted); }
+.badge-embed-card .pill-button { justify-self: start; }
+
+.coupon-row-actions { display: inline-flex; gap: 6px; }
+.coupon-row-actions form { margin: 0; }

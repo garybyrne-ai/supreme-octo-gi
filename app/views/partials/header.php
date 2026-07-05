@@ -8,6 +8,9 @@ $isShopPath = str_starts_with($currentPath, '/code-shop');
 $isStorePath = str_starts_with($currentPath, '/code-shop')
     || str_starts_with($currentPath, '/membership')
     || str_starts_with($currentPath, '/backlinks')
+    || str_starts_with($currentPath, '/website-care-plans')
+    || str_starts_with($currentPath, '/website-audit')
+    || str_starts_with($currentPath, '/speed-rescue')
     || $currentPath === '/tools-pricing';
 $isCompanyPath = in_array($currentPath, ['/about', '/portfolio', '/process', '/blog', '/support', '/contact'], true)
     || str_starts_with($currentPath, '/blog/');
@@ -87,6 +90,9 @@ $isToolsPath = in_array($currentPath, [
                     <a href="/membership"><i class="fa-solid fa-id-card"></i><span>Membership<small>Growth Lab plans for tools &amp; downloads.</small></span></a>
                     <a href="/backlinks"><i class="fa-solid fa-link"></i><span>Buy Irish Backlinks<small>Rare .ie links — 25 from €59.</small></span></a>
                     <a href="/tools-pricing"><i class="fa-solid fa-crown"></i><span>Growth Lab Pro<small>€25/mo or €200/yr tools membership.</small></span></a>
+                    <a href="/website-care-plans"><i class="fa-solid fa-heart-pulse"></i><span>Website Care Plans<small>Maintenance from €49/month.</small></span></a>
+                    <a href="/website-audit"><i class="fa-solid fa-file-shield"></i><span>Website Audit — €49<small>One-off white-label PDF report.</small></span></a>
+                    <a href="/speed-rescue"><i class="fa-solid fa-bolt"></i><span>Speed Rescue — €149<small>Under 2s load or you don't pay.</small></span></a>
                 </div>
             </div>
         </div>

@@ -9,7 +9,9 @@ use App\Core\Database;
 use App\Core\Security;
 use App\Models\AdminModuleDraftRepository;
 use App\Models\BacklinkPlanRepository;
+use App\Models\CarePlanRepository;
 use App\Models\CommerceRepository;
+use App\Models\CouponRepository;
 use App\Models\ContentRepository;
 use App\Models\SiteContentRepository;
 use App\Models\MailSettingsRepository;
@@ -165,6 +167,7 @@ final class AdminController extends Controller
             ['slug' => 'commerce', 'title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'summary' => 'Sell themes, plugins, templates and services marketplace-style with private ZIP packages, licenses, orders and download grants.'],
             ['slug' => 'membership', 'title' => 'Membership Plans', 'icon' => 'fa-id-card', 'summary' => 'Control every membership tier: price, billing interval, trial, Stripe and PayPal wiring, features and availability.'],
             ['slug' => 'members', 'title' => 'Member Manager', 'icon' => 'fa-users-gear', 'summary' => 'Edit members, upgrade or downgrade Pro access with a calendar expiry date, manage forum posting and remove accounts.'],
+            ['slug' => 'coupons', 'title' => 'Coupons', 'icon' => 'fa-tags', 'summary' => 'Create discount codes for backlinks, care plans, audits and Speed Rescue — percent or fixed, usage caps and expiry dates.'],
             ['slug' => 'faq', 'title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'summary' => 'Edit answers for common sales, delivery and support questions.'],
             ['slug' => 'seo', 'title' => 'SEO Center', 'icon' => 'fa-chart-line', 'summary' => 'Review titles, descriptions, schema signals and crawl priorities.'],
             ['slug' => 'redirects', 'title' => 'Redirect Manager', 'icon' => 'fa-route', 'summary' => 'Plan redirects, campaign URLs and migration-safe route changes.'],
@@ -216,6 +219,7 @@ final class AdminController extends Controller
             'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'actions' => ['Create marketplace item', 'Attach private ZIP package', 'Review order lifecycle']],
             'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card', 'actions' => ['Create plan', 'Edit pricing and gateways', 'Pause or feature a plan']],
             'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear', 'actions' => ['Edit member', 'Upgrade or downgrade Pro', 'Set access expiry']],
+            'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags', 'actions' => ['Create coupon', 'Set usage cap & expiry', 'Pause or delete codes']],
             'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'actions' => ['Add answer', 'Update schema FAQ', 'Review sales objections']],
             'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line', 'actions' => ['Audit metadata', 'Preview schema', 'Map internal links']],
             'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route', 'actions' => ['Add redirect', 'Import route map', 'Test status codes']],
@@ -247,6 +251,9 @@ final class AdminController extends Controller
             'membershipPlans' => $slug === 'membership' ? (new MembershipPlanRepository())->all() : [],
             'siteContent' => $slug === 'content' ? (new SiteContentRepository())->all() : [],
             'backlinkPlans' => $slug === 'content' ? (new BacklinkPlanRepository())->all() : [],
+            'carePlans' => $slug === 'content' ? (new CarePlanRepository())->all() : [],
+            'coupons' => $slug === 'coupons' ? (new CouponRepository())->all() : [],
+            'couponContexts' => CouponRepository::CONTEXTS,
             'pageIntroDefs' => $slug === 'content' ? (new SiteContentRepository())->pageIntroDefinitions() : [],
             'catalogProducts' => $slug === 'commerce' ? (new CommerceRepository())->allProducts() : [],
             'intervals' => MembershipPlanRepository::INTERVALS,
@@ -372,6 +379,100 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/content');
+    }
+
+    public function saveCarePlan(): void
+    {
+        $this->guardAdminPost('/admin/modules/content', 'Care plan token expired. Please try again.');
+
+        try {
+            $slug = (new CarePlanRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Care plan saved.';
+            (new AuditLogger())->log('admin.care_plan.saved', ['slug' => $slug]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
+    }
+
+    public function carePlanState(): void
+    {
+        $this->guardAdminPost('/admin/modules/content', 'Care plan token expired. Please try again.');
+
+        try {
+            $slug = (string) ($_POST['slug'] ?? '');
+            if (($_POST['state'] ?? '') === 'delete') {
+                (new CarePlanRepository())->delete($slug);
+                $_SESSION['admin_notice'] = 'Care plan deleted.';
+                (new AuditLogger())->log('admin.care_plan.deleted', ['slug' => $slug]);
+            } else {
+                $active = ($_POST['state'] ?? '') === 'activate';
+                (new CarePlanRepository())->setActive($slug, $active);
+                $_SESSION['admin_notice'] = $active ? 'Care plan activated.' : 'Care plan paused.';
+                (new AuditLogger())->log('admin.care_plan.toggled', ['slug' => $slug, 'active' => $active]);
+            }
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
+    }
+
+    public function saveCoupon(): void
+    {
+        $this->guardAdminPost('/admin/modules/coupons', 'Coupon token expired. Please try again.');
+
+        try {
+            $code = (new CouponRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Coupon “' . $code . '” saved.';
+            (new AuditLogger())->log('admin.coupon.saved', ['code' => $code]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/coupons');
+    }
+
+    public function couponState(): void
+    {
+        $this->guardAdminPost('/admin/modules/coupons', 'Coupon token expired. Please try again.');
+
+        try {
+            $code = (string) ($_POST['code'] ?? '');
+            if (($_POST['state'] ?? '') === 'delete') {
+                (new CouponRepository())->delete($code);
+                $_SESSION['admin_notice'] = 'Coupon deleted.';
+                (new AuditLogger())->log('admin.coupon.deleted', ['code' => $code]);
+            } else {
+                $active = ($_POST['state'] ?? '') === 'activate';
+                (new CouponRepository())->setActive($code, $active);
+                $_SESSION['admin_notice'] = $active ? 'Coupon activated.' : 'Coupon paused.';
+                (new AuditLogger())->log('admin.coupon.toggled', ['code' => $code, 'active' => $active]);
+            }
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/coupons');
+    }
+
+    /**
+     * Shared guard for admin POST endpoints: session + CSRF, redirecting back
+     * to the module page with a friendly error when the token has expired.
+     */
+    private function guardAdminPost(string $redirect, string $expiredMessage): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = $expiredMessage;
+            $this->redirect($redirect);
+        }
     }
 
     public function saveMember(): void

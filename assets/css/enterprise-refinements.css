@@ -633,3 +633,47 @@
         50% { border-color: rgba(180, 92, 255, .6); }
     }
 }
+
+/* ==========================================================================
+   Overlap fix — stop the hero copy column (esp. the 4-up service grid) from
+   overflowing its grid track and colliding with the absolutely-positioned
+   LOCAL TIME / DIRECT SIGNAL panels. Grid items default to min-width:auto,
+   which lets wide content push past its track — pin them to 0 and let the
+   service tiles shrink instead of forcing a 600px minimum.
+   ========================================================================== */
+.hero-copy,
+.hero-panels { min-width: 0; }
+.hero-copy { max-width: 100%; }
+.hero-service-grid {
+    max-width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+/* Below the point where the hero is still two columns but the left track is
+   getting tight, drop the service tiles to 2-up so they never crowd the
+   panels. (Hero collapses to a single column at 1180px.) */
+@media (min-width: 1181px) and (max-width: 1480px) {
+    .hero-service-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; }
+}
+@media (max-width: 1180px) {
+    /* Single-column hero: panels flow below the copy, so give the service grid
+       room and make sure the two floating cards can't overlap each other. */
+    .hero-service-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .hero-panels {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        min-height: 0;
+    }
+    .hero-panels .email-neon-sign,
+    .hero-panels .live-card {
+        position: relative;
+        top: auto; right: auto; bottom: auto; left: auto;
+        width: 100%;
+        min-width: 0;
+    }
+}
+@media (max-width: 680px) {
+    .hero-service-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hero-panels { grid-template-columns: 1fr; }
+}

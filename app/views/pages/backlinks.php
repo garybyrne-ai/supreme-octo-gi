@@ -98,6 +98,9 @@ $old = $old ?? [];
         <label>Target Keywords <span class="cyber-hint">optional</span>
             <input name="keywords" placeholder="e.g. web design dublin, accountant cork" value="<?= e($old['keywords'] ?? '') ?>">
         </label>
+        <label>Coupon Code <span class="cyber-hint">optional</span>
+            <input name="coupon" placeholder="e.g. LAUNCH50" value="<?= e($old['coupon'] ?? '') ?>">
+        </label>
         <label>Notes <textarea name="notes" rows="4" placeholder="Target pages, niche, anchors to avoid, deadlines..."><?= e($old['notes'] ?? '') ?></textarea></label>
         <label class="captcha-field">PHP Captcha
             <span class="captcha-box"><?= e($captcha['question'] ?? '') ?> = ?</span>

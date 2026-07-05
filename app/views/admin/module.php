@@ -12,6 +12,7 @@ $adminMenu = [
     'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping'],
     'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card'],
     'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear'],
+    'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags'],
     'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question'],
     'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line'],
     'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route'],
@@ -474,6 +475,171 @@ $moduleDrafts = $moduleDrafts ?? [];
                 });
             })();
             </script>
+
+            <?php $carePlans = $carePlans ?? []; ?>
+            <section class="split-section">
+                <form class="cyber-form care-plan-form" method="post" action="/admin/care-plans">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="original_slug" value="" data-care-original-slug>
+                    <h2>Care Plan</h2>
+                    <p>Add or edit a maintenance plan sold on <a href="/website-care-plans" target="_blank" rel="noopener">/website-care-plans</a>. Click "Edit" on a plan below to load it here.</p>
+                    <div class="form-grid two">
+                        <label>Name <input name="name" data-care-field="name" required></label>
+                        <label>Slug <small>(blank = auto)</small> <input name="slug" data-care-field="slug"></label>
+                        <label>Price <input name="price" data-care-field="price" placeholder="€49"></label>
+                        <label>Period <input name="period" data-care-field="period" placeholder="/month"></label>
+                        <label>Ideal for <input name="ideal_for" data-care-field="ideal_for" placeholder="Brochure & small business sites"></label>
+                        <label>Badge <input name="badge" data-care-field="badge" placeholder="Most popular"></label>
+                        <label>Sort order <input name="sort_order" data-care-field="sort_order" type="number" value="100"></label>
+                        <label>Checkout URL <small>(Stripe/PayPal link, optional)</small> <input name="checkout_url" data-care-field="checkout_url"></label>
+                    </div>
+                    <label>Features <small>(one per line)</small> <textarea name="features" rows="7" data-care-field="features"></textarea></label>
+                    <div class="checkbox-row">
+                        <label><input type="checkbox" name="active" value="1" checked data-care-field="active"> Active (shown on site)</label>
+                        <label><input type="checkbox" name="featured" value="1" data-care-field="featured"> Featured (most popular)</label>
+                    </div>
+                    <button class="pill-button" type="submit">Save Care Plan <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <section class="cyber-card membership-plan-list">
+                    <div class="section-heading compact">
+                        <span class="status-chip"><span></span> Live plans</span>
+                        <h2>Care Plan Tiers</h2>
+                    </div>
+                    <?php if (!empty($carePlans)): ?>
+                        <div class="membership-plan-grid">
+                            <?php foreach ($carePlans as $cp): ?>
+                                <article class="membership-plan-item <?= empty($cp['active']) ? 'is-paused' : '' ?>">
+                                    <header>
+                                        <div>
+                                            <strong><?= e($cp['name']) ?></strong>
+                                            <small><?= e($cp['ideal_for']) ?></small>
+                                        </div>
+                                        <span class="membership-price"><?= e($cp['price']) ?><em><?= e($cp['period'] ?? '/month') ?></em></span>
+                                    </header>
+                                    <div class="membership-plan-flags">
+                                        <em class="pill-status <?= !empty($cp['active']) ? 'is-live' : 'is-paused' ?>"><?= !empty($cp['active']) ? 'Active' : 'Paused' ?></em>
+                                        <?php if (!empty($cp['featured'])): ?><em class="pill-status is-feature">Featured</em><?php endif; ?>
+                                        <?php if (!empty($cp['checkout_url'])): ?><em class="pill-status is-gw">Checkout link</em><?php endif; ?>
+                                    </div>
+                                    <div class="membership-plan-actions">
+                                        <button type="button" class="pill-button ghost" data-edit-care-plan='<?= e(json_encode($cp, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>'><i class="fa-solid fa-pen"></i> Edit</button>
+                                        <form method="post" action="/admin/care-plans/state">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="slug" value="<?= e($cp['slug']) ?>">
+                                            <input type="hidden" name="state" value="<?= !empty($cp['active']) ? 'deactivate' : 'activate' ?>">
+                                            <button class="pill-button ghost" type="submit"><?= !empty($cp['active']) ? 'Pause' : 'Activate' ?></button>
+                                        </form>
+                                        <form method="post" action="/admin/care-plans/state" onsubmit="return confirm('Delete this care plan? This cannot be undone.');">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="slug" value="<?= e($cp['slug']) ?>">
+                                            <input type="hidden" name="state" value="delete">
+                                            <button class="pill-button ghost danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p>No care plans yet. Add your first plan on the left — it appears on <a href="/website-care-plans">/website-care-plans</a> instantly once active.</p>
+                    <?php endif; ?>
+                </section>
+            </section>
+            <script>
+            (function () {
+                var form = document.querySelector('.care-plan-form');
+                if (!form) { return; }
+                document.querySelectorAll('[data-edit-care-plan]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var plan = JSON.parse(btn.getAttribute('data-edit-care-plan'));
+                        var set = function (name, val) {
+                            var el = form.querySelector('[data-care-field="' + name + '"]');
+                            if (el) { el.value = val; }
+                        };
+                        set('name', plan.name || '');
+                        set('slug', plan.slug || '');
+                        set('price', plan.price || '');
+                        set('period', plan.period || '/month');
+                        set('ideal_for', plan.ideal_for || '');
+                        set('badge', plan.badge || '');
+                        set('sort_order', plan.sort_order || 100);
+                        set('checkout_url', plan.checkout_url || '');
+                        set('features', (plan.features || []).join('\n'));
+                        form.querySelector('[data-care-field="featured"]').checked = !!plan.featured;
+                        form.querySelector('[data-care-field="active"]').checked = !!plan.active;
+                        form.querySelector('[data-care-original-slug]').value = plan.slug || '';
+                        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                });
+            })();
+            </script>
+        <?php endif; ?>
+
+        <?php if (($module['title'] ?? '') === 'Coupons'): ?>
+            <?php $coupons = $coupons ?? []; $couponContexts = $couponContexts ?? ['all']; ?>
+            <section class="split-section">
+                <form class="cyber-form" method="post" action="/admin/coupons">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <h2>Create / Update Coupon</h2>
+                    <p>Saving an existing code updates it. Codes work on the backlinks, care plan, audit and Speed Rescue order forms — the discounted price is recorded on the order ticket. For hosted Stripe payment links, create the matching promo code in Stripe too.</p>
+                    <div class="form-grid two">
+                        <label>Code <input name="code" required placeholder="LAUNCH50" style="text-transform:uppercase"></label>
+                        <label>Applies to
+                            <select name="applies_to">
+                                <?php foreach ($couponContexts as $ctx): ?>
+                                    <option value="<?= e($ctx) ?>"><?= e(ucwords(str_replace('-', ' ', $ctx))) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>Type
+                            <select name="type">
+                                <option value="percent">Percent off (%)</option>
+                                <option value="fixed">Fixed amount off (€)</option>
+                            </select>
+                        </label>
+                        <label>Value <input name="value" type="number" step="0.01" min="0.01" required placeholder="50"></label>
+                        <label>Max uses <small>(0 = unlimited)</small> <input name="max_uses" type="number" min="0" value="0"></label>
+                        <label>Expires <small>(optional)</small> <input name="expires_at" type="date"></label>
+                    </div>
+                    <div class="checkbox-row">
+                        <label><input type="checkbox" name="active" value="1" checked> Active</label>
+                    </div>
+                    <button class="pill-button" type="submit">Save Coupon <i class="fa-solid fa-floppy-disk"></i></button>
+                </form>
+                <section class="cyber-card ticket-table-card">
+                    <h2>Live Coupons</h2>
+                    <?php if (!empty($coupons)): ?>
+                        <div class="ticket-table full">
+                            <?php foreach ($coupons as $coupon): ?>
+                                <div>
+                                    <strong><?= e($coupon['code']) ?></strong>
+                                    <span>
+                                        <?= $coupon['type'] === 'percent' ? e((string) $coupon['value']) . '% off' : '€' . e((string) $coupon['value']) . ' off' ?>
+                                        · <?= e(ucwords(str_replace('-', ' ', $coupon['applies_to']))) ?>
+                                        <small>Used <?= e((string) $coupon['used_count']) ?><?= $coupon['max_uses'] > 0 ? '/' . e((string) $coupon['max_uses']) : '' ?><?= $coupon['expires_at'] !== '' ? ' · expires ' . e($coupon['expires_at']) : '' ?></small>
+                                    </span>
+                                    <em><?= !empty($coupon['active']) ? 'active' : 'paused' ?></em>
+                                    <span class="coupon-row-actions">
+                                        <form method="post" action="/admin/coupons/state">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="code" value="<?= e($coupon['code']) ?>">
+                                            <input type="hidden" name="state" value="<?= !empty($coupon['active']) ? 'deactivate' : 'activate' ?>">
+                                            <button class="pill-button ghost" type="submit"><?= !empty($coupon['active']) ? 'Pause' : 'Activate' ?></button>
+                                        </form>
+                                        <form method="post" action="/admin/coupons/state" onsubmit="return confirm('Delete this coupon?');">
+                                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="code" value="<?= e($coupon['code']) ?>">
+                                            <input type="hidden" name="state" value="delete">
+                                            <button class="pill-button ghost danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    </span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p>No coupons yet. Create your first code on the left — try <strong>LAUNCH50</strong> for a 50% launch discount.</p>
+                    <?php endif; ?>
+                </section>
+            </section>
         <?php endif; ?>
 
         <?php if (($module['title'] ?? '') === 'Newsletter Offer'): ?>

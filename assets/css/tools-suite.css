@@ -449,3 +449,21 @@
     .cyber-form.glass-tool > button:hover { transform: none; }
     .cyber-form.glass-tool > button:hover i { transform: none; }
 }
+
+/* ==========================================================================
+   Overlap fix — inside the tool access gate, the premium glass-tool form must
+   NOT use the wide auto-fit grid / centered max-width (that made the name/email
+   fields bleed into the sign-in-code column). Force each gate form to a single
+   stacked column that fills its own track.
+   ========================================================================== */
+.tool-access-gate .cyber-form.glass-tool {
+    grid-template-columns: 1fr;
+    max-width: none;
+    margin: 0;
+    align-content: start;
+}
+.tool-access-gate .cyber-form.glass-tool > button { justify-self: stretch; justify-content: center; }
+@media (max-width: 1024px) {
+    /* Stack the gate to one column so the two forms never sit side by side. */
+    .tool-access-gate { grid-template-columns: 1fr !important; }
+}

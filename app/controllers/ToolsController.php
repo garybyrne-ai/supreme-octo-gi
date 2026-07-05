@@ -343,6 +343,46 @@ final class ToolsController extends Controller
         $this->interactiveTool('security-badge');
     }
 
+    /**
+     * Embeddable "Powered by Crest" security badge (GET /badge.svg?grade=A).
+     * Served as a cacheable SVG; each request logs the referring host so badge
+     * adoption can be tracked from the activity log. Grade is whitelisted.
+     */
+    public function badgeSvg(): void
+    {
+        $grade = strtoupper(substr(trim((string) ($_GET['grade'] ?? 'A')), 0, 1));
+        if (!in_array($grade, ['A', 'B', 'C', 'D', 'F'], true)) {
+            $grade = 'A';
+        }
+
+        $colors = [
+            'A' => '#19f79a',
+            'B' => '#00e5ff',
+            'C' => '#ffc53d',
+            'D' => '#ff9f43',
+            'F' => '#ff4d81',
+        ];
+        $color = $colors[$grade];
+
+        $referer = parse_url((string) ($_SERVER['HTTP_REFERER'] ?? ''), PHP_URL_HOST);
+        if (is_string($referer) && $referer !== '') {
+            (new AuditLogger())->log('badge.impression', ['host' => substr($referer, 0, 190), 'grade' => $grade]);
+        }
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="178" height="40" role="img" aria-label="Security ' . $grade . ' — Crest Web Media">'
+            . '<rect width="178" height="40" rx="8" fill="#060c18"/>'
+            . '<rect x="0.5" y="0.5" width="177" height="39" rx="7.5" fill="none" stroke="' . $color . '" stroke-opacity="0.55"/>'
+            . '<path d="M20 8l9 4v6c0 6-3.9 10.3-9 12-5.1-1.7-9-6-9-12v-6l9-4z" fill="none" stroke="' . $color . '" stroke-width="1.6"/>'
+            . '<text x="20" y="25.5" font-family="Segoe UI,Arial,sans-serif" font-size="12" font-weight="700" fill="' . $color . '" text-anchor="middle">' . $grade . '</text>'
+            . '<text x="38" y="17" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="#9db4d0" letter-spacing="1.2">SECURITY CHECKED</text>'
+            . '<text x="38" y="30" font-family="Segoe UI,Arial,sans-serif" font-size="11" font-weight="700" fill="#f3f8ff">Crest Web Media</text>'
+            . '</svg>';
+
+        header('Content-Type: image/svg+xml; charset=utf-8');
+        header('Cache-Control: public, max-age=86400, s-maxage=86400');
+        echo $svg;
+    }
+
     public function clientPortalPreview(): void
     {
         $this->interactiveTool('client-portal');
