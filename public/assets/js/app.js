@@ -1049,6 +1049,21 @@ document.querySelectorAll('[data-tool-report]').forEach(function (report) {
     });
 })();
 
+// --- Open the header account popover on the Register tab from any CTA ---
+(function () {
+    document.querySelectorAll('[data-open-register]').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+            event.preventDefault();
+            var widget = document.querySelector('[data-account-widget]');
+            if (!widget) { window.location.href = '/tools-pricing'; return; }
+            var registerTab = widget.querySelector('[data-account-tab="register"]');
+            if (registerTab) { registerTab.click(); }
+            widget.dispatchEvent(new CustomEvent('account:open'));
+            widget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+})();
+
 // --- AI content assistant: copy the preceding [data-copy-source] text ---
 (function () {
     document.querySelectorAll('[data-copy-prev]').forEach(function (btn) {

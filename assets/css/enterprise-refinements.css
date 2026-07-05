@@ -857,3 +857,54 @@
 }
 .toolkit-steps h3 { margin: 0 0 6px; font-size: 16px; color: #fff; }
 .toolkit-steps p { margin: 0; font-size: 14px; line-height: 1.55; color: #b7c7de; }
+
+/* Home: Growth Lab Pro / Tools Membership call-to-action */
+.growth-cta { position: relative; overflow: hidden; }
+.growth-cta-glow {
+    position: absolute; inset: -40% 20% auto; height: 420px; z-index: 0;
+    background: radial-gradient(60% 60% at 50% 0%, rgba(0, 183, 255, .16), transparent 70%),
+                radial-gradient(50% 50% at 80% 20%, rgba(123, 62, 255, .14), transparent 70%);
+    pointer-events: none; filter: blur(8px);
+}
+.growth-cta > * { position: relative; z-index: 1; }
+.growth-cta-head { text-align: center; max-width: 760px; margin: 0 auto 34px; }
+.growth-cta-head h2 { margin: 14px 0 12px; }
+.growth-cta-head h2 span {
+    background: linear-gradient(120deg, #00e5ff, #7b3eff);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.growth-cta-head p { color: #b7c7de; line-height: 1.7; margin: 0; }
+.growth-cta-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 16px; margin-bottom: 30px;
+}
+.growth-perk { padding: 24px; border-radius: 16px; }
+.growth-perk i {
+    display: inline-grid; place-items: center; width: 46px; height: 46px; margin-bottom: 14px;
+    font-size: 20px; color: #02040c; border-radius: 12px;
+    background: linear-gradient(135deg, #00e5ff, #7b3eff);
+    box-shadow: 0 8px 22px rgba(0, 183, 255, .25);
+}
+.growth-perk h3 { margin: 0 0 8px; font-size: 18px; color: #fff; }
+.growth-perk p { margin: 0; font-size: 14px; line-height: 1.6; color: #b7c7de; }
+.growth-cta-foot {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 18px 28px; padding: 26px; border-radius: 18px; text-align: center;
+    border: 1px solid rgba(0, 183, 255, .3);
+    background: linear-gradient(145deg, rgba(7, 16, 32, .9), rgba(3, 7, 18, .9));
+}
+.growth-cta-price { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.growth-price-tag { font-size: 40px; font-weight: 800; line-height: 1; color: #fff; }
+.growth-price-tag b { font-size: 16px; font-weight: 600; color: #9db4d0; }
+.growth-price-alt { font-size: 13px; color: #23ff9a; }
+.growth-cta-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.growth-cta-actions button.pill-button { cursor: pointer; font: inherit; }
+.growth-cta-trust {
+    list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap;
+    gap: 8px 18px; justify-content: center; width: 100%;
+}
+.growth-cta-trust li { font-size: 13px; color: #9db4d0; }
+.growth-cta-trust i { color: #23ff9a; margin-right: 6px; }
+@media (max-width: 640px) {
+    .growth-cta-foot { flex-direction: column; }
+}

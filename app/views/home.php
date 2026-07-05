@@ -99,6 +99,68 @@
     </a>
 </section>
 
+<section class="section reveal growth-cta" id="growth-lab" aria-labelledby="growth-cta-title">
+    <div class="growth-cta-glow" aria-hidden="true"></div>
+    <div class="growth-cta-head">
+        <span class="status-chip"><span></span> Growth Lab Pro · Tools Membership</span>
+        <h2 id="growth-cta-title">Register Free. Go Pro. <span>Own Your Website's Growth.</span></h2>
+        <p>Create a free account to unlock the toolkit &mdash; then upgrade to the Tools Membership for unlimited audits, white-label reports and always-on monitoring. Built to pay for itself with a single won client.</p>
+    </div>
+
+    <div class="growth-cta-grid">
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-infinity"></i>
+            <h3>Unlimited audits</h3>
+            <p>The deepest free on-page &amp; technical SEO audit in Ireland &mdash; 28+ weighted checks &mdash; plus security headers, TLS, DNS and speed scans. Run them as often as you like.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-file-invoice"></i>
+            <h3>White-label PDF reports</h3>
+            <p>Drop in your own agency name and logo, then export clean, client-ready PDF reports you can send &mdash; or resell &mdash; as your own.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-satellite-dish"></i>
+            <h3>Always-on monitoring</h3>
+            <p>We re-check your sites on a schedule and email you the moment SEO, security or performance regresses &mdash; so you fix it before clients notice.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+            <h3>Search Console import</h3>
+            <p>Connect Google Search Console for real queries, clicks and top pages, with backlink import by CSV &mdash; your true search data in one dashboard.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <h3>AI content assistant</h3>
+            <p>Generate unlimited SEO meta descriptions, title tags, blog outlines, FAQs, product copy, social posts and CTAs from a single keyword.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h3>Ethical hacking toolkit</h3>
+            <p>Scan your own sites for exposed files, weak headers, expiring certificates and spoofable email &mdash; then harden them with a prioritised fix list.</p>
+        </article>
+    </div>
+
+    <div class="growth-cta-foot">
+        <div class="growth-cta-price">
+            <span class="growth-price-tag">&euro;25<b>/mo</b></span>
+            <span class="growth-price-alt">or &euro;200/year &mdash; save &euro;100. Cancel anytime.</span>
+        </div>
+        <div class="growth-cta-actions">
+            <a class="pill-button" href="/tools-pricing">Get Growth Lab Pro <i class="fa-solid fa-crown"></i></a>
+            <?php if (empty($_SESSION['member'])): ?>
+                <button class="pill-button ghost" type="button" data-open-register>Register Free <i class="fa-solid fa-user-plus"></i></button>
+            <?php else: ?>
+                <a class="pill-button ghost" href="/account/dashboard">Open Your Dashboard <i class="fa-solid fa-arrow-right"></i></a>
+            <?php endif; ?>
+        </div>
+        <ul class="growth-cta-trust">
+            <li><i class="fa-solid fa-circle-check"></i> 3 free scans every day, no card needed</li>
+            <li><i class="fa-solid fa-circle-check"></i> Save &amp; track your reports</li>
+            <li><i class="fa-solid fa-circle-check"></i> Secure Stripe &amp; PayPal checkout</li>
+        </ul>
+    </div>
+</section>
+
 <section class="section reveal priority-services" id="services">
     <div class="section-heading">
         <span class="kicker">Core Capabilities</span>
