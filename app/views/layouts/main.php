@@ -50,8 +50,9 @@ if (is_file(base_path('config/installed.php'))) {
     <meta property="og:description" content="<?= e($metaDescription) ?>">
     <meta property="og:type" content="website">
     <link rel="preload" href="<?= asset('images/hero-himalayan-studio.webp') ?>" as="image" type="image/webp" fetchpriority="high">
-    <link rel="preload" href="<?= asset('fonts/oxanium-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="<?= asset('fonts/raleway-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400..800&family=Raleway:wght@400..800&display=swap">
     <link rel="stylesheet" href="<?= asset('css/style.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/shop.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/commerce-suite.css') ?>">

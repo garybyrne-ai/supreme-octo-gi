@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Google Ads">
+  <rect width="96" height="96" rx="22" fill="#06101c"/>
+  <path d="M39 18c5-3 12-1 15 5l25 43c3 6 1 13-5 16s-13 1-16-5L33 34c-3-6 0-13 6-16z" fill="#4285f4"/>
+  <path d="M34 31 16 63c-3 6-1 13 5 16s13 1 16-5l18-31L34 31z" fill="#fbbc04"/>
+  <circle cx="25" cy="69" r="13" fill="#34a853"/>
+</svg>
