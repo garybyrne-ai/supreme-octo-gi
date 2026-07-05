@@ -1107,3 +1107,22 @@
     .serp-tr-kw { grid-column: 1 / -1; }
     .serp-tr-dom { grid-column: 1 / -1; }
 }
+
+/* ==========================================================================
+   Hero balance — fill the right column so no empty background shows below the
+   panels. The left copy column is much taller than the two panel cards; stretch
+   the panels column and distribute the cards top→bottom instead of letting them
+   float centered (which left an empty band in the lower hero). Desktop only.
+   ========================================================================== */
+@media (min-width: 1181px) {
+    .hero { align-items: stretch; }
+    .hero-panels {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 0;
+        gap: 24px;
+    }
+    .hero-panels .email-neon-sign { position: relative; top: 0; margin: 0; }
+    .hero-panels .live-card { position: relative; top: 0; bottom: auto; margin: 0; }
+}
