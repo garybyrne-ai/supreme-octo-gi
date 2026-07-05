@@ -431,6 +431,14 @@ final class ToolsController extends Controller
                 'accent' => 'violet',
             ],
             [
+                'title' => 'Ethical Hacking Toolkit',
+                'url' => '/ethical-hacking-toolkit',
+                'icon' => 'fa-solid fa-shield-halved',
+                'category' => 'Security',
+                'summary' => 'Defensive self-audit: scan for exposed .env, .git, backups and phpinfo, plus headers, TLS, DNS and cookie hardening in one place.',
+                'accent' => 'green',
+            ],
+            [
                 'title' => 'Security Headers Checker',
                 'url' => '/tools/security-headers',
                 'icon' => 'fa-solid fa-lock',
@@ -764,6 +772,172 @@ final class ToolsController extends Controller
             'location' => $location,
             'serpResult' => $report,
         ]);
+    }
+
+    public function ethicalHackingToolkit(array $data = []): void
+    {
+        $this->render('pages/ethical-hacking-toolkit', array_replace([
+            'title' => 'Ethical Hacking Toolkit | Crest Web Media',
+            'metaDescription' => 'A free defensive ethical-hacking toolkit: scan your own site for exposed sensitive files, weak security headers, TLS, DNS/email spoofing, cookie flags and disclosure — with a prioritised hardening report.',
+            'toolkitTools' => $this->toolkitTools(),
+        ], $this->toolAccessData(), $data));
+    }
+
+    public function analyzeExposure(): void
+    {
+        if (!$this->hasToolAccess()) {
+            $this->ethicalHackingToolkit(['accessError' => 'Register and verify your email to run the exposure scan.']);
+            return;
+        }
+
+        if (Security::hitRateLimit('exposure_scan', 6, 900)) {
+            http_response_code(429);
+            $this->ethicalHackingToolkit(['error' => 'Too many exposure scans. Please wait a few minutes before trying again.']);
+            return;
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            http_response_code(419);
+            $this->ethicalHackingToolkit(['error' => 'Your secure form token expired. Please try again.']);
+            return;
+        }
+
+        $host = $this->normalizePublicHost((string) ($_POST['domain'] ?? ''));
+        if ($host === null) {
+            http_response_code(422);
+            $this->ethicalHackingToolkit(['error' => 'Enter a valid public domain you own or are authorised to test. Private networks and localhost are blocked.']);
+            return;
+        }
+
+        if (!$this->consumeFreeScan('exposure_scan')) {
+            http_response_code(402);
+            $this->ethicalHackingToolkit(['error' => $this->growthLabLimitMessage()]);
+            return;
+        }
+
+        (new AuditLogger())->log('tools.exposure_scanned', ['host' => $host]);
+        $result = $this->exposureReport($host);
+
+        $this->ethicalHackingToolkit([
+            'exposureHost' => $host,
+            'report' => [
+                'tool' => 'Attack Surface & File Exposure',
+                'icon' => 'fa-shield-halved',
+                'target' => $host,
+                'score' => $result['score'],
+                'summary' => 'Publicly reachable sensitive files, disclosure headers and directory listings on ' . $host . '.',
+                'checks' => $result['checks'],
+            ],
+        ]);
+    }
+
+    /**
+     * Scans a bounded set of commonly-leaked sensitive paths on a host you
+     * control, plus server-disclosure headers and directory-listing exposure.
+     * Every request is a single SSRF-safe GET to the target host only.
+     *
+     * @return array{score: int, checks: array<int, array<string, mixed>>}
+     */
+    private function exposureReport(string $host): array
+    {
+        // Sensitive paths that should never be public. Kept small and bounded.
+        $paths = [
+            ['path' => '/.env', 'label' => 'Environment file (.env)', 'fix' => 'Move secrets out of the web root and block dotfiles in your server config.'],
+            ['path' => '/.git/config', 'label' => 'Git repository (.git/config)', 'fix' => 'Never deploy the .git directory; deny access to /.git in your server config.'],
+            ['path' => '/.git/HEAD', 'label' => 'Git HEAD (.git/HEAD)', 'fix' => 'Remove the .git directory from production and deny /.git access.'],
+            ['path' => '/config.php.bak', 'label' => 'Config backup (config.php.bak)', 'fix' => 'Delete editor/backup files (.bak, .old, ~) from the server.'],
+            ['path' => '/wp-config.php.bak', 'label' => 'WordPress config backup', 'fix' => 'Remove wp-config.php.bak and any config backups from the web root.'],
+            ['path' => '/backup.zip', 'label' => 'Site backup archive (backup.zip)', 'fix' => 'Store backups outside the public web root, never at a guessable URL.'],
+            ['path' => '/backup.sql', 'label' => 'Database dump (backup.sql)', 'fix' => 'Keep SQL dumps off the web server entirely.'],
+            ['path' => '/phpinfo.php', 'label' => 'phpinfo() page', 'fix' => 'Delete phpinfo.php — it leaks your full server configuration.'],
+            ['path' => '/.htaccess', 'label' => 'Apache config (.htaccess)', 'fix' => 'Ensure .htaccess returns 403; Apache blocks it by default — check overrides.'],
+            ['path' => '/.DS_Store', 'label' => 'macOS .DS_Store', 'fix' => 'Remove .DS_Store files; they leak your directory structure.'],
+            ['path' => '/server-status', 'label' => 'Apache server-status', 'fix' => 'Restrict mod_status /server-status to localhost only.'],
+            ['path' => '/.well-known/security.txt', 'label' => 'security.txt present', 'fix' => 'Add a security.txt so researchers can report issues responsibly.', 'want' => true],
+        ];
+
+        $checks = [];
+        $exposed = 0;
+        $scanned = 0;
+
+        foreach ($paths as $target) {
+            if ($scanned >= 14) {
+                break; // hard cap on outbound requests
+            }
+            $scanned++;
+            $res = $this->fetchSmallText('https://' . $host . $target['path']);
+            $reachable = $res['status'] >= 200 && $res['status'] < 300 && $res['body'] !== '';
+
+            if (!empty($target['want'])) {
+                // A "want" item (security.txt) is good when it IS present.
+                $checks[] = [
+                    'label' => $target['label'],
+                    'present' => $reachable,
+                    'value' => $reachable ? 'Published for responsible disclosure (HTTP ' . $res['status'] . ')' : 'Not found',
+                    'advice' => $target['fix'] ?? '',
+                ];
+                continue;
+            }
+
+            if ($reachable) {
+                $exposed++;
+            }
+            $checks[] = [
+                'label' => $target['label'],
+                'present' => !$reachable, // "pass" means NOT exposed
+                'value' => $reachable
+                    ? 'EXPOSED — HTTP ' . $res['status'] . ' at ' . $target['path']
+                    : 'Not publicly reachable (HTTP ' . ($res['status'] ?: 'no response') . ')',
+                'advice' => $target['fix'] ?? '',
+            ];
+        }
+
+        // Server-disclosure check from the homepage response headers.
+        $headers = $this->fetchHeaders('https://' . $host . '/');
+        $server = trim((string) ($headers['server'] ?? ''));
+        $powered = trim((string) ($headers['x-powered-by'] ?? ''));
+        $discloses = ($server !== '' && preg_match('/\d/', $server)) || $powered !== '';
+        $checks[] = [
+            'label' => 'Software version disclosure',
+            'present' => !$discloses,
+            'value' => $discloses
+                ? trim(($server !== '' ? 'Server: ' . excerpt($server, 60) : '') . ' ' . ($powered !== '' ? 'X-Powered-By: ' . excerpt($powered, 60) : ''))
+                : 'No obvious server or framework version leaked',
+            'advice' => 'Hide software version numbers in Server and X-Powered-By headers to slow targeted attacks.',
+        ];
+
+        // Directory-listing exposure on the homepage path.
+        $root = $this->fetchSmallText('https://' . $host . '/');
+        $listing = stripos($root['body'], 'Index of /') !== false;
+        $checks[] = [
+            'label' => 'Directory listing exposure',
+            'present' => !$listing,
+            'value' => $listing ? 'A directory listing appears to be enabled' : 'No open directory listing detected',
+            'advice' => 'Disable auto-indexing (e.g. Apache "Options -Indexes") so folders cannot be browsed.',
+        ];
+
+        // Score: start at 100; exposed secrets hurt most, other failures less.
+        $fails = count(array_filter($checks, static fn ($c) => empty($c['present'])));
+        $score = max(0, 100 - ($exposed * 22) - (($fails - $exposed) * 8));
+
+        return ['score' => $score, 'checks' => $checks];
+    }
+
+    /**
+     * The defensive tools grouped for the ethical-hacking toolkit hub.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function toolkitTools(): array
+    {
+        return [
+            ['title' => 'Sensitive File Exposure', 'url' => '#exposure-scan', 'icon' => 'fa-shield-halved', 'summary' => 'Scan your site for exposed .env, .git, backups, phpinfo, server-status and directory listings.', 'accent' => 'red'],
+            ['title' => 'Security Headers', 'url' => '/tools/security-headers', 'icon' => 'fa-lock', 'summary' => 'Grade HSTS, CSP, COOP, CORP, frame and MIME protection, cookie flags and disclosure.', 'accent' => 'green'],
+            ['title' => 'DNS & Email Spoofing', 'url' => '/tools/dns-email', 'icon' => 'fa-envelope-circle-check', 'summary' => 'Check MX, SPF, DMARC and CAA to stop spoofing and improve deliverability.', 'accent' => 'green'],
+            ['title' => 'TLS / SSL Certificate', 'url' => '/tools/tls-ssl', 'icon' => 'fa-certificate', 'summary' => 'Read certificate issuer, validity window and days remaining to expiry.', 'accent' => 'green'],
+            ['title' => 'security.txt & Discovery', 'url' => '/tools/security-txt', 'icon' => 'fa-file-shield', 'summary' => 'Check responsible-disclosure and crawler-discovery files.', 'accent' => 'cyan'],
+            ['title' => 'Password & Token Lab', 'url' => '/free-penetration-testing-tools', 'icon' => 'fa-key', 'summary' => 'Test passphrase strength, decode JWTs, hash text and build a hardened CSP — all locally.', 'accent' => 'violet'],
+        ];
     }
 
     public function contentAssistant(array $data = []): void

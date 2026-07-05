@@ -18,6 +18,8 @@ $isToolsPath = in_array($currentPath, [
     '/tools',
     '/seo-tools',
     '/serp-checker',
+    '/ai-content-assistant',
+    '/ethical-hacking-toolkit',
     '/free-penetration-testing-tools',
     '/ai-website-growth-consultant',
     '/instant-website-quote-calculator',
@@ -69,8 +71,10 @@ $isToolsPath = in_array($currentPath, [
                     <a href="/instant-website-quote-calculator"><i class="fa-solid fa-calculator"></i><span>Quote Calculator<small>Estimate project scope and priority.</small></span></a>
                     <a href="/seo-tools"><i class="fa-solid fa-chart-line"></i><span>SEO Audit<small>Review page-level search signals.</small></span></a>
                     <a href="/serp-checker"><i class="fa-solid fa-ranking-star"></i><span>SERP Checker<small>Compare ranking opportunities.</small></span></a>
+                    <a href="/ai-content-assistant"><i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Content Assistant<small>Generate SEO copy in seconds.</small></span></a>
                     <a href="/ppc-roi-calculator"><i class="fa-solid fa-bullseye"></i><span>PPC ROI<small>Model paid-search return.</small></span></a>
-                    <a href="/free-penetration-testing-tools"><i class="fa-solid fa-shield-halved"></i><span>Security Tools<small>Check headers, DNS and TLS.</small></span></a>
+                    <a href="/ethical-hacking-toolkit"><i class="fa-solid fa-shield-halved"></i><span>Ethical Hacking Toolkit<small>Scan for exposed files &amp; harden.</small></span></a>
+                    <a href="/free-penetration-testing-tools"><i class="fa-solid fa-user-secret"></i><span>Security Tools<small>Check headers, DNS and TLS.</small></span></a>
                     <a href="/ai-automation-finder"><i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Automation Finder<small>Find workflow automation candidates.</small></span></a>
                     <a href="/client-portal-preview"><i class="fa-solid fa-table-columns"></i><span>Client Portal<small>Preview reporting and support UX.</small></span></a>
                     <a href="/tools-pricing"><i class="fa-solid fa-crown"></i><span>Growth Lab Pro<small>Unlimited scans &amp; white-label reports.</small></span></a>

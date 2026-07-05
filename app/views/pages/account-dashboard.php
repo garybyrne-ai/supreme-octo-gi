@@ -20,6 +20,7 @@ $toolMenu = [
         ['/account/search-console', 'fa-magnifying-glass-chart', 'Search Console'],
     ]],
     ['group' => 'Security', 'items' => [
+        ['/ethical-hacking-toolkit', 'fa-shield-halved', 'Ethical Hacking Kit'],
         ['/tools/security-headers', 'fa-lock', 'Security Headers'],
         ['/tools/dns-email', 'fa-envelope-circle-check', 'DNS & Email'],
         ['/tools/tls-ssl', 'fa-certificate', 'TLS / SSL'],

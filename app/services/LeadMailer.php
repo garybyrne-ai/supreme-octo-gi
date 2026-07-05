@@ -149,11 +149,11 @@ final class LeadMailer
         $fixes = '';
         $shown = 0;
         foreach (($report['checks'] ?? []) as $check) {
-            if (!is_array($check) || ($check['status'] ?? '') === 'pass') {
-                continue;
+            if (!is_array($check) || !empty($check['present'])) {
+                continue; // present === true means the check passed
             }
             $label = (string) ($check['label'] ?? ($check['title'] ?? ''));
-            $detail = (string) ($check['detail'] ?? ($check['message'] ?? ''));
+            $detail = (string) ($check['advice'] ?? ($check['value'] ?? ''));
             if ($label === '') {
                 continue;
             }

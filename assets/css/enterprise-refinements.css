@@ -829,3 +829,31 @@
 }
 .ai-copy-btn:hover { color: #fff; background: rgba(0, 183, 255, .22); }
 .ai-content-foot { margin-top: 14px; font-size: 13px; color: #9db4d0; }
+
+/* Ethical hacking toolkit hub */
+.toolkit-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+.toolkit-card {
+    display: block; text-decoration: none; color: inherit; padding: 22px;
+    border-radius: 14px; transition: transform .2s ease, border-color .2s ease;
+}
+.toolkit-card:hover { transform: translateY(-3px); border-color: rgba(0, 229, 255, .5); }
+.toolkit-card i { font-size: 26px; margin-bottom: 10px; color: #00e5ff; }
+.toolkit-card.accent-red i { color: #ff6b8b; }
+.toolkit-card.accent-green i { color: #23ff9a; }
+.toolkit-card.accent-violet i { color: #b18cff; }
+.toolkit-card h3 { margin: 0 0 6px; font-size: 18px; color: #fff; }
+.toolkit-card p { margin: 0; font-size: 14px; line-height: 1.55; color: #b7c7de; }
+.toolkit-steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+}
+.toolkit-steps article { padding: 22px; border-radius: 14px; }
+.toolkit-steps b {
+    display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px;
+    margin-bottom: 12px; font-size: 16px; color: #02040c;
+    background: linear-gradient(135deg, #00e5ff, #7b3eff);
+}
+.toolkit-steps h3 { margin: 0 0 6px; font-size: 16px; color: #fff; }
+.toolkit-steps p { margin: 0; font-size: 14px; line-height: 1.55; color: #b7c7de; }

@@ -61,6 +61,7 @@ $statefulPrefixes = [
     '/seo-tools',
     '/serp-checker',
     '/ai-content-assistant',
+    '/ethical-hacking-toolkit',
     '/free-penetration-testing-tools',
     '/forum',
     '/ai-website-growth-consultant',
