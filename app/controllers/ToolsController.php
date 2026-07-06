@@ -53,6 +53,8 @@ final class ToolsController extends Controller
             'metaDescription' => 'Enterprise-grade SERP checker and rank tracker: live keyword position, visibility tier, estimated CTR, competitors ranking above you, and position history tracked over time for Growth Lab Pro members.',
             'trackedKeywords' => $tracked,
             'serpIsPro' => $isPro,
+            'serpCountries' => self::serpCountries(),
+            'country' => 'ie',
             'serpNotice' => $_SESSION['serp_notice'] ?? null,
             'serpError' => $_SESSION['serp_error'] ?? null,
         ], $this->toolAccessData(), $data));
@@ -762,7 +764,15 @@ final class ToolsController extends Controller
         // Domain is optional: leave it blank to just look up the live SERP for a
         // keyword (like a plain rank-explorer); fill it to also see your position.
         $target = $rawDomain === '' ? null : $this->normalizePublicHost($rawDomain);
-        $location = trim((string) ($_POST['location'] ?? 'Ireland'));
+
+        // Country drives the Google region (gl); fall back to the free-text
+        // location field, then Ireland, for older requests.
+        $countries = self::serpCountries();
+        $gl = strtolower(trim((string) ($_POST['country'] ?? '')));
+        if (!isset($countries[$gl])) {
+            $gl = 'ie';
+        }
+        $location = $countries[$gl] ?? trim((string) ($_POST['location'] ?? 'Ireland'));
 
         if (strlen($keyword) < 2 || strlen($keyword) > 120) {
             http_response_code(422);
@@ -782,7 +792,7 @@ final class ToolsController extends Controller
             return;
         }
 
-        $report = $this->serpReport($keyword, $target ?? '', $location);
+        $report = $this->serpReport($keyword, $target ?? '', $location, $gl);
         // Only produce the "your rank / competitors" analysis when a domain was given.
         $analysis = $target === null
             ? null
@@ -807,6 +817,7 @@ final class ToolsController extends Controller
             'keyword' => $keyword,
             'domain' => $target ?? '',
             'location' => $location,
+            'country' => $gl,
             'serpResult' => $report,
             'serpAnalysis' => $analysis,
         ]);
@@ -2455,14 +2466,14 @@ final class ToolsController extends Controller
         return $this->serpReport($keyword, $host, $location)['position'] ?? null;
     }
 
-    private function serpReport(string $keyword, string $targetHost, string $location): array
+    private function serpReport(string $keyword, string $targetHost, string $location, string $gl = 'ie'): array
     {
         // Prefer real Google rankings when a provider is configured: ZenSERP
         // gives location-accurate live SERP positions; the Google Custom Search
         // JSON API (free 100 queries/day) queries Google's own index. Fall back
         // to the free live scrape below when neither is set up.
-        $apiResult = $this->zenserpReport($keyword, $targetHost, $location)
-            ?? $this->googleCseReport($keyword, $targetHost, $location);
+        $apiResult = $this->zenserpReport($keyword, $targetHost, $location, $gl)
+            ?? $this->googleCseReport($keyword, $targetHost, $location, $gl);
         if ($apiResult !== null) {
             return $apiResult;
         }
@@ -2526,7 +2537,7 @@ final class ToolsController extends Controller
      *
      * @return array<string, mixed>|null Null when no key or the call fails.
      */
-    private function zenserpReport(string $keyword, string $targetHost, string $location): ?array
+    private function zenserpReport(string $keyword, string $targetHost, string $location, string $gl = 'ie'): ?array
     {
         $apiKey = $this->serpApiKey();
         if ($apiKey === '') {
@@ -2538,7 +2549,7 @@ final class ToolsController extends Controller
             'q' => $keyword,
             'num' => '20',
             'hl' => 'en',
-            'gl' => 'ie',
+            'gl' => $gl !== '' ? $gl : 'ie',
             'location' => $location !== '' ? $location : 'Ireland',
         ];
         $endpoint = 'https://app.zenserp.com/api/v2/search?' . http_build_query($params);
@@ -2609,6 +2620,38 @@ final class ToolsController extends Controller
     }
 
     /**
+     * Countries offered in the SERP Checker, keyed by Google region code (gl).
+     * Ireland leads because that's the primary market.
+     *
+     * @return array<string, string>
+     */
+    public static function serpCountries(): array
+    {
+        return [
+            'ie' => 'Ireland',
+            'gb' => 'United Kingdom',
+            'us' => 'United States',
+            'ca' => 'Canada',
+            'au' => 'Australia',
+            'nz' => 'New Zealand',
+            'de' => 'Germany',
+            'fr' => 'France',
+            'es' => 'Spain',
+            'it' => 'Italy',
+            'nl' => 'Netherlands',
+            'be' => 'Belgium',
+            'pt' => 'Portugal',
+            'se' => 'Sweden',
+            'no' => 'Norway',
+            'dk' => 'Denmark',
+            'pl' => 'Poland',
+            'in' => 'India',
+            'ae' => 'United Arab Emirates',
+            'za' => 'South Africa',
+        ];
+    }
+
+    /**
      * Live Google rankings via the Google Custom Search JSON API. Requires a
      * Google API key plus a Programmable Search Engine ID (cx) configured to
      * search the entire web. Free tier is 100 queries/day. Reads credentials
@@ -2617,7 +2660,7 @@ final class ToolsController extends Controller
      *
      * @return array<string, mixed>|null Null when unconfigured or the call fails.
      */
-    private function googleCseReport(string $keyword, string $targetHost, string $location): ?array
+    private function googleCseReport(string $keyword, string $targetHost, string $location, string $gl = 'ie'): ?array
     {
         [$key, $cx] = $this->googleCseCredentials();
         if ($key === '' || $cx === '') {
@@ -2631,7 +2674,7 @@ final class ToolsController extends Controller
             'q' => $query,
             'num' => '10',
             'hl' => 'en',
-            'gl' => 'ie',
+            'gl' => $gl !== '' ? $gl : 'ie',
             'safe' => 'off',
         ];
         $endpoint = 'https://www.googleapis.com/customsearch/v1?' . http_build_query($params);

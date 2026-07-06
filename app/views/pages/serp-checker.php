@@ -43,9 +43,25 @@ $sparkline = static function (array $positions): string {
         <label>Target Domain <span class="serp-optional">optional — to see your rank</span>
             <input name="domain" placeholder="leave blank to just view results" value="<?= e($domain ?? '') ?>">
         </label>
-        <label>Country / Location
-            <input name="location" placeholder="Ireland" value="<?= e($location ?? 'Ireland') ?>">
+        <label>Country
+            <select name="country" class="serp-country-select">
+                <?php $sel = $country ?? 'ie'; foreach (($serpCountries ?? ['ie' => 'Ireland']) as $code => $name): ?>
+                    <option value="<?= e($code) ?>"<?= $sel === $code ? ' selected' : '' ?>><?= e($name) ?></option>
+                <?php endforeach; ?>
+            </select>
         </label>
+        <div class="serp-locked-row">
+            <label class="serp-pro-field">Device <span class="serp-pro-tag">Pro</span>
+                <select disabled aria-disabled="true" title="Desktop vs mobile SERPs are a Growth Lab Pro feature">
+                    <option>Desktop</option>
+                    <option>Mobile</option>
+                </select>
+            </label>
+            <label class="serp-pro-field">City <span class="serp-pro-tag">Pro</span>
+                <input type="text" disabled aria-disabled="true" placeholder="e.g. Dublin" title="City-level results are a Growth Lab Pro feature">
+            </label>
+        </div>
+        <p class="serp-pro-note"><i class="fa-solid fa-lock"></i> Device &amp; city-level results are a <a href="/tools-pricing">Growth Lab Pro</a> feature. Free lookups return country-level Google rankings.</p>
         <button class="pill-button" type="submit">Look Up <i class="fa-solid fa-magnifying-glass"></i></button>
     </form>
 

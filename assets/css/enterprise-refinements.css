@@ -1449,6 +1449,31 @@
 .serp-filter-empty { margin: 0; padding: 18px 16px; text-align: center; color: #8ea3c2; font-size: 13.5px; }
 .serp-optional { font-weight: 500; font-size: 11px; text-transform: none; letter-spacing: normal; color: #7f97b8; }
 
+/* whatsmyserp-style control row: functional country + locked Pro device/city */
+.cyber-form.glass-tool .serp-locked-row { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cyber-form.glass-tool label.serp-pro-field { display: block; position: relative; }
+.serp-pro-tag {
+    display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 99px;
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+    color: #04140a; background: linear-gradient(135deg, #ffd76a, #ffb020); vertical-align: middle;
+}
+.serp-pro-field select,
+.serp-pro-field input { margin-top: 8px; }
+.serp-pro-field select[disabled],
+.serp-pro-field input[disabled] {
+    opacity: .55; cursor: not-allowed; background: rgba(6, 12, 24, .4) !important;
+    border-style: dashed !important;
+}
+.cyber-form.glass-tool .serp-pro-note {
+    grid-column: 1 / -1; margin: -4px 0 0; font-size: 12.5px; color: #8ea3c2;
+    display: flex; align-items: center; gap: 7px;
+}
+.serp-pro-note i { color: #ffb020; }
+.serp-pro-note a { color: #7fd4ff; }
+@media (max-width: 560px) {
+    .cyber-form.glass-tool .serp-locked-row { grid-template-columns: 1fr; }
+}
+
 .serp-board-list { list-style: none; margin: 0; padding: 6px; display: grid; gap: 2px; }
 .serp-board-list .serp-row[hidden] { display: none; }
 .serp-row {
