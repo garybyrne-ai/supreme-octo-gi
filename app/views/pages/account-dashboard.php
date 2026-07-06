@@ -183,6 +183,24 @@ $toolMenu = [
                     </div>
                 <?php endif; ?>
 
+                <?php $siteCrawl = $siteCrawl ?? null; $crawlLatest = is_array($siteCrawl['latest'] ?? null) ? $siteCrawl['latest'] : null; ?>
+                <div class="site-crawl-status">
+                    <div class="site-crawl-status-main">
+                        <span class="site-crawl-ico"><i class="fa-solid fa-spider"></i></span>
+                        <div>
+                            <strong>Weekly full-site crawl <?= $isPro ? '<em class="site-crawl-on">On</em>' : '<em class="site-crawl-off">Pro</em>' ?></strong>
+                            <?php if ($crawlLatest): ?>
+                                <small>Last crawl scored <b><?= e((string) $crawlLatest['site_score']) ?>/100</b> across <?= e((string) $crawlLatest['crawled']) ?> pages, <?= e(date('j M', strtotime((string) $crawlLatest['crawled_at']) ?: time())) ?> · <?= e((string) $crawlLatest['issue_count']) ?> issue types.</small>
+                            <?php elseif ($isPro): ?>
+                                <small>We crawl your whole site every week and email you if the score drops. First crawl runs within a week — or run it now.</small>
+                            <?php else: ?>
+                                <small>Growth Lab Pro crawls every page of your site weekly and alerts you to regressions.</small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <a class="pill-button ghost" href="/site-crawler"><i class="fa-solid fa-spider"></i> <?= $crawlLatest ? 'View / re-run' : 'Crawl now' ?></a>
+                </div>
+
                 <p class="site-analytics-note">
                     <i class="fa-solid fa-circle-info"></i>
                     On-page SEO &amp; performance are measured live and free.

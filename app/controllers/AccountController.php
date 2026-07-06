@@ -49,6 +49,7 @@ final class AccountController extends Controller
             'siteUrl' => (string) ($member['website'] ?? ''),
             'siteHistory' => (string) ($member['website'] ?? '') !== '' ? $siteMetrics->history($email) : [],
             'siteLatest' => $siteMetrics->latest($email),
+            'siteCrawl' => (new \App\Models\SiteCrawlRepository())->get($email),
             'scanUsage' => (new ToolUsageRepository())->status($email),
             'savedReports' => $isPro ? (new SavedReportRepository())->forEmail($email) : [],
             'monitors' => $isPro ? (new MonitorRepository())->forEmail($email) : [],

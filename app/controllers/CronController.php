@@ -185,4 +185,115 @@ final class CronController extends Controller
         header('Cache-Control: no-store');
         echo json_encode(['ok' => true] + $summary);
     }
+
+    /**
+     * Runs the scheduled weekly full-site crawl for every Pro member with a
+     * saved website that is due, records the result and emails them when the
+     * site-wide score regresses or new critical issues appear. Point a daily
+     * scheduled task at /cron/run-site-crawls?key=YOUR_KEY (it self-throttles
+     * to once a week per site).
+     */
+    public function runSiteCrawls(): void
+    {
+        $configured = (string) ($this->config['monitor_cron_key'] ?? '');
+        $provided = (string) ($_GET['key'] ?? $_SERVER['HTTP_X_CRON_KEY'] ?? '');
+
+        if ($configured === '' || !hash_equals($configured, $provided)) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+
+        $tools = new ToolsController($this->config);
+        $crawls = new \App\Models\SiteCrawlRepository();
+        $mailer = new LeadMailer();
+        $now = time();
+        $crawled = 0;
+        $alerts = 0;
+
+        foreach ((new \App\Models\MemberRepository())->recent(500) as $member) {
+            $website = (string) ($member['website'] ?? '');
+            $email = (string) ($member['email'] ?? '');
+            if ($website === '' || $email === '' || !\App\Models\MemberRepository::isPro($member)) {
+                continue;
+            }
+            if (!$crawls->isDue($email, $now)) {
+                continue;
+            }
+            if ($crawled >= 15) {
+                break; // crawling is heavy — bound work per run
+            }
+
+            $previous = $crawls->get($email)['latest'] ?? null;
+
+            try {
+                $result = $tools->crawlSite($website, \App\Services\SiteCrawler::HARD_CAP);
+            } catch (\Throwable) {
+                $crawls->deferRetry($email, $now);
+                continue;
+            }
+            if (($result['crawled'] ?? 0) === 0) {
+                $crawls->deferRetry($email, $now);
+                continue;
+            }
+
+            $crawls->record($email, $result, $now);
+            $crawled++;
+
+            $changes = $this->siteCrawlRegressions($previous, $result);
+            if ($changes !== []) {
+                try {
+                    $mailer->sendSiteCrawlAlert($email, (string) ($member['name'] ?? ''), $result, $changes);
+                    $alerts++;
+                } catch (\Throwable) {
+                    // Email is best-effort; the crawl record is already saved.
+                }
+            }
+        }
+
+        $summary = ['crawled' => $crawled, 'alerts' => $alerts];
+        (new AuditLogger())->log('cron.site_crawls.run', $summary);
+
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        echo json_encode(['ok' => true] + $summary);
+    }
+
+    /**
+     * Compare a previous crawl summary to a fresh crawl and describe any
+     * regressions worth emailing about. Returns [] when nothing regressed (or
+     * there is no prior crawl to compare against — the first run is a baseline).
+     *
+     * @param array<string, mixed>|null $previous
+     * @param array<string, mixed>      $current
+     * @return array<int, string>
+     */
+    private function siteCrawlRegressions(?array $previous, array $current): array
+    {
+        if (!is_array($previous)) {
+            return [];
+        }
+
+        $changes = [];
+        $prevScore = (int) ($previous['site_score'] ?? 0);
+        $curScore = (int) ($current['site_score'] ?? 0);
+        if ($prevScore - $curScore >= 5) {
+            $changes[] = 'Site-wide score dropped from ' . $prevScore . ' to ' . $curScore . ' out of 100.';
+        }
+
+        // New critical (weight 3) issue types that were not present last week.
+        $prevLabels = [];
+        foreach (is_array($previous['issues'] ?? null) ? $previous['issues'] : [] as $i) {
+            $prevLabels[(string) ($i['label'] ?? '')] = true;
+        }
+        foreach (is_array($current['issues'] ?? null) ? $current['issues'] : [] as $i) {
+            $label = (string) ($i['label'] ?? '');
+            if ($label !== '' && (int) ($i['weight'] ?? 1) >= 3 && !isset($prevLabels[$label])) {
+                $changes[] = 'New critical issue: “' . $label . '” now affects ' . (int) ($i['pages'] ?? 0) . ' page(s).';
+            }
+        }
+
+        return array_slice($changes, 0, 8);
+    }
 }

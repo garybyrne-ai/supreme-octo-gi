@@ -89,6 +89,39 @@ final class LeadMailer
     }
 
     /**
+     * Alerts a Pro member when their scheduled weekly full-site crawl finds a
+     * regression (a lower site-wide score or new issue types).
+     *
+     * @param array<string, mixed> $crawl   Latest crawl summary.
+     * @param array<int, string>   $changes Human-readable regression lines.
+     */
+    public function sendSiteCrawlAlert(string $email, string $name, array $crawl, array $changes): bool
+    {
+        $host = (string) ($crawl['host'] ?? 'your site');
+        $score = (int) ($crawl['site_score'] ?? 0);
+        $pages = (int) ($crawl['crawled'] ?? 0);
+        $subject = 'Site SEO alert: ' . $host . ' dropped to ' . $score . '/100';
+
+        $items = '';
+        foreach ($changes as $change) {
+            $items .= '<li style="margin-bottom:6px;line-height:1.6;color:#ffd7e2">' . e($change) . '</li>';
+        }
+
+        $html = '<!doctype html><html><body style="margin:0;background:#02040c;color:#f3f8ff;font-family:Arial,sans-serif">'
+            . '<div style="max-width:680px;margin:0 auto;padding:30px;background:linear-gradient(145deg,#071020,#030712);border:1px solid #ff4d81">'
+            . '<p style="color:#ff4d81;text-transform:uppercase;font-size:12px;letter-spacing:.08em">Weekly Full-Site Crawl</p>'
+            . '<h1 style="font-size:26px;line-height:1.15;color:#fff">' . e($host) . ' now scores ' . e((string) $score) . '/100</h1>'
+            . '<p>Hi ' . e($name !== '' ? $name : 'there') . ',</p>'
+            . '<p style="line-height:1.7;color:#c8d8ef">Your automatic weekly crawl of <strong style="color:#fff">' . e((string) $pages) . '</strong> pages found changes worth a look:</p>'
+            . '<ul style="padding-left:18px">' . $items . '</ul>'
+            . '<p><a href="https://www.crestwebmedia.com/site-crawler" style="display:inline-block;padding:14px 22px;background:linear-gradient(135deg,#00b7ff,#7b3eff);color:#fff;text-decoration:none;font-weight:bold;border-radius:999px">Re-run the crawl</a></p>'
+            . '<p style="line-height:1.7;color:#9db4d0;font-size:13px">You receive this because weekly full-site crawls are on for your Growth Lab Pro account. Manage it from your dashboard.</p>'
+            . '</div></body></html>';
+
+        return $this->send($email, $subject, $html);
+    }
+
+    /**
      * Recovery nudge for a checkout that was started but never paid.
      *
      * @param array<string, mixed> $order

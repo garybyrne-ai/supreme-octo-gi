@@ -79,6 +79,7 @@ $router->get('/cron/run-monitors', [CronController::class, 'runMonitors']);
 $router->get('/cron/run-abandoned-orders', [CronController::class, 'runAbandonedOrders']);
 $router->get('/cron/run-rank-tracker', [CronController::class, 'runRankTracker']);
 $router->get('/cron/run-site-metrics', [CronController::class, 'runSiteMetrics']);
+$router->get('/cron/run-site-crawls', [CronController::class, 'runSiteCrawls']);
 $router->get('/tech-news-feed', [PageController::class, 'techNews']);
 $router->get('/ethical-hacking-toolkit', [ToolsController::class, 'ethicalHackingToolkit']);
 $router->post('/ethical-hacking-toolkit/exposure', [ToolsController::class, 'analyzeExposure']);

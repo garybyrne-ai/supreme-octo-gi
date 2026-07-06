@@ -86,12 +86,7 @@ final class ToolsController extends Controller
         $isPro = MemberRepository::isPro($_SESSION['member'] ?? null);
         $maxPages = $isPro ? 30 : 8;
 
-        $crawl = (new \App\Services\SiteCrawler())->crawl(
-            $start,
-            $maxPages,
-            fn (string $url): string => $this->fetchHtml($url),
-            fn (string $url, string $html): array => $this->seoAudit($url, $html, '')
-        );
+        $crawl = $this->crawlSite($start, $maxPages);
 
         (new AuditLogger())->log('tools.site_crawled', ['host' => $crawl['host'] ?? '', 'pages' => $crawl['crawled'] ?? 0]);
 
@@ -106,6 +101,23 @@ final class ToolsController extends Controller
             'crawlIsPro' => $isPro,
             'crawlMaxPages' => $maxPages,
         ]);
+    }
+
+    /**
+     * Crawl a site and audit every internal page, returning the rolled-up
+     * summary. Shared by the web tool and the scheduled weekly-crawl cron.
+     * The URL must already be a validated public URL.
+     *
+     * @return array<string, mixed>
+     */
+    public function crawlSite(string $startUrl, int $maxPages): array
+    {
+        return (new \App\Services\SiteCrawler())->crawl(
+            $startUrl,
+            $maxPages,
+            fn (string $url): string => $this->fetchHtml($url),
+            fn (string $url, string $html): array => $this->seoAudit($url, $html, '')
+        );
     }
 
     public function serpChecker(array $data = []): void
