@@ -1588,6 +1588,15 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                         <input name="serp_api_key" type="password" autocomplete="off" placeholder="<?= !empty($paypalSettings['serp_api_key']) ? 'Saved - leave blank to keep' : 'Paste your ZenSERP apikey' ?>">
                     </label>
                     <p class="cyber-note">When set, the SERP Checker returns live Google rankings via ZenSERP instead of the free fallback. Stored privately on the server (never in code). You can also set the <code>ZENSERP_API_KEY</code> environment variable.</p>
+                    <div class="form-grid two">
+                        <label>Google Custom Search API Key <span class="cyber-hint">free — Google rankings</span>
+                            <input name="google_cse_key" type="password" autocomplete="off" placeholder="<?= !empty($paypalSettings['google_cse_key']) ? 'Saved - leave blank to keep' : 'Paste your Google API key' ?>">
+                        </label>
+                        <label>Search Engine ID (cx)
+                            <input name="google_cse_cx" type="text" autocomplete="off" value="<?= e($paypalSettings['google_cse_cx'] ?? '') ?>" placeholder="e.g. 012345678:abcdefg">
+                        </label>
+                    </div>
+                    <p class="cyber-note">Free alternative to ZenSERP: the SERP Checker will show <strong>real Google rankings</strong> from Google's own index (free tier: 100 checks/day). Create a key at <code>console.cloud.google.com</code> (enable "Custom Search API") and a search engine set to "Search the entire web" at <code>programmablesearchengine.google.com</code>, then paste both. Used only when no ZenSERP key is set. Env vars <code>GOOGLE_CSE_KEY</code> / <code>GOOGLE_CSE_CX</code> also work.</p>
                     <label>Google PageSpeed API Key <span class="cyber-hint">optional</span>
                         <input name="google_psi_key" type="password" autocomplete="off" placeholder="<?= !empty($paypalSettings['google_psi_key']) ? 'Saved - leave blank to keep' : 'Optional — raises PageSpeed quota' ?>">
                     </label>

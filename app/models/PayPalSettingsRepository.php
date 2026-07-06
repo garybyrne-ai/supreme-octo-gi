@@ -25,6 +25,8 @@ final class PayPalSettingsRepository
             'stripe_success_url' => '',
             'stripe_cancel_url' => '',
             'serp_api_key' => '',
+            'google_cse_key' => '',
+            'google_cse_cx' => '',
             'google_psi_key' => '',
         ];
 
@@ -57,11 +59,21 @@ final class PayPalSettingsRepository
             'stripe_success_url' => trim((string) ($input['stripe_success_url'] ?? '')),
             'stripe_cancel_url' => trim((string) ($input['stripe_cancel_url'] ?? '')),
             'serp_api_key' => trim((string) ($input['serp_api_key'] ?? '')),
+            'google_cse_key' => trim((string) ($input['google_cse_key'] ?? '')),
+            'google_cse_cx' => trim((string) ($input['google_cse_cx'] ?? '')),
             'google_psi_key' => trim((string) ($input['google_psi_key'] ?? '')),
         ];
 
         if ($settings['serp_api_key'] === '') {
             $settings['serp_api_key'] = (string) ($current['serp_api_key'] ?? '');
+        }
+
+        if ($settings['google_cse_key'] === '') {
+            $settings['google_cse_key'] = (string) ($current['google_cse_key'] ?? '');
+        }
+
+        if ($settings['google_cse_cx'] === '') {
+            $settings['google_cse_cx'] = (string) ($current['google_cse_cx'] ?? '');
         }
 
         if ($settings['google_psi_key'] === '') {

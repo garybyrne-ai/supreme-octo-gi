@@ -2445,9 +2445,12 @@ final class ToolsController extends Controller
 
     private function serpReport(string $keyword, string $targetHost, string $location): array
     {
-        // Prefer a real SERP API (ZenSERP) when a key is configured; otherwise
-        // fall back to the free live scrape below.
-        $apiResult = $this->zenserpReport($keyword, $targetHost, $location);
+        // Prefer real Google rankings when a provider is configured: ZenSERP
+        // gives location-accurate live SERP positions; the Google Custom Search
+        // JSON API (free 100 queries/day) queries Google's own index. Fall back
+        // to the free live scrape below when neither is set up.
+        $apiResult = $this->zenserpReport($keyword, $targetHost, $location)
+            ?? $this->googleCseReport($keyword, $targetHost, $location);
         if ($apiResult !== null) {
             return $apiResult;
         }
@@ -2591,6 +2594,109 @@ final class ToolsController extends Controller
         } catch (\Throwable) {
             return '';
         }
+    }
+
+    /**
+     * Live Google rankings via the Google Custom Search JSON API. Requires a
+     * Google API key plus a Programmable Search Engine ID (cx) configured to
+     * search the entire web. Free tier is 100 queries/day. Reads credentials
+     * from GOOGLE_CSE_KEY / GOOGLE_CSE_CX env vars or the admin integration
+     * settings — never stored in the codebase.
+     *
+     * @return array<string, mixed>|null Null when unconfigured or the call fails.
+     */
+    private function googleCseReport(string $keyword, string $targetHost, string $location): ?array
+    {
+        [$key, $cx] = $this->googleCseCredentials();
+        if ($key === '' || $cx === '') {
+            return null;
+        }
+
+        $query = trim($keyword . ' ' . $location);
+        $params = [
+            'key' => $key,
+            'cx' => $cx,
+            'q' => $query,
+            'num' => '10',
+            'hl' => 'en',
+            'gl' => 'ie',
+            'safe' => 'off',
+        ];
+        $endpoint = 'https://www.googleapis.com/customsearch/v1?' . http_build_query($params);
+
+        $context = stream_context_create([
+            'http' => ['method' => 'GET', 'timeout' => 8, 'ignore_errors' => true, 'header' => "Accept: application/json\r\n"],
+            'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
+        ]);
+        $raw = @file_get_contents($endpoint, false, $context, 0, 600000);
+        if (!is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        $data = json_decode($raw, true);
+        $items = $data['items'] ?? null;
+        if (!is_array($items)) {
+            return null;
+        }
+
+        $results = [];
+        foreach ($items as $item) {
+            $href = (string) ($item['link'] ?? '');
+            $host = strtolower((string) parse_url($href, PHP_URL_HOST));
+            if ($href === '' || $host === '') {
+                continue;
+            }
+            $results[] = [
+                'title' => trim((string) ($item['title'] ?? '')),
+                'url' => $href,
+                'host' => preg_replace('/^www\./', '', $host),
+            ];
+            if (count($results) >= 10) {
+                break;
+            }
+        }
+
+        $normalizedTarget = preg_replace('/^www\./', '', strtolower($targetHost));
+        $position = null;
+        foreach ($results as $index => $result) {
+            if ($result['host'] === $normalizedTarget || str_ends_with((string) $result['host'], '.' . $normalizedTarget)) {
+                $position = $index + 1;
+                break;
+            }
+        }
+
+        return [
+            'engine' => 'Google rankings',
+            'query' => trim($keyword . ' — ' . ($location !== '' ? $location : 'Ireland')),
+            'position' => $position,
+            'results' => $results,
+            'opportunities' => $this->serpOpportunities($position, $results),
+        ];
+    }
+
+    /**
+     * @return array{0: string, 1: string} [api_key, search_engine_id]
+     */
+    private function googleCseCredentials(): array
+    {
+        $key = (string) (getenv('GOOGLE_CSE_KEY') ?: '');
+        $cx = (string) (getenv('GOOGLE_CSE_CX') ?: '');
+
+        if ($key === '' || $cx === '') {
+            try {
+                $settings = (new PayPalSettingsRepository())->current();
+                if ($key === '') {
+                    $key = (string) ($settings['google_cse_key'] ?? '');
+                }
+                if ($cx === '') {
+                    $cx = (string) ($settings['google_cse_cx'] ?? '');
+                }
+            } catch (\Throwable) {
+                // fall through with whatever we have
+            }
+        }
+
+        return [trim($key), trim($cx)];
     }
 
     private function serpOpportunities(?int $position, array $results): array
