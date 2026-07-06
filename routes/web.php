@@ -66,6 +66,8 @@ $router->post('/account/reports/save', [AccountController::class, 'saveReport'])
 $router->post('/account/reports/delete', [AccountController::class, 'deleteReport']);
 $router->post('/account/monitors/add', [AccountController::class, 'addMonitor']);
 $router->post('/account/monitors/delete', [AccountController::class, 'deleteMonitor']);
+$router->post('/account/site', [AccountController::class, 'saveSite']);
+$router->post('/account/site/analyze', [AccountController::class, 'runSiteAnalysis']);
 $router->post('/account/logout', [AccountController::class, 'logout']);
 $router->get('/account/search-console', [SearchConsoleController::class, 'dashboard']);
 $router->get('/account/search-console/connect', [SearchConsoleController::class, 'connect']);
@@ -76,6 +78,7 @@ $router->post('/account/search-console/disconnect', [SearchConsoleController::cl
 $router->get('/cron/run-monitors', [CronController::class, 'runMonitors']);
 $router->get('/cron/run-abandoned-orders', [CronController::class, 'runAbandonedOrders']);
 $router->get('/cron/run-rank-tracker', [CronController::class, 'runRankTracker']);
+$router->get('/cron/run-site-metrics', [CronController::class, 'runSiteMetrics']);
 $router->get('/tech-news-feed', [PageController::class, 'techNews']);
 $router->get('/ethical-hacking-toolkit', [ToolsController::class, 'ethicalHackingToolkit']);
 $router->post('/ethical-hacking-toolkit/exposure', [ToolsController::class, 'analyzeExposure']);

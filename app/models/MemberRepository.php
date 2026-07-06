@@ -272,6 +272,34 @@ final class MemberRepository
         return $this->find($id) ?? [];
     }
 
+    /**
+     * Store (or clear) the member's own website — the site the dashboard runs
+     * on-page analytics against. Matches by email. Returns the normalized value.
+     */
+    public function setWebsiteByEmail(string $email, string $website): string
+    {
+        $email = strtolower(trim($email));
+        $website = trim($website);
+        if ($website !== '' && !preg_match('#^https?://#i', $website)) {
+            $website = 'https://' . $website;
+        }
+        if ($website !== '' && !filter_var($website, FILTER_VALIDATE_URL)) {
+            throw new \RuntimeException('Enter a valid website address, for example https://example.com.');
+        }
+
+        $members = $this->all();
+        foreach ($members as &$member) {
+            if (($member['email'] ?? '') === $email) {
+                $member['website'] = $website;
+                $this->save($members);
+                return $website;
+            }
+        }
+        unset($member);
+
+        throw new \RuntimeException('Member not found.');
+    }
+
     public function deleteMember(string $id): void
     {
         $members = array_values(array_filter(

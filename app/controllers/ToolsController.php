@@ -2466,6 +2466,46 @@ final class ToolsController extends Controller
         return $this->serpReport($keyword, $host, $location)['position'] ?? null;
     }
 
+    /**
+     * Run a compact SEO health snapshot of a member's own site for the
+     * dashboard trend graph: the on-page SEO score (always available) plus the
+     * PageSpeed performance score (when reachable). Returns null values for any
+     * signal that could not be measured, never throwing, so a scheduled capture
+     * degrades gracefully.
+     *
+     * @return array{seo: int|null, psi: int|null, words: int|null, url: string}
+     */
+    public function siteSnapshot(string $url): array
+    {
+        $normalized = $this->normalizePublicUrl($url);
+        $snapshot = ['seo' => null, 'psi' => null, 'words' => null, 'url' => $normalized ?? $url];
+        if ($normalized === null) {
+            return $snapshot;
+        }
+
+        try {
+            $html = $this->fetchHtml($normalized);
+            if ($html !== '') {
+                $seo = $this->seoAudit($normalized, $html, '');
+                $snapshot['seo'] = isset($seo['score']) ? (int) $seo['score'] : null;
+                $snapshot['words'] = isset($seo['words']) ? (int) $seo['words'] : null;
+            }
+        } catch (\Throwable) {
+            // Leave SEO metrics null on any fetch/parse failure.
+        }
+
+        try {
+            $psi = $this->pagespeedReport($normalized);
+            if (is_array($psi) && isset($psi['score'])) {
+                $snapshot['psi'] = (int) $psi['score'];
+            }
+        } catch (\Throwable) {
+            // PageSpeed is best-effort; leave null when the API is unavailable.
+        }
+
+        return $snapshot;
+    }
+
     private function serpReport(string $keyword, string $targetHost, string $location, string $gl = 'ie'): array
     {
         // Prefer real Google rankings when a provider is configured: ZenSERP

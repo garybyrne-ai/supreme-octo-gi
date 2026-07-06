@@ -37,11 +37,18 @@ final class AccountController extends Controller
         $isPro = MemberRepository::isPro($member);
         $email = (string) $member['email'];
 
+        // Keep the member's saved website in sync so the analytics card persists.
+        $member['website'] = (string) ($fresh['website'] ?? ($member['website'] ?? ''));
+        $siteMetrics = new \App\Models\SiteMetricsRepository();
+
         $this->render('pages/account-dashboard', [
             'title' => 'Your Dashboard | Crest Web Media Growth Lab',
             'metaDescription' => 'Your Growth Lab dashboard: tools, membership status, free scans and saved reports.',
             'member' => $member,
             'isPro' => $isPro,
+            'siteUrl' => (string) ($member['website'] ?? ''),
+            'siteHistory' => (string) ($member['website'] ?? '') !== '' ? $siteMetrics->history($email) : [],
+            'siteLatest' => $siteMetrics->latest($email),
             'scanUsage' => (new ToolUsageRepository())->status($email),
             'savedReports' => $isPro ? (new SavedReportRepository())->forEmail($email) : [],
             'monitors' => $isPro ? (new MonitorRepository())->forEmail($email) : [],
@@ -102,6 +109,83 @@ final class AccountController extends Controller
             (new MonitorRepository())->delete((string) $member['email'], (string) ($_POST['id'] ?? ''));
             $_SESSION['account_notice'] = 'Monitor removed.';
         }
+
+        $this->redirect('/account/dashboard');
+    }
+
+    /**
+     * Save (or update) the member's own website — the site the dashboard's
+     * Website Analytics graph tracks.
+     */
+    public function saveSite(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['account_error'] = 'Session token expired. Please try again.';
+            $this->redirect('/account/dashboard');
+        }
+
+        try {
+            $website = (new MemberRepository())->setWebsiteByEmail((string) $member['email'], (string) ($_POST['website'] ?? ''));
+            $_SESSION['member']['website'] = $website;
+            $_SESSION['account_notice'] = $website === ''
+                ? 'Website cleared.'
+                : 'Website saved. Run an analysis to start your live SEO graph.';
+            (new AuditLogger())->log('account.site.saved', ['email' => $member['email'], 'website' => $website]);
+        } catch (\Throwable $exception) {
+            $_SESSION['account_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/account/dashboard');
+    }
+
+    /**
+     * Run an on-page SEO + PageSpeed snapshot of the member's website now and
+     * record it, extending the dashboard trend graph. Rate-limited; the daily
+     * automatic capture is handled by the monitor cron for Pro members.
+     */
+    public function runSiteAnalysis(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['account_error'] = 'Session token expired. Please try again.';
+            $this->redirect('/account/dashboard');
+        }
+
+        $website = (string) ($member['website'] ?? '');
+        if ($website === '') {
+            $fresh = (new MemberRepository())->findByEmail((string) $member['email']);
+            $website = (string) ($fresh['website'] ?? '');
+        }
+        if ($website === '') {
+            $_SESSION['account_error'] = 'Add your website first, then run an analysis.';
+            $this->redirect('/account/dashboard');
+        }
+
+        if (Security::hitRateLimit('site_analysis', 6, 900)) {
+            $_SESSION['account_error'] = 'Please wait a few minutes before running another analysis.';
+            $this->redirect('/account/dashboard');
+        }
+
+        $snapshot = (new ToolsController($this->config))->siteSnapshot($website);
+        if ($snapshot['seo'] === null && $snapshot['psi'] === null) {
+            $_SESSION['account_error'] = 'Could not read that site just now. Check the address and try again.';
+            $this->redirect('/account/dashboard');
+        }
+
+        (new \App\Models\SiteMetricsRepository())->record((string) $member['email'], $snapshot);
+        $_SESSION['account_notice'] = 'Analysis complete — your website graph is updated.';
+        (new AuditLogger())->log('account.site.analyzed', ['email' => $member['email'], 'seo' => $snapshot['seo'], 'psi' => $snapshot['psi']]);
 
         $this->redirect('/account/dashboard');
     }

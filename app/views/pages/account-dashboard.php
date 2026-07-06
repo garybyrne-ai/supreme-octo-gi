@@ -104,6 +104,102 @@ $toolMenu = [
             </article>
         </section>
 
+        <?php
+            $siteUrl = $siteUrl ?? '';
+            $siteHistory = $siteHistory ?? [];
+            $siteLatest = $siteLatest ?? null;
+            $siteHost = $siteUrl !== '' ? (parse_url($siteUrl, PHP_URL_HOST) ?: $siteUrl) : '';
+
+            // Build a two-line SVG trend chart (SEO score + performance) from the
+            // stored daily snapshots. Values are 0–100, so the Y axis is fixed.
+            $buildLine = static function (array $history, string $key): string {
+                $pts = [];
+                $n = count($history);
+                if ($n < 1) {
+                    return '';
+                }
+                $w = 620; $h = 200; $padL = 34; $padR = 12; $padT = 12; $padB = 24;
+                $plotW = $w - $padL - $padR; $plotH = $h - $padT - $padB;
+                foreach ($history as $i => $point) {
+                    $v = $point[$key] ?? null;
+                    if ($v === null) { continue; }
+                    $x = $n > 1 ? $padL + ($i / ($n - 1)) * $plotW : $padL + $plotW / 2;
+                    $y = $padT + (1 - max(0, min(100, (int) $v)) / 100) * $plotH;
+                    $pts[] = round($x, 1) . ',' . round($y, 1);
+                }
+                return implode(' ', $pts);
+            };
+            $seoLine = $buildLine($siteHistory, 'seo');
+            $psiLine = $buildLine($siteHistory, 'psi');
+        ?>
+        <section class="cyber-card account-panel site-analytics">
+            <div class="section-heading compact left">
+                <span class="status-chip"><span></span> Website Analytics</span>
+                <h2><?= $siteHost !== '' ? 'SEO health for ' . e($siteHost) : 'Track your website' ?></h2>
+            </div>
+
+            <?php if ($siteUrl === ''): ?>
+                <p>Add your website and we'll run on-page SEO and Core Web Vitals on it, then chart the trend over time — free.</p>
+                <form method="post" action="/account/site" class="site-analytics-form">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="url" name="website" placeholder="https://yourbusiness.ie" required>
+                    <button class="pill-button" type="submit">Save website <i class="fa-solid fa-arrow-right"></i></button>
+                </form>
+            <?php else: ?>
+                <div class="site-analytics-head">
+                    <div class="site-metric-tiles">
+                        <div class="site-metric"><span>On-page SEO</span><b class="<?= ($siteLatest['seo'] ?? null) === null ? '' : 'grade-num' ?>"><?= $siteLatest && $siteLatest['seo'] !== null ? e((string) $siteLatest['seo']) : '—' ?></b><small>/ 100</small></div>
+                        <div class="site-metric"><span>Performance</span><b><?= $siteLatest && $siteLatest['psi'] !== null ? e((string) $siteLatest['psi']) : '—' ?></b><small>/ 100</small></div>
+                        <div class="site-metric"><span>Words on page</span><b><?= $siteLatest && $siteLatest['words'] !== null ? e((string) $siteLatest['words']) : '—' ?></b><small>indexed</small></div>
+                        <div class="site-metric"><span>Snapshots</span><b><?= e((string) count($siteHistory)) ?></b><small>tracked</small></div>
+                    </div>
+                    <form method="post" action="/account/site/analyze" class="site-analytics-run">
+                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                        <button class="pill-button" type="submit"><i class="fa-solid fa-rotate"></i> Run analysis now</button>
+                    </form>
+                </div>
+
+                <?php if (count($siteHistory) < 1): ?>
+                    <p class="site-analytics-empty">No data yet. Press <strong>Run analysis now</strong> to take your first snapshot — each run adds a point to the graph below.</p>
+                <?php else: ?>
+                    <div class="site-chart">
+                        <div class="site-chart-legend">
+                            <span class="is-seo"><i></i> On-page SEO</span>
+                            <span class="is-psi"><i></i> Performance</span>
+                        </div>
+                        <svg viewBox="0 0 620 200" class="site-chart-svg" role="img" aria-label="Website SEO trend">
+                            <?php foreach ([0, 25, 50, 75, 100] as $g): $gy = 12 + (1 - $g / 100) * 164; ?>
+                                <line x1="34" x2="608" y1="<?= round($gy, 1) ?>" y2="<?= round($gy, 1) ?>" class="site-chart-grid"></line>
+                                <text x="28" y="<?= round($gy + 3, 1) ?>" class="site-chart-axis"><?= $g ?></text>
+                            <?php endforeach; ?>
+                            <?php if ($psiLine !== ''): ?><polyline points="<?= e($psiLine) ?>" class="site-chart-line psi" fill="none"></polyline><?php endif; ?>
+                            <?php if ($seoLine !== ''): ?><polyline points="<?= e($seoLine) ?>" class="site-chart-line seo" fill="none"></polyline><?php endif; ?>
+                        </svg>
+                        <div class="site-chart-dates">
+                            <span><?= e(date('j M', strtotime((string) ($siteHistory[0]['date'] ?? 'now')) ?: time())) ?></span>
+                            <span><?= e(date('j M', strtotime((string) ($siteHistory[count($siteHistory) - 1]['date'] ?? 'now')) ?: time())) ?></span>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <p class="site-analytics-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    On-page SEO &amp; performance are measured live and free.
+                    <?php if ($isPro): ?>
+                        <a href="/account/search-console">Connect Search Console</a> to add real clicks, impressions &amp; average position, and <a href="/serp-checker">track keyword rankings</a> over time.
+                    <?php else: ?>
+                        <a href="/tools-pricing">Upgrade to Pro</a> for automatic daily tracking, Search Console traffic and keyword rank history.
+                    <?php endif; ?>
+                    <a href="/account/site" onclick="this.closest('.site-analytics').querySelector('.site-analytics-editrow')?.toggleAttribute('hidden');return false;">Change website</a>
+                </p>
+                <form method="post" action="/account/site" class="site-analytics-form site-analytics-editrow" hidden>
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="url" name="website" value="<?= e($siteUrl) ?>" placeholder="https://yourbusiness.ie" required>
+                    <button class="pill-button ghost" type="submit">Update</button>
+                </form>
+            <?php endif; ?>
+        </section>
+
         <section class="cyber-card account-panel">
             <div class="section-heading compact left">
                 <span class="status-chip"><span></span> Saved reports</span>

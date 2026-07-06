@@ -124,4 +124,65 @@ final class CronController extends Controller
         header('Cache-Control: no-store');
         echo json_encode(['ok' => true] + $summary);
     }
+
+    /**
+     * Takes a daily on-page SEO + PageSpeed snapshot of every Pro member's saved
+     * website, feeding the dashboard's live Website Analytics graph. Point a
+     * daily scheduled task at /cron/run-site-metrics?key=YOUR_KEY.
+     */
+    public function runSiteMetrics(): void
+    {
+        $configured = (string) ($this->config['monitor_cron_key'] ?? '');
+        $provided = (string) ($_GET['key'] ?? $_SERVER['HTTP_X_CRON_KEY'] ?? '');
+
+        if ($configured === '' || !hash_equals($configured, $provided)) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+
+        $tools = new ToolsController($this->config);
+        $metrics = new \App\Models\SiteMetricsRepository();
+        $today = gmdate('Y-m-d');
+        $captured = 0;
+        $eligible = 0;
+
+        // Auto-tracking is a Pro benefit; free members refresh manually.
+        foreach ((new \App\Models\MemberRepository())->recent(500) as $member) {
+            $website = (string) ($member['website'] ?? '');
+            $email = (string) ($member['email'] ?? '');
+            if ($website === '' || $email === '' || !\App\Models\MemberRepository::isPro($member)) {
+                continue;
+            }
+            $eligible++;
+
+            // Skip sites already captured today so the run stays cheap.
+            $latest = $metrics->latest($email);
+            if (is_array($latest) && ($latest['date'] ?? '') === $today) {
+                continue;
+            }
+            if ($captured >= 40) {
+                break; // bound outbound work per run
+            }
+
+            try {
+                $snapshot = $tools->siteSnapshot($website);
+            } catch (\Throwable) {
+                continue;
+            }
+            if ($snapshot['seo'] === null && $snapshot['psi'] === null) {
+                continue;
+            }
+            $metrics->record($email, $snapshot);
+            $captured++;
+        }
+
+        $summary = ['eligible' => $eligible, 'captured' => $captured];
+        (new AuditLogger())->log('cron.site_metrics.run', $summary);
+
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        echo json_encode(['ok' => true] + $summary);
+    }
 }
