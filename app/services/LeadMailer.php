@@ -10,11 +10,11 @@ final class LeadMailer
 {
     private ?string $lastError = null;
 
-    public function sendCode(string $email, string $name, string $code): void
+    public function sendCode(string $email, string $name, string $code): bool
     {
         $subject = 'Your Crest Web Media tool access code';
         $html = '<p>Hi ' . e($name) . ',</p><p>Your tool access code is <strong style="font-size:22px">' . e($code) . '</strong>.</p><p>This code expires in 15 minutes.</p>';
-        $this->send($email, $subject, $html);
+        return $this->send($email, $subject, $html);
     }
 
     public function sendOffer(string $email, string $name, array $offer): void
@@ -55,6 +55,172 @@ final class LeadMailer
             . '</div></body></html>';
 
         return $this->send($to, $subject, $html);
+    }
+
+    /**
+     * @param array<string, mixed> $monitor
+     * @param array<string, mixed> $report
+     * @param array<int, string> $changes
+     */
+    public function sendMonitorAlert(string $email, string $name, array $monitor, array $report, array $changes): bool
+    {
+        $tool = (string) ($report['tool'] ?? 'Monitor');
+        $target = (string) ($monitor['target'] ?? '');
+        $score = (int) ($report['score'] ?? 0);
+        $subject = 'Alert: ' . $tool . ' changed for ' . $target;
+
+        $items = '';
+        foreach ($changes as $change) {
+            $items .= '<li style="margin-bottom:6px;line-height:1.6;color:#ffd7e2">' . e($change) . '</li>';
+        }
+
+        $html = '<!doctype html><html><body style="margin:0;background:#02040c;color:#f3f8ff;font-family:Arial,sans-serif">'
+            . '<div style="max-width:680px;margin:0 auto;padding:30px;background:linear-gradient(145deg,#071020,#030712);border:1px solid #ff4d81">'
+            . '<p style="color:#ff4d81;text-transform:uppercase;font-size:12px;letter-spacing:.08em">Growth Lab Monitoring Alert</p>'
+            . '<h1 style="font-size:26px;line-height:1.15;color:#fff">' . e($tool) . ' changed for ' . e($target) . '</h1>'
+            . '<p>Hi ' . e($name !== '' ? $name : 'there') . ',</p>'
+            . '<p style="line-height:1.7;color:#c8d8ef">Your scheduled monitor found the following on its latest run (current score <strong style="color:#fff">' . e((string) $score) . '/100</strong>):</p>'
+            . '<ul style="padding-left:18px">' . $items . '</ul>'
+            . '<p><a href="https://www.crestwebmedia.com/account/dashboard" style="display:inline-block;padding:14px 22px;background:linear-gradient(135deg,#00b7ff,#7b3eff);color:#fff;text-decoration:none;font-weight:bold;border-radius:999px">Open your dashboard</a></p>'
+            . '<p style="line-height:1.7;color:#9db4d0;font-size:13px">You are receiving this because you set up monitoring on Crest Web Media Growth Lab. Manage or remove monitors from your dashboard.</p>'
+            . '</div></body></html>';
+
+        return $this->send($email, $subject, $html);
+    }
+
+    /**
+     * Alerts a Pro member when their scheduled weekly full-site crawl finds a
+     * regression (a lower site-wide score or new issue types).
+     *
+     * @param array<string, mixed> $crawl   Latest crawl summary.
+     * @param array<int, string>   $changes Human-readable regression lines.
+     */
+    public function sendSiteCrawlAlert(string $email, string $name, array $crawl, array $changes): bool
+    {
+        $host = (string) ($crawl['host'] ?? 'your site');
+        $score = (int) ($crawl['site_score'] ?? 0);
+        $pages = (int) ($crawl['crawled'] ?? 0);
+        $subject = 'Site SEO alert: ' . $host . ' dropped to ' . $score . '/100';
+
+        $items = '';
+        foreach ($changes as $change) {
+            $items .= '<li style="margin-bottom:6px;line-height:1.6;color:#ffd7e2">' . e($change) . '</li>';
+        }
+
+        $html = '<!doctype html><html><body style="margin:0;background:#02040c;color:#f3f8ff;font-family:Arial,sans-serif">'
+            . '<div style="max-width:680px;margin:0 auto;padding:30px;background:linear-gradient(145deg,#071020,#030712);border:1px solid #ff4d81">'
+            . '<p style="color:#ff4d81;text-transform:uppercase;font-size:12px;letter-spacing:.08em">Weekly Full-Site Crawl</p>'
+            . '<h1 style="font-size:26px;line-height:1.15;color:#fff">' . e($host) . ' now scores ' . e((string) $score) . '/100</h1>'
+            . '<p>Hi ' . e($name !== '' ? $name : 'there') . ',</p>'
+            . '<p style="line-height:1.7;color:#c8d8ef">Your automatic weekly crawl of <strong style="color:#fff">' . e((string) $pages) . '</strong> pages found changes worth a look:</p>'
+            . '<ul style="padding-left:18px">' . $items . '</ul>'
+            . '<p><a href="https://www.crestwebmedia.com/site-crawler" style="display:inline-block;padding:14px 22px;background:linear-gradient(135deg,#00b7ff,#7b3eff);color:#fff;text-decoration:none;font-weight:bold;border-radius:999px">Re-run the crawl</a></p>'
+            . '<p style="line-height:1.7;color:#9db4d0;font-size:13px">You receive this because weekly full-site crawls are on for your Growth Lab Pro account. Manage it from your dashboard.</p>'
+            . '</div></body></html>';
+
+        return $this->send($email, $subject, $html);
+    }
+
+    /**
+     * Recovery nudge for a checkout that was started but never paid.
+     *
+     * @param array<string, mixed> $order
+     */
+    public function sendAbandonedOrderRecovery(string $email, array $order, string $productUrl, string $coupon = ''): bool
+    {
+        $name = trim((string) ($order['name'] ?? ''));
+        $title = (string) ($order['title'] ?? 'your order');
+        $price = (string) ($order['currency'] ?? 'EUR') . ' ' . (string) ($order['price'] ?? '');
+        $subject = 'Still thinking it over? ' . $title . ' is waiting for you';
+
+        $couponBlock = '';
+        if ($coupon !== '') {
+            $couponBlock = '<div style="padding:16px 18px;border:1px dashed #23ff9a;background:rgba(35,255,154,.08);margin:20px 0;border-radius:12px">'
+                . '<p style="margin:0;color:#c8d8ef">Use code <strong style="color:#23ff9a;font-size:18px;letter-spacing:.05em">' . e($coupon) . '</strong> at checkout to save on this order.</p>'
+                . '</div>';
+        }
+
+        $html = '<!doctype html><html><body style="margin:0;background:#02040c;color:#f3f8ff;font-family:Arial,sans-serif">'
+            . '<div style="max-width:640px;margin:0 auto;padding:30px;background:linear-gradient(145deg,#071020,#030712);border:1px solid #00b7ff">'
+            . '<p style="color:#00e5ff;text-transform:uppercase;font-size:12px;letter-spacing:.08em">Crest Web Media Code Shop</p>'
+            . '<h1 style="font-size:28px;line-height:1.15;color:#fff">You left ' . e($title) . ' behind.</h1>'
+            . '<p>Hi ' . e($name !== '' ? $name : 'there') . ',</p>'
+            . '<p style="line-height:1.7;color:#c8d8ef">It looks like your checkout for <strong style="color:#fff">' . e($title) . '</strong> (' . e($price) . ') didn\'t finish. No problem — your order is still saved and you can pick up right where you left off.</p>'
+            . $couponBlock
+            . '<p><a href="' . e($productUrl) . '" style="display:inline-block;padding:15px 24px;background:linear-gradient(135deg,#00b7ff,#7b3eff);color:#fff;text-decoration:none;font-weight:bold;border-radius:999px">Complete My Order</a></p>'
+            . '<p style="line-height:1.7;color:#9db4d0;font-size:13px">Questions before you buy? Just reply to this email or open a support ticket on the site and we\'ll help. If you\'ve already completed your purchase, please ignore this message.</p>'
+            . '</div></body></html>';
+
+        return $this->send($email, $subject, $html);
+    }
+
+    /**
+     * Emails a copy of an on-page SEO / security audit result to the person who
+     * ran it, so they keep the report and can act on the fixes later.
+     *
+     * @param array<string, mixed> $report
+     */
+    public function sendAuditReport(string $email, string $name, array $report, string $reportUrl = ''): bool
+    {
+        $tool = (string) ($report['tool'] ?? 'Website');
+        $target = (string) ($report['target'] ?? '');
+        $score = (int) ($report['score'] ?? 0);
+        $subject = 'Your ' . $tool . ' audit report' . ($target !== '' ? ' for ' . $target : '');
+
+        $facts = '';
+        foreach (($report['facts'] ?? []) as $fact) {
+            if (!is_array($fact)) {
+                continue;
+            }
+            $facts .= '<tr>'
+                . '<td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08);color:#9db4d0">' . e((string) ($fact['label'] ?? '')) . '</td>'
+                . '<td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;text-align:right">' . e((string) ($fact['value'] ?? '')) . '</td>'
+                . '</tr>';
+        }
+
+        // Show the highest-priority fixes first (failing checks).
+        $fixes = '';
+        $shown = 0;
+        foreach (($report['checks'] ?? []) as $check) {
+            if (!is_array($check) || !empty($check['present'])) {
+                continue; // present === true means the check passed
+            }
+            $label = (string) ($check['label'] ?? ($check['title'] ?? ''));
+            $detail = (string) ($check['advice'] ?? ($check['value'] ?? ''));
+            if ($label === '') {
+                continue;
+            }
+            $fixes .= '<li style="margin-bottom:8px;line-height:1.55;color:#ffd7e2"><strong style="color:#fff">' . e($label) . '</strong>'
+                . ($detail !== '' ? ' — ' . e($detail) : '') . '</li>';
+            if (++$shown >= 6) {
+                break;
+            }
+        }
+        if ($fixes === '') {
+            $fixes = '<li style="line-height:1.55;color:#23ff9a">Nice — no critical issues flagged on this scan.</li>';
+        }
+
+        $scoreColor = $score >= 80 ? '#23ff9a' : ($score >= 55 ? '#ffc66f' : '#ff6b8b');
+
+        $html = '<!doctype html><html><body style="margin:0;background:#02040c;color:#f3f8ff;font-family:Arial,sans-serif">'
+            . '<div style="max-width:680px;margin:0 auto;padding:30px;background:linear-gradient(145deg,#071020,#030712);border:1px solid #00b7ff">'
+            . '<p style="color:#00e5ff;text-transform:uppercase;font-size:12px;letter-spacing:.08em">Crest Web Media Growth Lab</p>'
+            . '<h1 style="font-size:26px;line-height:1.15;color:#fff">' . e($tool) . ' audit' . ($target !== '' ? ' for ' . e($target) : '') . '</h1>'
+            . '<p>Hi ' . e($name !== '' ? $name : 'there') . ',</p>'
+            . '<p style="line-height:1.7;color:#c8d8ef">Here\'s the report you just ran. Your overall score is '
+            . '<strong style="color:' . $scoreColor . ';font-size:20px">' . e((string) $score) . '/100</strong>.</p>'
+            . ($facts !== '' ? '<table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:14px">' . $facts . '</table>' : '')
+            . '<h2 style="font-size:17px;color:#fff;margin:22px 0 8px">Top fixes to prioritise</h2>'
+            . '<ul style="padding-left:18px;margin:0">' . $fixes . '</ul>';
+
+        if ($reportUrl !== '') {
+            $html .= '<p style="margin-top:24px"><a href="' . e($reportUrl) . '" style="display:inline-block;padding:14px 22px;background:linear-gradient(135deg,#00b7ff,#7b3eff);color:#fff;text-decoration:none;font-weight:bold;border-radius:999px">Open the full report</a></p>';
+        }
+
+        $html .= '<p style="line-height:1.7;color:#9db4d0;font-size:13px;margin-top:24px">Want these audits to run automatically and keep a white-label PDF history? Growth Lab Pro adds unlimited scans, saved reports and continuous monitoring. Reply to this email if you\'d like a hand implementing the fixes.</p>'
+            . '</div></body></html>';
+
+        return $this->send($email, $subject, $html);
     }
 
     private function send(string $to, string $subject, string $html): bool

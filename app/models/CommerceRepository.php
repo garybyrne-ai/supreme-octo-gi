@@ -9,21 +9,58 @@ use PDO;
 
 final class CommerceRepository
 {
+    /**
+     * Marketplace categories, ThemeForest / CodeCanyon style. Key => label.
+     */
+    public const CATALOG_CATEGORIES = [
+        'wordpress_theme' => 'WordPress Theme',
+        'wordpress_plugin' => 'WordPress Plugin',
+        'html_template' => 'HTML / Site Template',
+        'elementor_template' => 'Elementor Template',
+        'squarespace' => 'Squarespace Module',
+        'wix' => 'Wix Module',
+        'shopify' => 'Shopify Theme / App',
+        'php_script' => 'PHP Script / App',
+        'snippet' => 'Code Snippet / UI Kit',
+        'service' => 'Design-to-Code Service',
+        'file' => 'Other Downloadable',
+    ];
+
+    /**
+     * Productised done-for-you services (Figma/PSD to WordPress, etc.).
+     */
+    public const SERVICE_DELIVERIES = [
+        '' => 'Not a service',
+        'figma_to_wordpress' => 'Figma to WordPress',
+        'psd_to_wordpress' => 'PSD to WordPress',
+        'figma_to_html' => 'Figma to HTML',
+        'psd_to_html' => 'PSD to HTML',
+        'xd_to_wordpress' => 'Adobe XD to WordPress',
+        'sketch_to_wordpress' => 'Sketch to WordPress',
+    ];
+
     public function upsertProduct(array $product): int
     {
         $stmt = $this->pdo()->prepare(
             'INSERT INTO products
-                (slug, title, summary, description, product_type, platform, platform_tags, price_cents, currency, private_file_path, snippet_html, snippet_css, snippet_js, checkout_url, paypal_checkout_url, stripe_price_id, is_active, sort_order)
+                (slug, title, summary, description, product_type, catalog_category, service_delivery, subtitle, demo_url, thumbnail_url, is_featured, platform, platform_tags, price_cents, extended_price_cents, currency, private_file_path, snippet_html, snippet_css, snippet_js, checkout_url, paypal_checkout_url, stripe_price_id, is_active, sort_order)
              VALUES
-                (:slug, :title, :summary, :description, :product_type, :platform, :platform_tags, :price_cents, :currency, :private_file_path, :snippet_html, :snippet_css, :snippet_js, :checkout_url, :paypal_checkout_url, :stripe_price_id, :is_active, :sort_order)
+                (:slug, :title, :summary, :description, :product_type, :catalog_category, :service_delivery, :subtitle, :demo_url, :thumbnail_url, :is_featured, :platform, :platform_tags, :price_cents, :extended_price_cents, :currency, :private_file_path, :snippet_html, :snippet_css, :snippet_js, :checkout_url, :paypal_checkout_url, :stripe_price_id, :is_active, :sort_order)
              ON DUPLICATE KEY UPDATE
                 title = VALUES(title),
                 summary = VALUES(summary),
                 description = VALUES(description),
                 product_type = VALUES(product_type),
+                catalog_category = VALUES(catalog_category),
+                service_delivery = VALUES(service_delivery),
+                subtitle = VALUES(subtitle),
+                demo_url = VALUES(demo_url),
+                thumbnail_url = VALUES(thumbnail_url),
+                is_featured = VALUES(is_featured),
                 platform = VALUES(platform),
                 platform_tags = VALUES(platform_tags),
                 price_cents = VALUES(price_cents),
+                extended_price_cents = VALUES(extended_price_cents),
                 currency = VALUES(currency),
                 private_file_path = VALUES(private_file_path),
                 snippet_html = VALUES(snippet_html),
@@ -36,15 +73,24 @@ final class CommerceRepository
                 sort_order = VALUES(sort_order)'
         );
 
+        $extended = $product['extended_price_cents'] ?? null;
+
         $stmt->execute([
             'slug' => $product['slug'],
             'title' => $product['title'],
             'summary' => $product['summary'],
             'description' => $product['description'] ?? null,
             'product_type' => $product['product_type'] ?? 'file',
+            'catalog_category' => $product['catalog_category'] ?? 'file',
+            'service_delivery' => ($product['service_delivery'] ?? '') !== '' ? $product['service_delivery'] : null,
+            'subtitle' => $product['subtitle'] ?? null,
+            'demo_url' => $product['demo_url'] ?? null,
+            'thumbnail_url' => $product['thumbnail_url'] ?? null,
+            'is_featured' => !empty($product['is_featured']) ? 1 : 0,
             'platform' => $product['platform'] ?? 'Core PHP',
             'platform_tags' => json_encode(array_values($product['platform_tags'] ?? []), JSON_THROW_ON_ERROR),
             'price_cents' => (int) ($product['price_cents'] ?? 0),
+            'extended_price_cents' => ($extended === null || $extended === '') ? null : (int) $extended,
             'currency' => strtoupper((string) ($product['currency'] ?? 'USD')),
             'private_file_path' => $product['private_file_path'] ?? null,
             'snippet_html' => $product['snippet_html'] ?? null,
@@ -66,6 +112,37 @@ final class CommerceRepository
         $lookup->execute(['slug' => $product['slug']]);
 
         return (int) $lookup->fetchColumn();
+    }
+
+    /**
+     * Admin listing of every product (active and paused) for the catalog manager.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function allProducts(): array
+    {
+        try {
+            $rows = $this->pdo()->query(
+                'SELECT id, slug, title, catalog_category, service_delivery, price_cents, extended_price_cents, currency, is_active, is_featured, sort_order
+                 FROM products ORDER BY sort_order ASC, id DESC'
+            )->fetchAll() ?: [];
+
+            return array_map(static function (array $row): array {
+                $row['id'] = (int) $row['id'];
+                $row['price_cents'] = (int) ($row['price_cents'] ?? 0);
+                $row['is_active'] = (int) ($row['is_active'] ?? 0);
+                $row['is_featured'] = (int) ($row['is_featured'] ?? 0);
+
+                return $row;
+            }, $rows);
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    public function categoryLabel(string $key): string
+    {
+        return self::CATALOG_CATEGORIES[$key] ?? 'Digital Product';
     }
 
     public function saveProductAsset(array $asset): int

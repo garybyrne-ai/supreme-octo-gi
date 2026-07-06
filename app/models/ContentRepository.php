@@ -8,24 +8,9 @@ final class ContentRepository
 {
     public function contact(): array
     {
-        return [
-            'email' => 'ank.kalia@gmail.com',
-            'phone' => '+918894867819',
-            'phone_display' => '+91 88948 67819',
-            'whatsapp_url' => 'https://wa.me/918894867819',
-            'locations' => [
-                [
-                    'name' => 'Dublin, Ireland',
-                    'type' => 'Global client coordination',
-                    'timezone' => 'GMT / IST project overlap',
-                ],
-                [
-                    'name' => 'Shimla, Himachal Pradesh, India',
-                    'type' => 'Remote development studio',
-                    'timezone' => 'Asia/Kolkata',
-                ],
-            ],
-        ];
+        // Backend-editable via the Site Content admin module. Defaults mirror the
+        // original hard-coded values so nothing changes until an admin saves.
+        return (new SiteContentRepository())->contact();
     }
 
     public function stats(): array
@@ -241,8 +226,12 @@ final class ContentRepository
             ],
         ];
 
+        // Admin-editable: once services are managed in the backend, use those;
+        // otherwise fall back to the defaults defined above.
+        $services = (new ServiceContentRepository())->resolve($services);
+
         return array_map(function (array $service): array {
-            $service['visuals'] = $this->serviceVisuals($service['slug']);
+            $service['visuals'] = $this->serviceVisuals((string) ($service['slug'] ?? ''));
             return $service;
         }, $services);
     }
@@ -1163,7 +1152,7 @@ final class ContentRepository
 
     public function portfolio(): array
     {
-        return [
+        $defaults = [
             ['title' => 'Embryomic', 'category' => 'Healthcare Technology Website', 'summary' => 'Advanced reproductive health technology website focused on clinical trust, modern presentation and clear specialist pathways.', 'accent' => 'blue', 'url' => 'https://www.embryomic.com/', 'image' => 'embryomic.webp'],
             ['title' => 'Dyno Locks', 'category' => 'Locksmith Website', 'summary' => '24-hour locksmith and security service website built around fast enquiries, trust and local search.', 'accent' => 'cyan', 'url' => 'https://www.dynolocks.ie', 'image' => 'dynolocks.webp'],
             ['title' => 'VanQuotes.ie', 'category' => 'Lead Generation Platform', 'summary' => 'Ireland removals quote platform connecting customers with man-with-a-van and moving companies.', 'accent' => 'green', 'url' => 'https://www.vanquotes.ie', 'image' => 'vanquotes.webp'],
@@ -1184,26 +1173,32 @@ final class ContentRepository
             ['title' => 'Task Management App', 'category' => 'Mobile Application', 'summary' => 'Operational task interface with quick capture, status clarity, team accountability and app-style mobile navigation.', 'accent' => 'cyan'],
             ['title' => 'RDT Care Document Validator', 'category' => 'Lab Verification Portal', 'summary' => 'Document validation portal for labs, built around quick verification, clear trust signals and secure access to report checks.', 'accent' => 'green', 'url' => 'https://verify.rdtcare.com/#', 'image' => 'rdtcare-validator.webp'],
         ];
+
+        return (new PortfolioRepository())->resolve($defaults);
     }
 
     public function testimonials(): array
     {
-        return [
+        $defaults = [
             ['name' => 'Liam OConnor', 'role' => 'CEO, TravelGrid', 'country' => 'Global', 'flag' => 'GL', 'quote' => 'Crest Web Media took the time to understand what our customers needed before touching the design. The finished website feels faster, clearer and far more professional, and the enquiry quality improved because the pages finally explain our offer properly.'],
             ['name' => 'Sarah Johnson', 'role' => 'Founder, FinTechOS', 'country' => 'Global', 'flag' => 'GL', 'quote' => 'The web application build was handled with real care. We had dashboards, user flows, forms and admin details that needed to work cleanly, and everything was explained without technical drama. It felt like working with someone who cared about the product, not just the code.'],
             ['name' => 'Thomas Muller', 'role' => 'Owner, StyleHaus', 'country' => 'Global', 'flag' => 'GL', 'quote' => 'Our store used to look fine but it did not guide people to buy. Crest Web Media tightened the layout, improved performance and made the product pages easier to trust. The site now feels more premium, and customers tell us checkout is much smoother.'],
             ['name' => 'David Byrne', 'role' => 'CTO, TechSecure', 'country' => 'Global', 'flag' => 'GL', 'quote' => 'The security review was practical and easy to act on. Instead of just sending a scary report, they showed us what mattered, what could wait and how to fix the risks properly. It gave our team confidence before pushing the next release live.'],
         ];
+
+        return (new TestimonialRepository())->resolve($defaults);
     }
 
     public function faqs(): array
     {
-        return [
+        $defaults = [
             ['question' => 'Where does Crest Web Media work?', 'answer' => 'Crest Web Media works remotely with clients in Ireland, the UK, the USA and Europe, with written-first communication through email, WhatsApp and support tickets.'],
             ['question' => 'Can you build the website, CMS and backend together?', 'answer' => 'Yes. Projects can include public pages, custom PHP/MySQL admin workflows, media management, blog publishing, SEO controls, payment settings and secure user access.'],
             ['question' => 'Do you handle security and performance?', 'answer' => 'Yes. Forms, uploads, sessions, headers, cache behaviour, Core Web Vitals and hosting constraints are reviewed during delivery, with deeper penetration testing available as a dedicated service.'],
             ['question' => 'Can AI be integrated into an existing website?', 'answer' => 'Yes. AI can support lead qualification, CRM updates, support triage, content operations, summaries and internal workflows without forcing a full rebuild.'],
         ];
+
+        return (new FaqContentRepository())->resolve($defaults);
     }
 
     public function pricing(): array
@@ -1217,7 +1212,1089 @@ final class ContentRepository
 
     public function posts(): array
     {
-        return array_map(fn (array $topic, int $index): array => $this->buildLongFormPost($topic, $index), $this->blogTopics(), array_keys($this->blogTopics()));
+        $generated = array_map(fn (array $topic, int $index): array => $this->buildLongFormPost($topic, $index), $this->blogTopics(), array_keys($this->blogTopics()));
+        $defaults = array_merge($this->customPosts(), $generated);
+
+        // Admin-editable: use the managed post set once an admin edits the blog,
+        // otherwise the hand-written + generated defaults above.
+        return (new BlogPostRepository())->resolve($defaults);
+    }
+
+    /**
+     * Hand-written, original flagship articles (higher quality than the
+     * templated generator) on broadly-searched, on-brand topics. Original
+     * depth like this is what actually earns AdSense approval and rankings.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function customPosts(): array
+    {
+        return array_map([$this, 'assembleCustomPost'], [
+            [
+                'slug' => 'how-to-tell-if-your-website-has-been-hacked',
+                'title' => 'How to Tell If Your Website Has Been Hacked (and Exactly What to Do Next)',
+                'meta' => 'Clear signs your website has been hacked — spam pages, redirects, browser warnings — plus a step-by-step recovery and hardening plan for small businesses.',
+                'category' => 'Security',
+                'focus' => 'website hacked',
+                'secondary' => ['website hacked signs', 'malware removal', 'website security', 'hacked WordPress'],
+                'excerpt' => 'The warning signs of a hacked website, how to confirm it, and a calm, step-by-step plan to clean up and stop it happening again.',
+                'date' => '2025-11-12',
+                'views' => 5400,
+                'sections' => [
+                    ['heading' => 'The quick answer', 'paragraphs' => [
+                        'If your website suddenly redirects visitors to another site, shows pages you never created, triggers a red "deceptive site" warning in the browser, or Google emails you about "hacked content", it has very likely been compromised. The good news is that most small-business hacks follow a handful of common patterns, and most are recoverable if you act quickly and methodically.',
+                        'This guide walks through the tell-tale signs, how to confirm a hack without making it worse, the exact order to clean things up, and the handful of changes that stop it happening again. Work top to bottom and do not skip the backup step.',
+                    ]],
+                    ['heading' => 'Ten common signs of a hacked website', 'paragraphs' => [
+                        'Watch for: unexpected redirects to gambling, pharma or adult sites; new pages or posts you did not publish; spammy Japanese or pharmaceutical keywords appearing in Google results for your domain; a browser or antivirus warning when visiting your own site; a sudden traffic spike or collapse in analytics; admin accounts you do not recognise; your host suspending the account for malware; outbound spam emails from your domain; modified core files with recent timestamps; and pop-ups or injected ads that you never added.',
+                        'A single sign can have an innocent explanation, but two or more together is a strong indicator. The fastest external check is to search Google for "site:yourdomain.com" and look for pages and titles that are not yours.',
+                    ]],
+                    ['heading' => 'Confirm it safely', 'paragraphs' => [
+                        'Before changing anything, confirm from a position of safety. Check Google Search Console for a "Security issues" report — it often names the affected URLs and the type of problem. Run your site through a reputable free scanner (for example a URL/malware checker) and review your server access and error logs for suspicious POST requests or file changes.',
+                        'On our own free tools you can quickly check response headers, TLS and DNS/email records, which frequently reveal tampering such as a missing security header set, an unexpected redirect, or a changed mail record used to send spam. Note what you find before you clean up, so you can verify the fix afterwards.',
+                    ]],
+                    ['heading' => 'Clean up in the right order', 'paragraphs' => [
+                        'First, take a full backup of the current (infected) site and database — you may need it as evidence and for comparison. Second, put the site into maintenance mode if you can, and change every password: hosting, CMS admin, database, FTP/SFTP and email. Third, update the CMS core, themes and plugins to the latest versions, and delete any theme or plugin you are not actively using — abandoned plugins are the most common entry point.',
+                        'Fourth, remove unknown admin users and any files with suspicious recent timestamps, comparing against a known-good backup or a fresh copy of your CMS. Fifth, re-scan until clean. Finally, in Search Console, request a review once the malware is gone so Google removes the warning. If you are not confident doing this, restore a known-clean backup from before the infection and then apply the hardening steps below.',
+                    ]],
+                    ['heading' => 'Stop it happening again', 'paragraphs' => [
+                        'Most reinfections happen because the original weakness was never closed. Enable automatic updates for security patches, remove unused plugins and themes, and enforce strong, unique passwords with two-factor authentication on every admin account. Add the core security headers (HSTS, CSP, X-Content-Type-Options), keep TLS certificates from expiring, and set SPF and DMARC records so attackers cannot spoof your domain.',
+                        'Finally, put monitoring in place so you find out first, not your customers. A weekly automated check of your headers, certificate and DNS records will email you the moment something regresses — which is exactly the window in which a small problem is still a cheap one.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Search "site:yourdomain.com" on Google for pages that are not yours',
+                    'Check Search Console → Security issues',
+                    'Back up the current site and database before touching anything',
+                    'Change every password and enable two-factor authentication',
+                    'Update CMS core, themes and plugins; delete unused ones',
+                    'Remove unknown admin users and recently modified files',
+                    'Re-scan until clean, then request a review in Search Console',
+                    'Add security headers, fix SPF/DMARC, and enable weekly monitoring',
+                ],
+                'faq' => [
+                    ['question' => 'Can a hacked website be fixed, or do I need to rebuild?', 'answer' => 'Most hacked sites can be cleaned without a rebuild if you act quickly, restore from a clean backup or remove the malicious files, and close the original weakness. A rebuild is only necessary when there is no clean backup and the infection is deeply embedded.'],
+                    ['question' => 'How did my website get hacked?', 'answer' => 'The most common causes are outdated plugins or themes, weak or reused passwords, and no two-factor authentication. Shared-hosting cross-contamination and leaked FTP credentials are also frequent.'],
+                    ['question' => 'How long does Google take to remove the "hacked" warning?', 'answer' => 'After you clean the site and request a review in Search Console, the warning is usually removed within a few days, sometimes faster.'],
+                    ['question' => 'How do I stop it from happening again?', 'answer' => 'Keep everything updated, use strong unique passwords with 2FA, remove unused plugins, add security headers, and set up monitoring that alerts you to changes.'],
+                ],
+            ],
+            [
+                'slug' => 'how-to-speed-up-a-slow-wordpress-website',
+                'title' => 'How to Speed Up a Slow WordPress Website in 2026: A Practical Checklist',
+                'meta' => 'A practical, jargon-free checklist to speed up a slow WordPress site: hosting, caching, images, plugins, fonts and Core Web Vitals — with the biggest wins first.',
+                'category' => 'Performance',
+                'focus' => 'speed up WordPress',
+                'secondary' => ['slow WordPress site', 'WordPress performance', 'Core Web Vitals WordPress', 'website speed'],
+                'excerpt' => 'The changes that actually make WordPress fast — in priority order — from hosting and caching to images, plugins and fonts.',
+                'date' => '2025-09-03',
+                'views' => 6100,
+                'sections' => [
+                    ['heading' => 'Measure before you change anything', 'paragraphs' => [
+                        'You cannot improve what you do not measure. Start with a real page-speed test (PageSpeed Insights or a similar lab tool) on your homepage and one key landing page, on mobile. Note the largest contentful paint (LCP), interaction to next paint (INP) and cumulative layout shift (CLS). These three numbers — Core Web Vitals — are what Google actually cares about, and they point you at the real bottleneck instead of guesswork.',
+                        'Test again after each change. If a "speed plugin" does not move the numbers, it is not helping. Chasing a perfect score is a waste of time; getting LCP under about 2.5 seconds on mobile is the goal that affects rankings and conversions.',
+                    ]],
+                    ['heading' => 'Fix hosting and caching first — the biggest wins', 'paragraphs' => [
+                        'The single most common cause of a slow WordPress site is cheap, overcrowded shared hosting. If your server takes more than about 400–600ms just to respond (time to first byte), no amount of front-end tweaking will save you. Moving to quality hosting with server-level caching (LiteSpeed or NGINX with a proper cache) is frequently the biggest improvement available.',
+                        'On top of that, add a caching layer. A good caching plugin turns your dynamic PHP pages into static HTML so repeat visitors are served instantly, and a CDN puts your files physically closer to visitors. These two changes alone often halve load times before you touch a single image.',
+                    ]],
+                    ['heading' => 'Images are usually the heaviest thing on the page', 'paragraphs' => [
+                        'After hosting, images are the next biggest lever. Serve modern formats (WebP or AVIF), compress them, and size them correctly — a 3000px photo displayed at 600px is wasting most of its bytes. Enable lazy-loading so off-screen images do not block the first paint, and always set explicit width and height so the layout does not jump (which fixes CLS).',
+                        'Be especially careful with the largest image above the fold — often your hero. That image is usually your LCP element, so it should be optimised, correctly sized and, ideally, preloaded so the browser fetches it early.',
+                    ]],
+                    ['heading' => 'Audit plugins, fonts and scripts', 'paragraphs' => [
+                        'Every active plugin can add CSS, JavaScript and database queries to every page. Deactivate and delete anything you do not need, and be suspicious of page builders and sliders, which are common performance offenders. Where possible, replace three single-purpose plugins with one well-built solution.',
+                        'Fonts and third-party scripts are the quiet killers. Load only the font weights you actually use and self-host them so there is no extra connection to Google Fonts. Delay or remove non-essential third-party scripts (chat widgets, heatmaps, extra analytics) — each one is a separate network request that can block interactivity and hurt your INP score.',
+                    ]],
+                    ['heading' => 'Lock it in and keep it fast', 'paragraphs' => [
+                        'Once you are fast, keep it that way. Re-test after every plugin install or theme change, keep images disciplined, and schedule a periodic performance check so regressions are caught early. Speed is not a one-time project; it is a habit — but the wins above are durable and, done in order, they turn a sluggish WordPress site into one that feels instant.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Measure Core Web Vitals (LCP, INP, CLS) on mobile before starting',
+                    'Move to quality hosting with server-level caching if TTFB is high',
+                    'Add a caching plugin and a CDN',
+                    'Convert images to WebP/AVIF, compress and size them correctly',
+                    'Set width/height on images and lazy-load off-screen ones',
+                    'Preload the above-the-fold hero (LCP) image',
+                    'Delete unused plugins; replace heavy page builders where possible',
+                    'Self-host fonts and delay non-essential third-party scripts',
+                    'Re-test after every change and monitor for regressions',
+                ],
+                'faq' => [
+                    ['question' => 'Why is my WordPress site so slow?', 'answer' => 'The usual causes, in order of impact, are cheap/overcrowded hosting, no caching, unoptimised images, too many plugins, and heavy fonts or third-party scripts. Measure first so you fix the real bottleneck.'],
+                    ['question' => 'Do speed plugins actually work?', 'answer' => 'A good caching plugin helps a lot. Many "all-in-one optimiser" plugins help modestly and some make things worse — always test Core Web Vitals before and after to confirm real improvement.'],
+                    ['question' => 'What is a good page speed for mobile?', 'answer' => 'Aim for a largest contentful paint (LCP) under about 2.5 seconds on mobile. That is the threshold Google treats as "good" and it is where conversions noticeably improve.'],
+                    ['question' => 'Is hosting really that important for speed?', 'answer' => 'Yes. If the server is slow to respond, front-end tweaks cannot compensate. Quality hosting with server-level caching is often the single biggest improvement you can make.'],
+                ],
+            ],
+            [
+                'slug' => 'claude-ai-tips-and-hidden-features',
+                'title' => '17 Claude AI Tips and Hidden Features That Make It Far More Useful',
+                'meta' => 'Practical Claude AI tips most people miss: Projects, custom instructions, file and image analysis, prompt structure and workflows that get sharper answers and save hours.',
+                'category' => 'AI Tools',
+                'focus' => 'Claude AI tips',
+                'secondary' => ['Claude AI features', 'how to use Claude', 'Claude prompts', 'AI productivity'],
+                'excerpt' => 'The Claude habits and features that separate casual users from power users — Projects, custom instructions, file analysis and prompt structure that get consistently better answers.',
+                'date' => '2026-02-18',
+                'views' => 4200,
+                'sections' => [
+                    ['heading' => 'Give Claude a role and context before you ask', 'paragraphs' => [
+                        'The single biggest upgrade to your results is not a hidden setting — it is the first two sentences of your message. Tell Claude who it should act as, who the answer is for, and what "good" looks like. "You are a senior accountant explaining to a non-financial founder; keep it plain and use euros" produces a completely different (and far more useful) answer than "explain tax".',
+                        'Context beats cleverness. Paste the real email, the actual error message, the specific product page or the exact numbers you are working with. Claude cannot read your mind or your screen, so the more concrete detail you give it up front, the less back-and-forth you need and the more accurate the result.',
+                    ]],
+                    ['heading' => 'Use Projects to stop repeating yourself', 'paragraphs' => [
+                        'If you keep pasting the same background — your brand voice, your product list, your policies — into every chat, you are wasting time. A Project lets you store that context once so every conversation inside it already knows your world. It is ideal for ongoing work like a content calendar, a codebase, or client support where the same facts matter every day.',
+                        'Add your key reference documents to the Project knowledge, write a short set of instructions describing tone and rules, and from then on you can start a new chat and get on-brand, on-context answers immediately. Think of it as onboarding an assistant once instead of re-explaining the job every morning.',
+                    ]],
+                    ['heading' => 'Set custom instructions for tone and format', 'paragraphs' => [
+                        'Most people accept Claude\'s default style and then fight it in every reply. Instead, state your preferences once: "Default to British English, short paragraphs, no emoji, and always give me the answer first and the reasoning after." Claude will hold that style across the conversation, which saves you correcting the same things repeatedly.',
+                        'Formatting instructions are especially powerful. Ask for a table, a numbered checklist, a one-paragraph summary followed by detail, or "just the code, no explanation". Being explicit about the shape of the output is often the difference between something you can paste straight into your work and something you have to reformat by hand.',
+                    ]],
+                    ['heading' => 'Feed it files, images and data — not just questions', 'paragraphs' => [
+                        'Claude is far more useful when it can see the source material. Upload a PDF contract and ask for the risky clauses in plain English; drop in a spreadsheet and ask which products lost margin last quarter; paste a screenshot of an error and ask what is failing and how to fix it. Working from your real artefacts removes guesswork and hallucination risk.',
+                        'For images, it can read charts, describe designs, extract text, and critique a layout. For long documents, ask for a structured summary first, then drill into the sections that matter. The pattern that works: give it the material, tell it the outcome you want, and let it do the reading for you.',
+                    ]],
+                    ['heading' => 'Iterate deliberately instead of starting over', 'paragraphs' => [
+                        'When an answer is close but not right, do not rewrite your whole prompt — steer it. "Good, but make it half the length and more direct" or "keep the structure, change the examples to Irish businesses" gets you there faster because Claude keeps everything that was working. Treat it as a conversation, not a slot machine.',
+                        'A few more habits that compound: ask it to critique its own answer ("what is weak about this, and fix it"); ask for two or three options when you are exploring; and when accuracy is critical, ask it to show its reasoning and flag anything it is unsure about. Used this way, Claude stops being a novelty and becomes a genuinely reliable part of your working day.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Open with a role, an audience and what "good" looks like',
+                    'Paste real context — the actual email, error, numbers or page',
+                    'Use a Project to store recurring background and instructions',
+                    'Set custom instructions for language, tone and output format',
+                    'Upload files, spreadsheets and screenshots instead of describing them',
+                    'Ask for the answer first, reasoning after',
+                    'Iterate with small steering edits rather than starting over',
+                    'Ask Claude to critique and improve its own draft when it matters',
+                ],
+                'faq' => [
+                    ['question' => 'What is the best way to get better answers from Claude?', 'answer' => 'Give context and a role up front, paste the real source material, and be explicit about the format you want. Most poor answers come from vague prompts, not model limits.'],
+                    ['question' => 'What are Claude Projects for?', 'answer' => 'Projects store reusable context — documents, instructions and brand rules — so every conversation inside them already knows your world, instead of you re-pasting background each time.'],
+                    ['question' => 'Can Claude read files and images?', 'answer' => 'Yes. You can upload PDFs, spreadsheets, documents and images and ask Claude to summarise, extract, analyse or critique them, which is far more accurate than describing the content in words.'],
+                    ['question' => 'Is Claude free to use?', 'answer' => 'Claude has a free tier with usage limits and paid plans that add higher limits and more capability. For heavy daily use a paid plan is usually worth it; for occasional questions the free tier is plenty.'],
+                ],
+            ],
+            [
+                'slug' => 'best-free-ai-chatbots-2026',
+                'title' => 'The Best Free AI Chatbots in 2026 (and How to Choose the Right One)',
+                'meta' => 'A practical, honest comparison of the best free AI chatbots in 2026 — what each is good at, where the free limits bite, and how to pick the right one for writing, coding, research or images.',
+                'category' => 'AI Tools',
+                'focus' => 'best free AI chatbots',
+                'secondary' => ['free AI chatbot', 'AI chatbot comparison', 'ChatGPT alternatives', 'free AI tools'],
+                'excerpt' => 'What the leading free AI chatbots are actually good at in 2026, where the free tiers run out, and a simple way to choose the right one for your task.',
+                'date' => '2026-01-22',
+                'views' => 5800,
+                'sections' => [
+                    ['heading' => 'There is no single "best" — it depends on the job', 'paragraphs' => [
+                        'The honest answer to "which free AI chatbot is best?" is: it depends what you are doing. The leading assistants have quietly specialised. Some are strongest at careful writing and reasoning, some at live web research, some at coding, and some at generating images. Picking by task instead of by brand loyalty will get you noticeably better results for free.',
+                        'It also helps to know how free tiers work. Almost every provider gives you a capable model with a daily or hourly usage cap, then nudges you toward a paid plan for higher limits, larger file uploads or the very newest model. The trick is to match the free strengths of each tool to what you actually need, and keep two or three in your back pocket.',
+                    ]],
+                    ['heading' => 'For writing, reasoning and long documents', 'paragraphs' => [
+                        'If your work is mostly words — drafting, editing, summarising contracts, thinking through a decision — you want an assistant known for careful, natural writing and strong reasoning over long inputs. Claude and ChatGPT both do this well on their free tiers, and Gemini is competitive, especially when you need very long documents handled in one go.',
+                        'The differentiator here is tone control and how well the tool holds context across a long conversation. Test the same real task in two of them — say, "rewrite this 800-word page to be clearer and more persuasive for Irish small-business owners" — and use whichever voice you have to correct the least. That, more than any benchmark, is the one that suits you.',
+                    ]],
+                    ['heading' => 'For live research and current facts', 'paragraphs' => [
+                        'Standard chatbots are trained up to a cutoff date and will happily sound confident about things they cannot actually know. For anything time-sensitive — prices, news, "what changed recently" — use a tool with live web access. Perplexity is built around cited web answers, and the web-connected modes of the major assistants also work well.',
+                        'Whatever you use for research, insist on sources. The safest habit is to ask "answer with links I can verify" and then actually click them. AI is excellent at gathering and summarising, but you remain the fact-checker — especially for anything you will publish or make a decision on.',
+                    ]],
+                    ['heading' => 'For coding and for images', 'paragraphs' => [
+                        'For programming, the assistants with strong coding models — Claude and ChatGPT in particular — will explain errors, write functions, and review your code on their free tiers, and dedicated tools like GitHub Copilot integrate directly into your editor. Paste the real error and the relevant code rather than describing the problem, and you will get a fix far faster.',
+                        'For images, the landscape is different again: several tools generate images from a text description at no cost, usually with a daily limit. The quality gap between them narrows every few months, so judge by your own prompt: describe the exact scene, style and aspect ratio you want and compare the outputs side by side.',
+                    ]],
+                    ['heading' => 'A simple way to choose (and stay private)', 'paragraphs' => [
+                        'Keep it practical: use one strong all-rounder for daily writing and thinking, one research tool that cites sources, and one image generator. That trio covers most people\'s needs entirely for free. Only pay when a specific limit — usage, upload size, or a newer model — is genuinely holding you back.',
+                        'One caution that applies to all of them: do not paste confidential client data, passwords, or personal information you would not want stored. Assume anything you type could be retained for training unless the provider clearly says otherwise, and check the privacy settings. Treat free AI like a very capable stranger — brilliant help, but not somewhere to keep secrets.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Choose by task, not by brand — writing, research, code and images differ',
+                    'Keep one strong all-rounder for daily writing and reasoning',
+                    'Use a source-citing tool (e.g. Perplexity) for anything time-sensitive',
+                    'Always click through and verify AI-provided sources before trusting them',
+                    'For code, paste the real error and relevant snippet, not a description',
+                    'Compare image tools with your own detailed prompt, not marketing samples',
+                    'Never paste passwords, client data or personal information',
+                    'Only upgrade to paid when a specific free limit truly blocks you',
+                ],
+                'faq' => [
+                    ['question' => 'What is the best free AI chatbot in 2026?', 'answer' => 'There is no single winner. For writing and reasoning, Claude and ChatGPT lead; for live research with citations, Perplexity is excellent; for very long documents, Gemini is strong. Choose by the task in front of you.'],
+                    ['question' => 'Are free AI chatbots safe to use?', 'answer' => 'They are safe for general work, but never paste passwords, confidential client data or personal information. Assume inputs may be stored, and check each provider\'s privacy settings.'],
+                    ['question' => 'Can free AI chatbots access the internet?', 'answer' => 'Some can. Perplexity and the web-connected modes of major assistants can look things up live; standard chat modes are limited to their training cut-off, so verify anything time-sensitive.'],
+                    ['question' => 'Do I need to pay for AI to get good results?', 'answer' => 'Usually not for everyday tasks — the free tiers are very capable. Paid plans mainly add higher usage limits, bigger uploads and the newest models, which matter most for heavy daily use.'],
+                ],
+            ],
+            [
+                'slug' => 'free-ai-tools-that-save-time',
+                'title' => '15 Free AI Tools That Actually Save You Time (2026 Edition)',
+                'meta' => 'A curated list of genuinely useful free AI tools for writing, images, audio, meetings, coding and admin — with honest notes on where the free limits sit and how to use each well.',
+                'category' => 'AI Tools',
+                'focus' => 'free AI tools',
+                'secondary' => ['best free AI tools', 'AI productivity tools', 'AI tools for small business', 'AI automation'],
+                'excerpt' => 'The free AI tools worth your time in 2026, grouped by job — writing, images, audio, meetings, code and admin — with practical notes on getting the most from each.',
+                'date' => '2026-03-09',
+                'views' => 4900,
+                'sections' => [
+                    ['heading' => 'How to judge a free AI tool', 'paragraphs' => [
+                        'New AI tools launch every week, and most of them will not matter to you. A useful filter: does it remove a repetitive task you already do, does the free tier do enough real work before it asks for money, and does it fit into your existing workflow without a fight? If a tool passes all three, it earns a place; if not, it is a distraction.',
+                        'The categories below cover where AI genuinely saves time today. You do not need all of them — pick the two or three that map to your actual bottlenecks. The goal is fewer hours on low-value work, not a bigger pile of subscriptions.',
+                    ]],
+                    ['heading' => 'Writing, summarising and admin', 'paragraphs' => [
+                        'General assistants like Claude, ChatGPT and Gemini remain the highest-leverage free tools for most people: drafting emails and pages, summarising long documents, turning messy notes into a clean plan, and answering "how do I…" questions. Grammar and clarity tools that suggest edits as you type are a useful second layer for anyone who writes to clients.',
+                        'For admin specifically, use AI to convert a wall of text into a structured checklist, to draft polite replies to awkward emails, and to turn a rambling voice note into tidy meeting actions. These are small tasks individually, but they add up to hours a week that you get back.',
+                    ]],
+                    ['heading' => 'Images, design and video', 'paragraphs' => [
+                        'Free image generators can produce social graphics, blog headers and concept art from a text description, and browser-based design tools now bundle AI features — background removal, resizing, and "make this on-brand" — into their free plans. For simple product or marketing visuals, this replaces a lot of stock-photo hunting.',
+                        'On the video side, free tiers can auto-generate captions, trim silences, and turn a long recording into short clips. The output usually needs a human pass, but it takes the first 80% of the tedious work off your plate, which is exactly what good AI tooling should do.',
+                    ]],
+                    ['heading' => 'Meetings, audio and code', 'paragraphs' => [
+                        'Meeting assistants that transcribe a call and produce a summary with action items are one of the clearest time-savers going — you stay present in the conversation instead of scribbling notes. Free audio tools can transcribe recordings, and text-to-speech tools can turn an article into a listenable version.',
+                        'If you write any code, free AI coding help — whether an in-editor assistant or a chatbot you paste into — will explain errors, scaffold functions and review changes. Even non-developers use it to write small automation scripts and spreadsheet formulas that used to require hiring someone.',
+                    ]],
+                    ['heading' => 'Put them together into a workflow', 'paragraphs' => [
+                        'The real gains come from chaining tools, not using them in isolation. A common small-business loop: record a client call → an AI meeting tool summarises the actions → you ask a chat assistant to draft the follow-up email and proposal → a design tool creates the header image. What used to be an afternoon becomes twenty minutes of reviewing and sending.',
+                        'Two rules keep this healthy. First, always review AI output before it leaves your hands — it is a fast junior, not a final authority. Second, keep sensitive data out of free tools unless the privacy terms are clear. Follow those, and a handful of free AI tools can genuinely give you back a day a week.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Pick tools that remove a task you already do repeatedly',
+                    'Start with one general assistant for writing, summarising and admin',
+                    'Add an image/design tool with a usable free tier for marketing visuals',
+                    'Use a meeting assistant to capture calls and action items hands-free',
+                    'Use AI coding help for scripts, formulas and error fixes',
+                    'Chain tools into a workflow instead of using them one-off',
+                    'Always review AI output before it goes out',
+                    'Keep confidential data out of free tools unless privacy terms are clear',
+                ],
+                'faq' => [
+                    ['question' => 'What are the most useful free AI tools for a small business?', 'answer' => 'A general assistant (Claude, ChatGPT or Gemini) for writing and admin, a meeting assistant for calls, and a design tool with AI features for visuals cover most needs for free.'],
+                    ['question' => 'Are free AI tools good enough, or do I need to pay?', 'answer' => 'For most everyday tasks the free tiers are genuinely capable. Pay only when a specific limit — usage, upload size or a premium feature — is clearly slowing you down.'],
+                    ['question' => 'Is it safe to put my business data into free AI tools?', 'answer' => 'Be selective. Avoid pasting confidential client data, passwords or personal information, and check each tool\'s privacy and data-training settings first.'],
+                    ['question' => 'Can AI tools really save me time?', 'answer' => 'Yes, when they remove repetitive work and are chained into a workflow. The biggest wins come from summarising, drafting and admin tasks you would otherwise do by hand.'],
+                ],
+            ],
+            [
+                'slug' => 'kali-linux-for-beginners-legal-guide',
+                'title' => 'Kali Linux for Beginners: A Safe, Legal Getting-Started Guide (2026)',
+                'meta' => 'A beginner-friendly, ethical guide to Kali Linux: what it is, how to install it safely in a virtual machine, how to build a legal home lab, and the rules that keep your learning lawful.',
+                'category' => 'Security',
+                'focus' => 'Kali Linux for beginners',
+                'secondary' => ['install Kali Linux', 'Kali Linux tutorial', 'ethical hacking lab', 'penetration testing for beginners'],
+                'excerpt' => 'What Kali Linux is, how to install it safely in a virtual machine, how to build a legal practice lab, and the golden rule that keeps ethical hacking on the right side of the law.',
+                'date' => '2026-04-14',
+                'views' => 7300,
+                'sections' => [
+                    ['heading' => 'What Kali Linux is — and the one rule that matters most', 'paragraphs' => [
+                        'Kali Linux is a free, open-source operating system built by Offensive Security for penetration testing and security research. It ships with a large collection of tools that security professionals use to find and fix weaknesses in systems. It is a learning and defensive-testing platform, not a shortcut to "hacking" anything you like.',
+                        'Before anything else, understand the golden rule: only ever test systems you own or have explicit, written permission to test. Scanning or attacking someone else\'s network, website or account without authorisation is a criminal offence in Ireland, the UK, the US and almost everywhere else — regardless of intent. Everything in this guide assumes you are practising in your own lab. Keep it legal and you have a valuable career skill; ignore that and you have a criminal record.',
+                    ]],
+                    ['heading' => 'Download Kali from the official source only', 'paragraphs' => [
+                        'Always download Kali from the official project website at kali.org/get-kali — never from a random mirror, torrent or "free download" site, which are common ways to get a backdoored image. The official page offers several options: a bootable installer ISO, ready-made virtual machine images, a version for the Raspberry Pi, and Kali on Windows via WSL.',
+                        'For beginners, the pre-built virtual machine image is by far the easiest and safest start. Also verify the download: the official site publishes checksums so you can confirm the file you received matches the file they published. Taking two minutes to check the checksum is a good first security habit in its own right.',
+                    ]],
+                    ['heading' => 'Install it in a virtual machine, not on your main PC', 'paragraphs' => [
+                        'Do not install Kali as your everyday operating system. Run it inside a virtual machine using free software such as VirtualBox or VMware Workstation Player. A VM keeps Kali sandboxed from your real files, lets you snapshot a clean state to roll back to, and means a mistake costs you nothing. Give the VM around 2–4 GB of RAM and 30–40 GB of disk to start.',
+                        'If you are using the pre-built VM image, you simply import it into VirtualBox and start it — no manual installation needed. The default login for Kali is the username "kali" and password "kali", which you should change immediately. Once it boots, run the system update commands so you have the latest tools and security patches before you do anything else.',
+                    ]],
+                    ['heading' => 'Build a legal practice lab', 'paragraphs' => [
+                        'The safe, legal way to practise is against targets you control. Set up deliberately vulnerable machines inside your own virtual network — widely used free training targets are designed exactly for this, giving you realistic systems to probe without touching anyone else\'s property. Keep the whole lab on a host-only or internal network so nothing you do can reach the public internet.',
+                        'Beyond your own lab, use the legal online platforms built for learning: capture-the-flag sites and hands-on training labs give you authorised targets, guided exercises and a community. These are the right places to build real skills — sanctioned, structured, and impossible to get into legal trouble with.',
+                    ]],
+                    ['heading' => 'A sensible first-90-days path', 'paragraphs' => [
+                        'Resist the urge to jump straight to the flashy tools. Spend your first weeks getting comfortable with the Linux command line, networking basics (IP addresses, ports, DNS, HTTP) and how web applications actually work — that foundation is what separates people who understand security from people who just run scripts. Then learn a small number of core tools well rather than skimming dozens.',
+                        'Progress in this order: learn the command line and networking, then reconnaissance and scanning against your own lab, then web-application basics, then a structured course or certification path if you want to go professional. Document everything you do as if writing a report — clear notes on what you tested, what you found and how to fix it. That reporting habit, not the tools, is what security clients actually pay for.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Only ever test systems you own or have written permission to test',
+                    'Download Kali only from the official kali.org/get-kali page',
+                    'Verify the download checksum before using the image',
+                    'Run Kali in a VM (VirtualBox/VMware), never as your main OS',
+                    'Change the default kali/kali password and update the system first',
+                    'Keep your lab on a host-only/internal network, isolated from the internet',
+                    'Practise on deliberately vulnerable targets and legal CTF/training platforms',
+                    'Learn Linux, networking and web basics before the advanced tools',
+                    'Document every test like a client report',
+                ],
+                'faq' => [
+                    ['question' => 'Is it legal to use Kali Linux?', 'answer' => 'Yes — Kali itself is a legitimate, legal security operating system. What is illegal is using it (or any tool) against systems you do not own or have written permission to test. Practise only in your own lab or on sanctioned training platforms.'],
+                    ['question' => 'Where should I download Kali Linux?', 'answer' => 'Only from the official website, kali.org/get-kali, and verify the published checksum. Avoid third-party mirrors, torrents and "free download" sites, which can contain tampered images.'],
+                    ['question' => 'Should I install Kali on my main computer?', 'answer' => 'No. For learning, run Kali inside a virtual machine with VirtualBox or VMware. It keeps Kali isolated from your real files and lets you snapshot and roll back safely.'],
+                    ['question' => 'How do I practise ethical hacking legally?', 'answer' => 'Build a home lab with deliberately vulnerable practice machines on an isolated network, and use legal capture-the-flag and hands-on training platforms that give you authorised targets.'],
+                ],
+            ],
+            [
+                'slug' => 'how-to-write-better-ai-prompts',
+                'title' => 'How to Write Better AI Prompts: A Simple Framework Anyone Can Use',
+                'meta' => 'A plain-English prompt-writing framework that gets sharper answers from any AI chatbot — role, context, task, format and examples — with before-and-after examples you can copy.',
+                'category' => 'AI Tools',
+                'focus' => 'how to write better AI prompts',
+                'secondary' => ['prompt engineering', 'AI prompt tips', 'better ChatGPT prompts', 'AI prompt framework'],
+                'excerpt' => 'A five-part framework — role, context, task, format, examples — that reliably gets better answers from any AI chatbot, with simple before-and-after examples.',
+                'date' => '2026-05-02',
+                'views' => 5100,
+                'sections' => [
+                    ['heading' => 'Better prompts, not a better model, is usually the fix', 'paragraphs' => [
+                        'When people say an AI "gave a rubbish answer", the prompt is almost always the reason. The model can only work with what you give it, and a one-line request like "write a marketing email" leaves it guessing about your product, audience, tone and goal. A good prompt removes that guesswork — and you do not need to be technical to write one.',
+                        'The framework below has five parts: role, context, task, format and examples. You will not always need all five, but running through them mentally takes seconds and dramatically improves consistency. It works with any assistant — Claude, ChatGPT, Gemini or others.',
+                    ]],
+                    ['heading' => 'Role and context: tell it who and what', 'paragraphs' => [
+                        'Start by assigning a role and audience: "You are an experienced physiotherapist writing for nervous first-time patients." This sets the vocabulary, tone and level of detail instantly. The same question answered "as a lawyer for another lawyer" versus "as a lawyer for a worried tenant" produces two very different, and differently useful, replies.',
+                        'Then give context — the real facts the model needs. Paste the actual product description, the customer\'s email, the data, the draft you are improving. Vague prompts get generic answers; specific context gets specific, usable answers. This one habit fixes more bad outputs than anything else.',
+                    ]],
+                    ['heading' => 'Task and format: say exactly what you want back', 'paragraphs' => [
+                        'Be precise about the task and its constraints: "Write three subject-line options and a 120-word email. Friendly but professional. One clear call to action: book a free consultation." Numbers, limits and a single clear goal keep the answer tight and on target instead of long and generic.',
+                        'Then specify the format you want to receive: a table, a bulleted list, a short summary followed by detail, or "just the final text, no preamble". Telling the model the shape of the output is the difference between something you paste straight into your work and something you have to reshape yourself.',
+                    ]],
+                    ['heading' => 'Examples: show it what "good" looks like', 'paragraphs' => [
+                        'If you have an example of the style or structure you want, give it. "Match the tone of this paragraph:" followed by a sample is one of the most powerful things you can do, because the model is excellent at imitating a pattern it can see. Even one example sharpens the result significantly.',
+                        'The same applies to what you do not want: "Avoid buzzwords like synergy and leverage; no exclamation marks." Showing both a positive example and a short list of things to avoid gives the model clear guardrails and saves you correcting the same issues on every draft.',
+                    ]],
+                    ['heading' => 'Before and after — and then iterate', 'paragraphs' => [
+                        'Compare the two. Weak: "write a blog intro about SEO." Strong: "You are an SEO consultant writing for Irish café owners with no marketing background. Write a 90-word blog intro that explains why local SEO matters, in plain, encouraging language, ending with a question. Avoid jargon." The second one will get you something usable on the first try.',
+                        'Finally, treat the first answer as a draft, not a verdict. Steer it: "shorter", "more concrete examples", "change the audience to dentists". Because you gave a clear starting prompt, these small adjustments land precisely. Master this five-part habit and you will get more from any AI tool than most people ever do — for free.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Assign a role and audience at the start',
+                    'Paste real context — the actual text, data or draft',
+                    'State the task with clear limits and one main goal',
+                    'Specify the output format you want back',
+                    'Give an example of the style or structure to match',
+                    'List what to avoid (words, tone, formatting)',
+                    'Treat the first reply as a draft and steer it with small edits',
+                    'Reuse prompts that work — save them for next time',
+                ],
+                'faq' => [
+                    ['question' => 'What makes a good AI prompt?', 'answer' => 'A good prompt gives the model a role, real context, a specific task with limits, the format you want back, and ideally an example to match. That removes guesswork and produces consistent, usable answers.'],
+                    ['question' => 'Do I need to learn prompt engineering?', 'answer' => 'Not formally. A simple five-part habit — role, context, task, format, examples — covers almost everything most people need and works across every major AI chatbot.'],
+                    ['question' => 'Why does the AI give vague or generic answers?', 'answer' => 'Almost always because the prompt was vague. Add the real context, specify the audience and goal, and state the format you want — the answer becomes specific in response.'],
+                    ['question' => 'Can the same prompt framework be reused?', 'answer' => 'Yes. Once a prompt works well, save it as a template and swap in new details. Reusable prompts are one of the biggest time-savers in day-to-day AI use.'],
+                ],
+            ],
+            [
+                'slug' => 'chatgpt-vs-claude-which-should-you-use',
+                'title' => 'ChatGPT vs Claude in 2026: Which AI Should You Actually Use?',
+                'meta' => 'An honest, hands-on comparison of ChatGPT and Claude in 2026 — writing quality, coding, long documents, safety, pricing and privacy — with clear guidance on which to pick for your work.',
+                'category' => 'AI Tools',
+                'focus' => 'ChatGPT vs Claude',
+                'secondary' => ['Claude vs ChatGPT', 'best AI assistant', 'AI writing tool', 'AI for coding'],
+                'excerpt' => 'How ChatGPT and Claude really compare for writing, coding, long documents, safety and price — and a simple way to decide which one deserves your subscription.',
+                'date' => '2026-02-04',
+                'views' => 6600,
+                'sections' => [
+                    ['heading' => 'They are closer than the internet arguments suggest', 'paragraphs' => [
+                        'ChatGPT and Claude are the two assistants most people are choosing between, and the truth is they are both excellent. For everyday questions, drafting and summarising, either will serve you well, and the gap that fans argue about online rarely shows up in ordinary work. So instead of asking which is "smarter", ask which fits the specific things you do most.',
+                        'A quick way to decide without overthinking it: try the exact same real task in both for a week — a page you need to write, a problem you need to reason through, some code you need fixed — and keep the one whose answers you edit the least. Your own work is a better benchmark than anyone else\'s leaderboard.',
+                    ]],
+                    ['heading' => 'Writing and long documents', 'paragraphs' => [
+                        'For writing, many people find Claude\'s default tone more natural and less "AI-flavoured", with a tendency to follow nuanced instructions about voice closely. ChatGPT is highly capable too and very flexible, with a large ecosystem of custom versions for specific styles. If polished, human-sounding prose on the first draft matters most to you, Claude is worth testing head to head.',
+                        'For long documents — contracts, reports, big transcripts — both handle substantial inputs, and this is an area where Claude has traditionally been strong. If your work involves feeding in large files and getting careful, structured summaries back, weigh that capability heavily, because it saves the most time.',
+                    ]],
+                    ['heading' => 'Coding, research and extras', 'paragraphs' => [
+                        'Both are strong coding assistants that will explain errors, write functions and review changes. Developers often keep both open and pick per task. ChatGPT has a broad set of built-in extras — image generation, voice, data analysis and a large plugin-style ecosystem — which makes it a versatile all-rounder for people who want many features in one place.',
+                        'For live research, both offer web-connected modes, but always insist on sources you can click. If image generation and a wide feature set are important to you, ChatGPT\'s breadth is a genuine advantage; if you mainly want the best possible text and document handling, Claude is a focused, excellent choice.',
+                    ]],
+                    ['heading' => 'Safety, privacy and price', 'paragraphs' => [
+                        'Both companies take safety seriously, and both offer settings to control whether your conversations are used to improve their models — worth checking and adjusting on day one. As a universal rule, do not paste passwords, confidential client data or personal information into either, regardless of the settings.',
+                        'On price, both have a capable free tier and a paid plan in a similar range that unlocks higher limits and the newest models. For most individuals the free tier is enough to decide; for daily professional use, one paid plan is easily worth it. There is no need to pay for both unless you genuinely use each for different jobs.',
+                    ]],
+                    ['heading' => 'The simple recommendation', 'paragraphs' => [
+                        'If you want one clear steer: choose Claude if your work is mostly writing, editing and reasoning over long documents and you value a natural tone; choose ChatGPT if you want the widest set of built-in features — images, voice, data tools — in a single subscription. Either way you are getting a genuinely capable assistant.',
+                        'And remember it is not a marriage. Both free tiers are strong, so keep an account on each and route tasks to whichever does them best. The people getting the most from AI in 2026 are rarely loyal to one brand — they are just good at picking the right tool for the job in front of them.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Test both on your real tasks for a week before deciding',
+                    'Keep the one whose answers you edit the least',
+                    'Prefer Claude for natural writing and long-document work',
+                    'Prefer ChatGPT for the widest built-in feature set (images, voice, data)',
+                    'Use both for coding and pick per task',
+                    'Insist on clickable sources in any web-research mode',
+                    'Check and set the data-training/privacy option on day one',
+                    'Never paste passwords, client data or personal information',
+                ],
+                'faq' => [
+                    ['question' => 'Is Claude better than ChatGPT?', 'answer' => 'Neither is universally better. Claude is often preferred for natural writing and long-document handling; ChatGPT offers a wider set of built-in features. Test both on your own tasks and keep the one you edit least.'],
+                    ['question' => 'Which is better for coding, ChatGPT or Claude?', 'answer' => 'Both are strong coding assistants. Many developers keep both and pick per task. Paste the real error and relevant code either way for the fastest, most accurate help.'],
+                    ['question' => 'Do I need to pay for both?', 'answer' => 'Usually not. Both have capable free tiers. If you use each for genuinely different jobs a second subscription can pay off, but most people are well served by one paid plan.'],
+                    ['question' => 'Are ChatGPT and Claude safe for confidential work?', 'answer' => 'Use caution. Adjust each tool\'s data-training setting, and never paste passwords, personal data or confidential client information into either assistant.'],
+                ],
+            ],
+            [
+                'slug' => 'ai-for-small-business-practical-guide',
+                'title' => 'AI for Small Business: 9 Practical Ways to Save Time and Win More Customers',
+                'meta' => 'A grounded, hype-free guide to using AI in a small business — marketing, customer service, admin, sales and content — with realistic examples and the pitfalls to avoid.',
+                'category' => 'AI Automation',
+                'focus' => 'AI for small business',
+                'secondary' => ['small business AI tools', 'AI marketing', 'AI customer service', 'business automation'],
+                'excerpt' => 'Nine realistic, low-cost ways small businesses are using AI in 2026 to save hours and win more customers — plus the mistakes that waste time and money.',
+                'date' => '2026-03-20',
+                'views' => 5200,
+                'sections' => [
+                    ['heading' => 'Start with your most repetitive task', 'paragraphs' => [
+                        'The businesses getting real value from AI are not the ones chasing every shiny tool — they are the ones who picked one painful, repetitive task and fixed it. Before anything else, write down where your week actually goes. The best first AI project is almost always the boring thing you do over and over: the same emails, the same quotes, the same reports, the same social posts.',
+                        'Fixing one repetitive task well beats dabbling in ten. It proves the value, builds your confidence, and frees the time you need to tackle the next one. Treat AI as a series of small, specific wins rather than a magic transformation, and it will actually stick.',
+                    ]],
+                    ['heading' => 'Marketing and content', 'paragraphs' => [
+                        'AI is a genuine force multiplier for small-business marketing. Use it to turn one idea into a week of social posts, to draft newsletters and blog posts, to write and rewrite website copy, and to generate simple graphics. The key is that you provide the real substance — your offers, your results, your voice — and AI handles the drafting and repurposing.',
+                        'A word of caution: do not publish raw AI output. Search engines and customers can both tell when content is generic and unedited. Use AI for the first draft, then add your genuine expertise, local knowledge and specific examples. That human layer is what makes the content rank and convert.',
+                    ]],
+                    ['heading' => 'Customer service and sales', 'paragraphs' => [
+                        'On the service side, a well-set-up website chatbot can answer common questions around the clock, qualify enquiries, and hand off to you with a tidy summary — so you only spend time on the conversations that matter. AI can also draft replies to reviews and support emails, keeping your tone consistent even when you are busy.',
+                        'For sales, use AI to summarise call notes into next steps, draft tailored follow-up emails, and keep your customer records tidy. The goal is not to remove the human relationship that small businesses win on — it is to remove the admin around it so you can spend more time actually talking to customers.',
+                    ]],
+                    ['heading' => 'Admin, finance and operations', 'paragraphs' => [
+                        'A lot of small-business time disappears into admin, and this is where AI quietly shines. Turn a messy voice note into a clean task list, summarise long documents, draft standard operating procedures, extract data from invoices, and get plain-English answers to "how do I…" questions about your tools. Even spreadsheet formulas that used to mean asking for help are now a quick AI question.',
+                        'The trick is to keep humans in the loop for anything that involves money or a legal commitment. AI is a fast, tireless assistant, not a decision-maker. Use it to prepare, draft and organise — and keep the final sign-off with a person who understands the stakes.',
+                    ]],
+                    ['heading' => 'Avoid the common mistakes', 'paragraphs' => [
+                        'Three mistakes waste the most time and money. First, tool overload — subscribing to a dozen apps you never master; pick a few and go deep. Second, publishing unedited AI content that reads as generic and hurts your brand. Third, and most serious, pasting confidential customer data into free tools without checking the privacy terms.',
+                        'Get those right and the upside is real: most small businesses can reclaim several hours a week and present far more professionally, at very little cost. Start with one repetitive task, add your human judgement on top, protect your data, and let the wins compound from there.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Map where your week goes and pick one repetitive task to fix first',
+                    'Use AI for first drafts of marketing content, then add real expertise',
+                    'Never publish raw, unedited AI content',
+                    'Set up a website chatbot to answer FAQs and qualify leads 24/7',
+                    'Summarise calls and draft follow-ups to cut sales admin',
+                    'Use AI for document summaries, SOPs and data extraction',
+                    'Keep a human sign-off on anything involving money or legal commitments',
+                    'Do not paste confidential customer data into free tools',
+                ],
+                'faq' => [
+                    ['question' => 'How can a small business start using AI?', 'answer' => 'Pick the single most repetitive task you do — the same emails, quotes or posts — and use AI to handle it well. One solid win beats dabbling in many tools, and it builds momentum for the next.'],
+                    ['question' => 'Is AI content bad for SEO?', 'answer' => 'Raw, unedited AI content often is, because it reads as generic. AI-assisted content that you edit with real expertise, examples and local knowledge can rank well. The human layer is what matters.'],
+                    ['question' => 'Can AI replace customer service?', 'answer' => 'It can handle common questions and qualify enquiries around the clock, but the winning approach for small businesses is AI for the repetitive parts and humans for the conversations that build relationships.'],
+                    ['question' => 'What is the biggest AI mistake small businesses make?', 'answer' => 'Tool overload and publishing unedited output are common, but the most serious is pasting confidential customer data into free tools without checking the privacy terms.'],
+                ],
+            ],
+            [
+                'slug' => 'kali-linux-top-tools-overview',
+                'title' => 'The Kali Linux Toolkit Explained: What the Main Tool Categories Actually Do',
+                'meta' => 'A beginner-friendly overview of the main Kali Linux tool categories — reconnaissance, scanning, web testing, passwords and reporting — with an ethical, authorised-use-only framing.',
+                'category' => 'Security',
+                'focus' => 'Kali Linux tools',
+                'secondary' => ['Kali Linux tools overview', 'penetration testing tools', 'ethical hacking tools', 'security testing categories'],
+                'excerpt' => 'What the main Kali Linux tool categories are for — recon, scanning, web testing, passwords and reporting — explained plainly and framed strictly for authorised, ethical use.',
+                'date' => '2026-04-28',
+                'views' => 6800,
+                'sections' => [
+                    ['heading' => 'First, the ethics — because they are not optional', 'paragraphs' => [
+                        'This is an educational overview of what Kali\'s tool categories are for, so you can understand security testing and build a defensive mindset. It is not a how-to for attacking anything. The rule from our beginner guide still applies and always will: only ever use these tools against systems you own or have explicit written permission to test. Anything else is a crime, full stop.',
+                        'Understanding these categories makes you a better defender, whether you run a business or want a security career. Knowing how sites are probed tells you what to harden; knowing how passwords are attacked tells you why length and uniqueness matter. Learn the concepts in your own lab, and use them to protect, not to intrude.',
+                    ]],
+                    ['heading' => 'Reconnaissance and information gathering', 'paragraphs' => [
+                        'The first phase of any authorised test is reconnaissance — legally gathering publicly available information about a target you are permitted to assess. Tools in this category map out domains, subdomains, DNS records, public email addresses and technologies in use. It is the digital equivalent of a surveyor studying a building before any work begins.',
+                        'For defenders, this is a wake-up call about your own "attack surface": the more of your infrastructure is needlessly exposed, the more an attacker has to work with. Reviewing what your organisation reveals publicly — and reducing it — is one of the cheapest security improvements available.',
+                    ]],
+                    ['heading' => 'Scanning and web-application testing', 'paragraphs' => [
+                        'Scanning tools check which services and ports are reachable on a system and probe for known weaknesses, while web-application tools look specifically at how a website handles input, authentication and sessions. Together they help an authorised tester answer "where could this be broken, and how badly?" against a system they are allowed to assess.',
+                        'The defensive lesson is direct: most findings come down to out-of-date software, misconfigurations and unvalidated input. Keeping systems patched, closing services you do not use, and validating everything a user can submit removes the majority of what these tools would otherwise find.',
+                    ]],
+                    ['heading' => 'Passwords, wireless and exploitation frameworks', 'paragraphs' => [
+                        'Kali includes tools for testing password strength, assessing the security of wireless networks you own, and structured frameworks that security professionals use to safely verify whether a known weakness is genuinely exploitable in a controlled test. These are powerful, which is exactly why authorisation and a contained lab are non-negotiable.',
+                        'What they teach defenders is priceless: they are the reason security people insist on long, unique passwords and multi-factor authentication, strong wireless encryption, and prompt patching. Seeing why weak controls fall over quickly is the most persuasive argument there is for doing the basics properly.',
+                    ]],
+                    ['heading' => 'Reporting is the part clients actually pay for', 'paragraphs' => [
+                        'The tool that matters most in a professional engagement is not flashy at all: it is the report. A real penetration test ends with a clear, prioritised, plain-English document explaining what was found, how serious each issue is, and exactly how to fix it. Running tools is the easy part; communicating risk so a business can act on it is the skill.',
+                        'If you are learning, practise writing up every exercise in your lab as if for a client. That habit — documenting findings, ranking them by real business impact, and recommending fixes — is what separates someone who runs scripts from a security professional people hire. It is also, not coincidentally, exactly how we approach the responsible security reviews we offer.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Only use security tools against systems you own or are authorised to test',
+                    'Learn the categories to improve your defences, not to intrude',
+                    'Reduce your public attack surface found in reconnaissance',
+                    'Patch software and close unused services to cut scan findings',
+                    'Validate all user input to prevent web-application weaknesses',
+                    'Enforce long, unique passwords and multi-factor authentication',
+                    'Use strong wireless encryption on networks you own',
+                    'Practise writing clear, prioritised reports for every lab exercise',
+                ],
+                'faq' => [
+                    ['question' => 'What are the main categories of Kali Linux tools?', 'answer' => 'Broadly: reconnaissance/information gathering, scanning, web-application testing, password and wireless testing, exploitation frameworks, and reporting. Each maps to a phase of an authorised security assessment.'],
+                    ['question' => 'Is learning Kali tools useful for defence?', 'answer' => 'Very. Understanding how systems are probed and how weak controls fail tells you exactly what to harden — patching, input validation, strong passwords, MFA and reducing public exposure.'],
+                    ['question' => 'Can I use these tools on any website to test it?', 'answer' => 'No. Testing a system you do not own or lack written permission for is illegal regardless of intent. Practise only in your own lab or on sanctioned training platforms.'],
+                    ['question' => 'What skill matters most in penetration testing?', 'answer' => 'Reporting. Clearly explaining what was found, how serious it is, and how to fix it is what businesses pay for — running the tools is the easy part.'],
+                ],
+            ],
+            [
+                'slug' => 'crypto-security-basics-protect-your-wallet',
+                'title' => 'Crypto Security Basics: How to Protect Your Wallet From the Most Common Scams',
+                'meta' => 'A plain-English guide to keeping cryptocurrency safe: hot vs cold wallets, seed-phrase rules, spotting the most common scams, and the security habits that actually protect your funds.',
+                'category' => 'Security',
+                'focus' => 'crypto security basics',
+                'secondary' => ['protect crypto wallet', 'crypto scams', 'seed phrase security', 'cryptocurrency safety'],
+                'excerpt' => 'The security habits that actually keep cryptocurrency safe — wallet types, seed-phrase rules, and how to recognise the scams that catch people out most often.',
+                'date' => '2026-01-30',
+                'views' => 7000,
+                'sections' => [
+                    ['heading' => 'The one idea that changes everything: you are the bank', 'paragraphs' => [
+                        'The most important thing to understand about cryptocurrency is that there is usually no one to call. With a bank, a fraudulent transaction can often be reversed. With most crypto, transactions are final and irreversible, and if you lose access to your wallet, no support line can restore it. That is the trade-off for control: you get full ownership, and full responsibility.',
+                        'This is not a reason to avoid crypto — it is a reason to take security seriously from day one. The good news is that a small number of habits protect against the overwhelming majority of losses. Get these right and you remove most of the risk that catches beginners out.',
+                    ]],
+                    ['heading' => 'Hot wallets, cold wallets, and what to keep where', 'paragraphs' => [
+                        'A "hot" wallet is connected to the internet — a phone or browser app. It is convenient for small, everyday amounts but more exposed. A "cold" wallet is a hardware device that keeps your keys offline; it is the gold standard for storing anything you are not actively using. A simple rule works well: keep spending money in a hot wallet and savings in cold storage.',
+                        'Treat a hardware wallet like a safe for your long-term holdings. Buy it new and directly from the official manufacturer — never second-hand or from a marketplace reseller, as tampered devices are a known scam. Setting one up takes fifteen minutes and is the single biggest upgrade to your crypto security.',
+                    ]],
+                    ['heading' => 'Your seed phrase is everything — protect it like it', 'paragraphs' => [
+                        'When you create a wallet you are given a recovery phrase, usually twelve or twenty-four words. Whoever has those words controls the funds, completely. So the rules are absolute: write it on paper (or steel), store it offline in a safe place, and never type it into a website, a phone photo, a cloud note, an email or a chat. No legitimate service will ever ask you to enter your seed phrase.',
+                        'Consider a second copy in a separate secure location in case of fire or loss, and never store it digitally where malware or a cloud breach could reach it. Losing the phrase means losing the funds; someone else seeing it means the same. This single point is where most catastrophic, unrecoverable losses happen.',
+                    ]],
+                    ['heading' => 'The scams that catch people out', 'paragraphs' => [
+                        'Most crypto theft is not sophisticated hacking — it is old-fashioned deception. Watch for: fake support staff who message you first (real support never does) and ask for your seed phrase; "giveaways" that ask you to send crypto to receive more back (always a scam); fake wallet or exchange apps and phishing sites with a slightly misspelled address; and romance or investment "opportunities" that pressure you to move funds quickly.',
+                        'The defence is a healthy suspicion of urgency and of anyone contacting you first. Slow down, verify web addresses character by character, bookmark the real sites you use, and remember the golden rule: nobody legitimate will ever need your seed phrase or private key. If a deal sounds too good to be true, it is.',
+                    ]],
+                    ['heading' => 'A practical security routine', 'paragraphs' => [
+                        'Put it together into habits. Use a hardware wallet for savings and a reputable hot wallet for spending. Protect every exchange account with a strong, unique password and app-based two-factor authentication (an authenticator app, not SMS, which can be hijacked). Double-check every address before sending — malware can swap a copied address for an attacker\'s.',
+                        'Finally, keep your device itself clean: update your phone and computer, avoid installing dubious browser extensions, and be cautious with public Wi-Fi for anything sensitive. None of this is complicated, but together it puts you ahead of the vast majority of people who lose crypto — almost always to a preventable mistake rather than an unstoppable attack.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Understand that most crypto transactions are final and irreversible',
+                    'Keep spending funds in a hot wallet, savings in a cold (hardware) wallet',
+                    'Buy hardware wallets new, only from the official manufacturer',
+                    'Write your seed phrase offline; never type or photograph it',
+                    'Store a backup of the seed phrase in a second secure location',
+                    'Never share your seed phrase — no real service will ask for it',
+                    'Use app-based 2FA (not SMS) on every exchange account',
+                    'Verify every address before sending; beware urgency and unsolicited contact',
+                ],
+                'faq' => [
+                    ['question' => 'What is the safest way to store cryptocurrency?', 'answer' => 'For anything beyond spending money, a hardware (cold) wallet bought new from the official manufacturer is the safest option, with the recovery phrase stored offline and never entered online.'],
+                    ['question' => 'What is a seed phrase and why does it matter?', 'answer' => 'It is the 12- or 24-word recovery phrase that controls your wallet. Anyone who has it controls your funds, so it must be stored offline and never typed into any website, app, photo or message.'],
+                    ['question' => 'What are the most common crypto scams?', 'answer' => 'Fake support asking for your seed phrase, "send crypto to get more back" giveaways, fake apps and phishing sites, and pressured investment or romance schemes. Legitimate parties never contact you first for your keys.'],
+                    ['question' => 'Is SMS two-factor authentication safe for crypto?', 'answer' => 'It is better than nothing but weaker than an authenticator app, because SMS can be hijacked via SIM-swap attacks. Use an app-based authenticator on every exchange account where possible.'],
+                ],
+            ],
+            [
+                'slug' => 'ai-automation-for-your-workflow',
+                'title' => 'AI Automation for Your Workflow: How to Save 5+ Hours a Week Without Code',
+                'meta' => 'A practical, no-code guide to automating your workflow with AI: how to find the right tasks, connect your apps, add an AI step, and keep a human in control — with real examples.',
+                'category' => 'AI Automation',
+                'focus' => 'AI automation workflow',
+                'secondary' => ['no-code automation', 'AI workflow', 'automate business tasks', 'workflow automation tools'],
+                'excerpt' => 'How to automate the repetitive parts of your week with AI — no coding required — by finding the right tasks, connecting your apps, and adding a smart AI step.',
+                'date' => '2026-02-26',
+                'views' => 4700,
+                'sections' => [
+                    ['heading' => 'Automate the trigger-action pattern, not your whole job', 'paragraphs' => [
+                        'Most useful automation follows a simple shape: when something happens, do something in response. When a form is submitted, add the lead to your CRM and send a reply. When an invoice email arrives, extract the total and log it. When a call is recorded, summarise the actions. Once you start noticing this "when X, do Y" pattern in your week, you see automation opportunities everywhere.',
+                        'The mistake is trying to automate a whole role at once. Instead, pick one small, repetitive, rules-based chain and automate just that. It is easier to build, easier to trust, and it delivers time back this week rather than after a month of tinkering. String several small automations together over time and the hours really add up.',
+                    ]],
+                    ['heading' => 'Where AI adds a step that used to need a person', 'paragraphs' => [
+                        'Traditional automation moves data between apps; AI automation adds a step that used to require human judgement. That is the leap. An AI step can read an incoming email and decide how urgent it is, summarise a long document into three bullet points, draft a personalised reply, categorise a support ticket, or turn messy notes into a structured record — automatically, in the middle of a workflow.',
+                        'So the recipe is: use a connector to move information between your tools, and drop an AI step in the middle wherever the task needs understanding rather than just copying. That combination is what lets a small business run processes that used to need an extra pair of hands.',
+                    ]],
+                    ['heading' => 'The tools that make it no-code', 'paragraphs' => [
+                        'You do not need to write software. No-code automation platforms let you connect hundreds of apps with a visual "if this, then that" builder, and most now include AI actions built in. Many popular business apps also have their own automation features, and AI assistants can help you design the logic and even generate the small formulas or scripts if a step needs one.',
+                        'Start with whatever platform connects the apps you already use. Build one automation, test it thoroughly with real data, and only expand once you trust it. The goal is a reliable helper working quietly in the background — not an elaborate system you are afraid to touch.',
+                    ]],
+                    ['heading' => 'Real examples you can copy', 'paragraphs' => [
+                        'A few that work well for small businesses: a new website enquiry is automatically added to your CRM, tagged by service, and answered with a friendly AI-drafted reply within seconds. A recorded sales call is transcribed, summarised into next steps, and the follow-up email is drafted for your review. Incoming invoices are read, the key figures extracted, and a row added to your bookkeeping sheet.',
+                        'Notice the pattern: each one removes admin around a task without removing your judgement from it. The AI drafts, extracts and summarises; you review and approve. That balance is what makes these automations safe to rely on rather than risky to deploy.',
+                    ]],
+                    ['heading' => 'Keep a human in the loop and build trust gradually', 'paragraphs' => [
+                        'The golden rule of AI automation is to keep a person in control of anything that matters. For low-stakes steps — tagging, summarising, drafting — let it run. For anything that sends money, makes a promise to a customer, or deletes data, insert an approval step so a human clicks "go". This keeps the speed while removing the risk of an automated mistake at scale.',
+                        'Build trust in stages: run a new automation in "draft for review" mode first, watch it for a week, then let the safe parts run automatically once it has earned it. Done this way, AI automation is not a scary leap — it is a series of small, reversible steps that quietly hand you back several hours a week.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Look for "when X happens, do Y" patterns in your week',
+                    'Automate one small, repetitive chain first — not a whole role',
+                    'Use a connector to move data, and an AI step where judgement is needed',
+                    'Pick a no-code platform that supports the apps you already use',
+                    'Test every automation with real data before trusting it',
+                    'Let AI draft, extract and summarise; you review and approve',
+                    'Add a human approval step for money, promises or deletions',
+                    'Run new automations in "draft for review" mode first',
+                ],
+                'faq' => [
+                    ['question' => 'Do I need to know how to code to automate with AI?', 'answer' => 'No. No-code automation platforms let you connect apps visually and add built-in AI actions. AI assistants can also design the logic and generate any small script a step might need.'],
+                    ['question' => 'What tasks are best to automate first?', 'answer' => 'Small, repetitive, rules-based chains — like adding form enquiries to your CRM with an auto-reply, or summarising calls into follow-ups. One reliable win beats trying to automate everything at once.'],
+                    ['question' => 'Is it safe to let AI run tasks automatically?', 'answer' => 'For low-stakes steps like tagging, summarising and drafting, yes. For anything involving money, customer promises or deleting data, add a human approval step so a person signs off.'],
+                    ['question' => 'How much time can AI automation actually save?', 'answer' => 'Many small businesses reclaim several hours a week by chaining a handful of small automations that remove admin around leads, calls, invoices and follow-ups.'],
+                ],
+            ],
+            [
+                'slug' => 'how-to-spot-ai-written-content',
+                'title' => 'How to Spot AI-Written Content: 8 Tells and Why "AI Detectors" Get It Wrong',
+                'meta' => 'Learn the real signs of AI-written content, why automated AI detectors are unreliable and dangerous to trust, and how to judge quality and credibility instead of chasing a score.',
+                'category' => 'AI Tools',
+                'focus' => 'how to spot AI-written content',
+                'secondary' => ['AI content detection', 'AI detector accuracy', 'AI writing signs', 'content quality'],
+                'excerpt' => 'The genuine tells of AI-written text, why automated detectors are unreliable and unfair, and how to judge content on quality and credibility instead of a false score.',
+                'date' => '2026-03-01',
+                'views' => 4400,
+                'sections' => [
+                    ['heading' => 'Why this matters — and why it is getting harder', 'paragraphs' => [
+                        'Being able to judge whether content is AI-generated matters for teachers, editors, recruiters and anyone relying on information online. But it is getting harder every month as models improve, and — importantly — the goal should not be a witch-hunt. Plenty of excellent writing is now AI-assisted and edited by a skilled human, which is completely legitimate. What you really care about is whether the content is accurate, original and useful, not which tool touched it.',
+                        'With that framing, there are still some common tells in raw, unedited AI output. None is proof on its own, but several together are a strong signal that text was generated and published without a careful human pass.',
+                    ]],
+                    ['heading' => 'The common tells of unedited AI text', 'paragraphs' => [
+                        'Watch for: a smooth, confident tone that never takes a real position; generic examples with no specific names, dates, numbers or lived detail; repetitive sentence rhythm and structure; a fondness for tidy lists of three and phrases like "in today\'s fast-paced world"; and conclusions that restate the introduction without adding anything. Raw AI writing is often grammatically perfect yet strangely weightless.',
+                        'The most reliable tell is a lack of genuine specificity and experience. AI can describe a city it has never visited fluently but blandly; a human who was there mentions the odd, concrete detail no model would invent. When text explains everything correctly yet tells you nothing only a real person could know, be suspicious.',
+                    ]],
+                    ['heading' => 'Why AI detectors are unreliable', 'paragraphs' => [
+                        'Here is the uncomfortable truth: automated "AI detector" tools are not reliable, and acting on them can do real harm. They produce false positives — flagging human writing as AI — and false negatives, and studies have repeatedly shown they are especially likely to wrongly flag text written by non-native English speakers. Accusing a student or employee based on a detector score is both unfair and often simply wrong.',
+                        'Detectors work by guessing at statistical patterns, and lightly edited AI text or naturally "clean" human writing both fool them. Treat any detector percentage as a weak hint at best, never as evidence. No responsible institution should make a decision that affects someone based on one.',
+                    ]],
+                    ['heading' => 'Judge quality and credibility instead', 'paragraphs' => [
+                        'A better question than "was this AI-written?" is "is this any good, and can I trust it?" Check for verifiable facts and real sources you can click. Look for genuine expertise, original insight and specific examples. See whether the author stakes out a clear, defensible point of view. Good content — human or AI-assisted — survives this test; thin content fails it regardless of how it was made.',
+                        'For anything important, verify claims against a primary source rather than trusting the prose. This shifts you from an unwinnable game of guessing the author to the thing that actually matters: whether the information is correct and useful to you.',
+                    ]],
+                    ['heading' => 'If you publish: aim above the tells', 'paragraphs' => [
+                        'If you are creating content, the lesson is liberating: you do not need to hide AI assistance, you need to rise above generic output. Add your real expertise, specific examples, data, opinions and voice. Say something only you could say. That is what readers value, what search engines increasingly reward, and what no detector — and no competitor pasting prompts — can replicate.',
+                        'Used that way, AI is a drafting and research tool, and the human contribution is the point of difference. The winners are not the people who avoid AI or the people who publish its raw output — they are the ones who use it to do more of their best, most specific, most credible work.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Judge content on accuracy, originality and usefulness — not which tool made it',
+                    'Look for generic examples and a confident tone that never commits',
+                    'Treat missing specifics and lived detail as the strongest tell',
+                    'Do not trust automated AI detector scores — they are unreliable and biased',
+                    'Never accuse someone based on a detector result alone',
+                    'Verify important claims against primary sources',
+                    'If publishing, add real expertise, data, examples and a clear point of view',
+                    'Aim to be more specific and credible than generic AI output',
+                ],
+                'faq' => [
+                    ['question' => 'How can I tell if something was written by AI?', 'answer' => 'Look for generic examples, a smooth tone that never takes a position, repetitive structure and a lack of specific, lived detail. No single sign is proof — several together are a strong hint.'],
+                    ['question' => 'Are AI content detectors accurate?', 'answer' => 'No. They produce false positives and negatives and are especially likely to wrongly flag non-native English writers. Never make a decision about a person based on a detector score.'],
+                    ['question' => 'Is it wrong to use AI to write content?', 'answer' => 'Not at all, when a skilled human edits and adds real expertise, examples and voice. The problem is publishing thin, unedited output — the issue is quality, not the tool.'],
+                    ['question' => 'What should I look for instead of "AI or not"?', 'answer' => 'Whether the content is accurate, original and useful: verifiable facts, real sources, genuine expertise and a clear point of view. That matters far more than how it was produced.'],
+                ],
+            ],
+            [
+                'slug' => 'best-ai-tools-for-students',
+                'title' => 'The Best AI Tools for Students in 2026 (and How to Use Them Without Cheating)',
+                'meta' => 'The most useful AI tools for students — studying, research, writing and organisation — plus a clear, honest guide to using them ethically without crossing into academic misconduct.',
+                'category' => 'AI Tools',
+                'focus' => 'best AI tools for students',
+                'secondary' => ['AI tools for studying', 'AI for research', 'student productivity', 'academic integrity AI'],
+                'excerpt' => 'The AI tools that genuinely help students study, research and organise — and a clear line between using them to learn and using them to cheat.',
+                'date' => '2026-04-06',
+                'views' => 5300,
+                'sections' => [
+                    ['heading' => 'The line that keeps AI helpful, not harmful', 'paragraphs' => [
+                        'AI can make you a dramatically more effective student — or it can quietly rob you of the learning you are paying for. The difference is one principle: use AI to understand, not to submit. Using it to explain a hard concept, quiz you, or plan an essay builds your ability. Using it to write the essay you hand in does not, and in most institutions it is academic misconduct that can end a course.',
+                        'Always check your school or university\'s specific AI policy, because they vary and are changing fast. When in doubt, ask your tutor. The tools below are genuinely useful when used to learn — the responsibility for staying on the right side of the line is yours.',
+                    ]],
+                    ['heading' => 'For understanding and studying', 'paragraphs' => [
+                        'This is where AI shines for students. Use a chat assistant as a patient tutor: ask it to explain a difficult topic at your level, then in a simpler way, then with an analogy until it clicks. Ask it to generate practice questions and quiz you, to check your understanding by having you explain a concept back, or to create flashcards and a study plan from your notes.',
+                        'This kind of active recall and spaced practice is exactly how learning sticks, and AI makes it effortless to generate on demand. It is like having a tutor available at midnight before an exam — one that never gets tired of your questions.',
+                    ]],
+                    ['heading' => 'For research and reading', 'paragraphs' => [
+                        'AI can summarise long readings so you know which sections to focus on, explain dense academic language, and help you find and understand sources faster. Tools built for research can answer questions with citations you can follow back to the original. This is a huge time-saver for wading through material.',
+                        'Two firm rules keep this honest and safe. First, never cite something you have not read yourself — AI can misrepresent or invent sources, so always verify against the original. Second, use summaries to guide your reading, not to replace it; the understanding you need for an exam only comes from engaging with the material yourself.',
+                    ]],
+                    ['heading' => 'For writing and organisation', 'paragraphs' => [
+                        'On writing, the ethical uses are real and valuable: brainstorm and structure an essay, get feedback on a draft you wrote, check grammar and clarity, and practise explaining your argument. What crosses the line is having AI write the content you submit as your own. A good test: if you could not defend and explain every sentence yourself, it is not really your work.',
+                        'For organisation, AI helps turn a syllabus into a revision timetable, break a big assignment into manageable steps with deadlines, and keep track of what is due. This is pure upside — better planning has never been academic misconduct, and it removes a lot of the stress that derails good students.',
+                    ]],
+                    ['heading' => 'Build skills AI cannot replace', 'paragraphs' => [
+                        'The students who will thrive are not the ones who avoid AI or the ones who let it do their thinking — they are the ones who use it to learn faster while deliberately building the skills it cannot replace: critical thinking, judgement, clear argument and genuine understanding. Those are exactly what exams, and later employers, actually test.',
+                        'So treat AI as the best study partner you have ever had, and keep ownership of the thinking. Let it explain, quiz, summarise and organise — and make sure the understanding, and the words you submit, are truly yours. Used that way, it is one of the most powerful learning tools ever made.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Use AI to understand, never to write what you submit',
+                    'Check your institution\'s AI policy and ask your tutor when unsure',
+                    'Have AI explain hard topics, then quiz you on them',
+                    'Turn notes into flashcards, practice questions and a study plan',
+                    'Use summaries to guide your reading, not replace it',
+                    'Never cite a source you have not read and verified yourself',
+                    'Use AI to structure and get feedback on work you wrote',
+                    'Keep ownership of the thinking and every sentence you hand in',
+                ],
+                'faq' => [
+                    ['question' => 'Is it cheating to use AI as a student?', 'answer' => 'It depends how you use it. Using AI to understand, quiz yourself, plan and get feedback is legitimate learning. Submitting AI-written work as your own is academic misconduct in most institutions. Check your school\'s policy.'],
+                    ['question' => 'What are the best AI tools for studying?', 'answer' => 'A general chat assistant works well as a tutor for explanations and practice questions; research tools that cite sources help with reading; and AI planners help turn a syllabus into a revision timetable.'],
+                    ['question' => 'Can I trust AI for research and citations?', 'answer' => 'Use it to find and summarise, but never cite a source you have not read yourself — AI can misrepresent or invent references. Always verify against the original.'],
+                    ['question' => 'How do I use AI without harming my learning?', 'answer' => 'Use it to understand and practise, keep ownership of the thinking, and build the skills it cannot replace — critical thinking, judgement and clear argument, which is what exams actually test.'],
+                ],
+            ],
+            [
+                'slug' => 'iphone-and-mac-productivity-hacks',
+                'title' => '21 iPhone and Mac Productivity Hacks Most People Never Discover',
+                'meta' => 'Hidden iPhone and Mac productivity features that save real time: Spotlight, text replacement, Shortcuts, Focus modes, Continuity and more — practical settings you can turn on today.',
+                'category' => 'Tech Tips',
+                'focus' => 'iPhone and Mac productivity hacks',
+                'secondary' => ['iPhone tips', 'Mac tips', 'Apple productivity', 'iOS shortcuts'],
+                'excerpt' => 'The built-in iPhone and Mac features that quietly save the most time — Spotlight, text replacement, Shortcuts, Focus and Continuity — with exactly how to use each.',
+                'date' => '2026-05-14',
+                'views' => 6200,
+                'sections' => [
+                    ['heading' => 'Master search before anything else', 'paragraphs' => [
+                        'The single fastest habit on both devices is search. On the Mac, pressing Command and the space bar opens Spotlight, which is far more than a file finder: it launches apps, does maths and unit conversions, checks the weather, and searches your files in one keystroke. Learning to reach for it instead of hunting through folders and the Dock quietly saves minutes every hour.',
+                        'On the iPhone, swiping down on the home screen opens the same kind of search to find apps, contacts and settings instantly — much faster than swiping through pages of icons. If you remember one thing from this article, make it this: stop navigating, start searching.',
+                    ]],
+                    ['heading' => 'Type less with text replacement and dictation', 'paragraphs' => [
+                        'Text replacement is a hidden gem. In Settings you can create shortcuts so that typing a few letters expands into a full phrase — your email address, your business details, a common reply. Set "@@" to expand to your email and you will never type it in full again. Because it syncs across your Apple devices, it works everywhere you type.',
+                        'Pair that with dictation. Tapping the microphone on the keyboard, or pressing the dictation key on a Mac, lets you speak instead of type, and modern accuracy is excellent. For longer messages, notes and emails, talking is often several times faster than thumbs — especially on the phone.',
+                    ]],
+                    ['heading' => 'Automate with Shortcuts and Focus modes', 'paragraphs' => [
+                        'The Shortcuts app is the closest thing to no-code automation on Apple devices, and most people never open it. You can build one-tap routines: a "Driving" shortcut that texts someone your ETA and starts a playlist, or a "Work" shortcut that opens the apps you always use together. Start with the ready-made gallery shortcuts and adapt one to your day.',
+                        'Focus modes are the antidote to constant interruption. Instead of a blunt Do Not Disturb, you can create a "Work" focus that only allows notifications from specific people and apps, and even changes your home screen to hide distractions. Schedule it for your working hours and your phone stops competing with your attention.',
+                    ]],
+                    ['heading' => 'Use Continuity across your devices', 'paragraphs' => [
+                        'If you have more than one Apple device, Continuity features are the quiet superpower. Universal Clipboard lets you copy text or an image on your phone and paste it straight onto your Mac. Handoff lets you start an email on one device and finish it on another. AirDrop moves files between devices in seconds without email or cables.',
+                        'Your Mac can also display and control your iPhone, send and receive its texts and calls, and use the iPhone as a high-quality webcam. These features remove the small frictions of moving between devices that most people just tolerate — turn them on once and the whole setup starts to feel like a single tool.',
+                    ]],
+                    ['heading' => 'Small settings with a big daily payoff', 'paragraphs' => [
+                        'A handful of quick wins: on the Mac, set up hot corners so a flick of the mouse shows your desktop or launches a screensaver lock; use multiple desktops (Spaces) to separate work and personal apps; and learn a few keyboard shortcuts for the apps you live in. On the iPhone, use the Back Tap accessibility feature to trigger an action by tapping the back of the phone, and set up a personal automation to do something automatically at a certain time or place.',
+                        'None of these are dramatic on their own, but productivity on Apple devices is death by a thousand cuts in reverse — a lot of tiny efficiencies that compound. Turn on a few this week, let them become habit, then add a few more. Within a month your devices will feel noticeably faster to work with, without spending a cent.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Use Spotlight (Cmd+Space) and iPhone search instead of hunting for things',
+                    'Set up text replacement for your email, phone and common phrases',
+                    'Dictate longer messages instead of typing them',
+                    'Build one-tap routines in the Shortcuts app',
+                    'Create a scheduled "Work" Focus mode to cut interruptions',
+                    'Use Universal Clipboard, Handoff and AirDrop across devices',
+                    'Set up Mac hot corners and multiple desktops (Spaces)',
+                    'Enable iPhone Back Tap and a time- or location-based automation',
+                ],
+                'faq' => [
+                    ['question' => 'What is the most useful hidden iPhone feature?', 'answer' => 'Text replacement and swipe-down search are two of the biggest time-savers. Text replacement expands short codes into full phrases everywhere you type, and search finds any app or setting instantly.'],
+                    ['question' => 'What does the Shortcuts app do?', 'answer' => 'It lets you build one-tap or automatic routines — like texting your ETA and starting music when you begin driving — without any coding. The built-in gallery is a good place to start.'],
+                    ['question' => 'What are Continuity features on Apple devices?', 'answer' => 'They connect your devices: copy on one and paste on another (Universal Clipboard), start a task on one and finish on another (Handoff), send files instantly (AirDrop), and use your iPhone as a Mac webcam.'],
+                    ['question' => 'How do Focus modes help productivity?', 'answer' => 'A Focus mode lets only chosen people and apps notify you and can hide distracting home-screen apps. Scheduled for your work hours, it stops your phone constantly interrupting you.'],
+                ],
+            ],
+            [
+                'slug' => 'passkeys-explained-passwordless-login',
+                'title' => 'Passkeys Explained: How Passwordless Login Works and Why It Is Safer',
+                'meta' => 'A clear, non-technical guide to passkeys: what they are, how passwordless login works, why they beat passwords against phishing, and how to start using them on your accounts today.',
+                'category' => 'Security',
+                'focus' => 'passkeys explained',
+                'secondary' => ['passwordless login', 'what are passkeys', 'passkey vs password', 'phishing protection'],
+                'excerpt' => 'What passkeys are, how passwordless login actually works, why they defeat phishing, and how to start replacing your passwords with them today.',
+                'date' => '2026-01-16',
+                'views' => 5900,
+                'sections' => [
+                    ['heading' => 'Why passwords had to go', 'paragraphs' => [
+                        'Passwords are the weakest link in most people\'s security. They get reused across sites, guessed, leaked in data breaches, and — most damagingly — handed straight to attackers through phishing pages that look like the real login. Even careful people get caught, because a convincing fake site can fool anyone having a bad day. The whole model asks humans to memorise dozens of long secrets and never be tricked, which was always going to fail.',
+                        'Passkeys are the industry\'s answer, backed by Apple, Google, Microsoft and the major standards bodies. They replace the shared secret with something fundamentally more secure, and the experience is actually easier: you sign in with your face, fingerprint or device PIN instead of typing anything.',
+                    ]],
+                    ['heading' => 'How a passkey actually works (in plain English)', 'paragraphs' => [
+                        'A passkey is a pair of cryptographic keys created for one specific website. One key (public) is stored by the website; the other (private) stays securely on your device and never leaves it. To log in, the website sends a challenge, your device signs it with the private key after you approve with your face, fingerprint or PIN, and the site verifies the signature. No shared secret is ever typed or transmitted.',
+                        'The crucial part: there is no password to steal, guess or leak. Even if the website is breached, attackers only get the useless public key. And because the private key never leaves your device and you approve with biometrics, there is nothing for you to remember and nothing to accidentally give away.',
+                    ]],
+                    ['heading' => 'Why passkeys defeat phishing', 'paragraphs' => [
+                        'This is the killer feature. A passkey is cryptographically tied to the real website\'s address. If you land on a convincing fake login page, your device simply will not offer the passkey, because the address does not match. The single most common way accounts are stolen — tricking someone into entering credentials on a lookalike site — stops working entirely.',
+                        'With passwords, staying safe depends on you spotting every fake site, every time, forever. With passkeys, the maths does the checking for you. That shift, from relying on constant human vigilance to relying on cryptography, is why security experts are so keen for everyone to adopt them.',
+                    ]],
+                    ['heading' => 'How to start using them today', 'paragraphs' => [
+                        'You almost certainly already have what you need — a modern phone or computer with biometric unlock. Many major services now offer passkeys: check the security settings of your important accounts (email, Apple/Google/Microsoft, and increasingly banks and social apps) for a "passkey" or "passwordless" option and set one up. It usually takes seconds and asks only for a face scan, fingerprint or PIN.',
+                        'Your passkeys can sync securely through your device\'s ecosystem, so a passkey created on your phone works on your other signed-in devices, and you can use your phone to sign in on a shared or work computer. Start with your most important accounts — your email above all, since it is the key to resetting everything else.',
+                    ]],
+                    ['heading' => 'What to keep in mind during the transition', 'paragraphs' => [
+                        'We are in a transition period, so a few practical notes. Not every site supports passkeys yet, so you will keep some passwords for now — use a password manager and unique passwords for those, and add passkeys wherever they are offered. Keep a recovery method set up for each account, and make sure you can still get in if you lose a device (device sync and account recovery options cover this).',
+                        'The direction of travel is clear: passwordless is where every major platform is heading, because it is both safer and simpler. You do not have to switch everything overnight — just turn on passkeys for your key accounts as you go, and enjoy logging in with a glance instead of a guess.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Understand a passkey replaces the password with keys, not a typed secret',
+                    'Know the private key never leaves your device',
+                    'Add passkeys to your most important account first — your email',
+                    'Look for "passkey" or "passwordless" in each account\'s security settings',
+                    'Rely on face, fingerprint or device PIN to approve sign-ins',
+                    'Keep unique passwords in a manager for sites without passkeys yet',
+                    'Set up account recovery in case you lose a device',
+                    'Add passkeys elsewhere as more services support them',
+                ],
+                'faq' => [
+                    ['question' => 'What is a passkey?', 'answer' => 'A passkey is a pair of cryptographic keys for one specific site. The private key stays on your device and you approve sign-in with your face, fingerprint or PIN — there is no password to type, steal or leak.'],
+                    ['question' => 'Are passkeys safer than passwords?', 'answer' => 'Yes, significantly. There is no shared secret to breach, and passkeys are tied to the real site\'s address, so phishing pages cannot capture them — which stops the most common way accounts are stolen.'],
+                    ['question' => 'How do I start using passkeys?', 'answer' => 'On a modern phone or computer with biometric unlock, open the security settings of your key accounts and look for a "passkey" or "passwordless" option. Start with your email account.'],
+                    ['question' => 'Do I still need passwords if I use passkeys?', 'answer' => 'For now, yes, because not every site supports passkeys. Use a password manager with unique passwords for those, and add passkeys everywhere they are offered.'],
+                ],
+            ],
+            [
+                'slug' => 'how-much-does-a-website-cost-ireland',
+                'title' => 'How Much Does a Website Cost in Ireland in 2026? An Honest Breakdown',
+                'meta' => 'A transparent guide to website costs in Ireland in 2026 — real price ranges for brochure sites, business sites and e-commerce, what drives the price, and the hidden ongoing costs.',
+                'category' => 'Web Design',
+                'focus' => 'website cost ireland',
+                'secondary' => ['how much does a website cost', 'website price ireland', 'web design cost', 'ecommerce website cost'],
+                'excerpt' => 'What a website really costs in Ireland in 2026 — honest price ranges by type, what pushes the price up or down, and the ongoing costs nobody warns you about.',
+                'date' => '2026-03-14',
+                'views' => 6900,
+                'sections' => [
+                    ['heading' => 'Why the answer is "it depends" — and what actually decides it', 'paragraphs' => [
+                        'Ask what a website costs and you will hear anything from a few hundred euro to tens of thousands, which is useless without context. The price is driven by a handful of real factors: how many pages and how much custom design, whether it is a simple brochure or a system that takes bookings or payments, how much content and photography you need created, and how much ongoing support you want afterwards.',
+                        'The other big variable is who builds it. A DIY builder, a freelancer, a small studio and a large agency will quote very differently for the same brief — not because one is ripping you off, but because you are buying different levels of strategy, custom work, reliability and aftercare. The ranges below assume a professional build that is fast, secure and designed to win enquiries, not just exist.',
+                    ]],
+                    ['heading' => 'Brochure & small business sites', 'paragraphs' => [
+                        'A professional small-business website — think 5 to 10 pages, custom-styled, mobile-first, with your services, contact forms and basic SEO set up — typically lands somewhere in the low-to-mid four figures in Ireland. That covers design, build, going live, and the technical basics done properly so it loads fast and ranks locally.',
+                        'You can pay far less with a template you assemble yourself, and that can be the right call when budget is tight and the site just needs to exist. The difference you are paying for at the professional level is conversion-focused design, correct technical SEO, speed, and someone accountable if something breaks — which usually pays for itself in enquiries.',
+                    ]],
+                    ['heading' => 'Lead-generation & content sites', 'paragraphs' => [
+                        'Once a site has to actively generate business — more pages, location or service landing pages, a blog set up for SEO, integrations with your CRM or email tools — you are into the mid-to-upper four figures, sometimes into five for larger or more competitive builds. This is where the website stops being a brochure and becomes a marketing asset.',
+                        'The value here is measured in leads, not pages. A well-built lead-generation site that ranks and converts can return its cost many times over, which is why businesses that live or die by enquiries invest more at this level. The right question is not "what is the cheapest?" but "what will pay for itself fastest?"',
+                    ]],
+                    ['heading' => 'E-commerce & custom systems', 'paragraphs' => [
+                        'Online shops and custom systems (booking platforms, portals, anything with logins and payments) start higher — mid four figures for a straightforward store and climbing well into five figures as product counts, payment and shipping rules, integrations and custom features grow. You are paying for secure payment handling, stock and order workflows, and reliability under real transactions.',
+                        'For e-commerce especially, cutting corners is expensive later: a checkout that loses sales, or a store that goes down on your busiest day, costs far more than the saving. This is the tier where getting a capable, security-minded builder matters most, because real money flows through it every day.',
+                    ]],
+                    ['heading' => 'The ongoing costs nobody mentions', 'paragraphs' => [
+                        'The build price is not the whole story. Budget for the recurring essentials: a domain name (small annual cost), hosting (from modest to significant depending on traffic and type), and — the one most people skip — ongoing maintenance. Websites are software; they need updates, backups, security monitoring and small fixes, or they slowly degrade and eventually break or get hacked.',
+                        'A sensible way to think about it: the build is the car, maintenance is the servicing. Skipping it saves nothing in the long run. Whether you handle updates yourself or put the site on a care plan, factor a monthly amount into your budget from day one — it is the difference between a website that keeps earning and one that quietly falls apart.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Define scope first: pages, custom design, and any bookings/payments',
+                    'Match the builder (DIY, freelancer, studio, agency) to the stakes',
+                    'Budget four figures for a professional small-business site',
+                    'Expect more for lead-gen sites with landing pages and integrations',
+                    'Budget higher (often five figures) for e-commerce and custom systems',
+                    'Add recurring costs: domain, hosting and — crucially — maintenance',
+                    'Judge value by leads and sales returned, not by lowest price',
+                    'Get the scope and what is included in writing before you commit',
+                ],
+                'faq' => [
+                    ['question' => 'How much does a small business website cost in Ireland?', 'answer' => 'A professional 5–10 page small-business site typically costs in the low-to-mid four figures, covering conversion-focused design, correct technical SEO, speed and going live. DIY templates cost far less but trade away strategy, custom work and aftercare.'],
+                    ['question' => 'How much does an e-commerce website cost?', 'answer' => 'Straightforward online stores usually start in the mid four figures and rise into five figures as products, payment/shipping rules, integrations and custom features grow, because you are paying for secure, reliable transaction handling.'],
+                    ['question' => 'What are the ongoing costs of a website?', 'answer' => 'A domain (small annual fee), hosting (modest to significant by traffic and type) and ongoing maintenance — updates, backups, security and fixes. Maintenance is the cost most people forget, and skipping it leads to slow, broken or hacked sites.'],
+                    ['question' => 'Why do website quotes vary so much?', 'answer' => 'Because scope and provider differ. Page count, custom design, bookings or payments, content creation and aftercare all move the price, and a freelancer, studio and agency each include different levels of strategy and reliability.'],
+                ],
+            ],
+            [
+                'slug' => 'is-seo-worth-it-for-small-business',
+                'title' => 'Is SEO Worth It for a Small Business in 2026? A Straight Answer',
+                'meta' => 'An honest look at whether SEO is worth it for a small business in 2026 — what it really delivers, how long it takes, what it costs, and when to choose ads or local SEO instead.',
+                'category' => 'SEO',
+                'focus' => 'is SEO worth it for small business',
+                'secondary' => ['small business SEO', 'local SEO', 'SEO vs ads', 'SEO return on investment'],
+                'excerpt' => 'Whether SEO actually pays off for a small business, how long it takes, what it costs, and when local SEO or ads are the smarter first move.',
+                'date' => '2026-04-20',
+                'views' => 5600,
+                'sections' => [
+                    ['heading' => 'The honest short answer', 'paragraphs' => [
+                        'For most small businesses, yes — SEO is worth it, but with two big caveats: it is a medium-to-long-term investment, not a quick win, and it is only worth it if it is done properly. Poor SEO, or a few blog posts with no strategy, is a waste of money. Done well, SEO delivers something ads cannot: a steady flow of people actively searching for what you sell, without paying for every click.',
+                        'The reason it works is intent. Someone searching "emergency plumber Cork" or "accountant for small business Dublin" is ready to act. Showing up there, for free, again and again, compounds over time into one of the best returns in marketing. But you have to be realistic about the timeline and do the fundamentals right.',
+                    ]],
+                    ['heading' => 'What SEO actually delivers (and does not)', 'paragraphs' => [
+                        'SEO delivers durable, compounding visibility. Unlike an ad that stops the moment you stop paying, a page that ranks keeps bringing visitors month after month. It also builds trust — people trust organic results and a credible website more than an ad — and it captures demand you would otherwise miss entirely.',
+                        'What SEO does not deliver is instant results or guaranteed positions. Anyone promising a "number one ranking next week" is not credible. It also will not save a business with no genuine value to offer; SEO amplifies a good business, it does not invent demand that is not there. Set expectations accordingly and it becomes a reliable channel rather than a disappointment.',
+                    ]],
+                    ['heading' => 'How long and how much', 'paragraphs' => [
+                        'Timeline: for a local small business, meaningful movement typically takes three to six months, with the compounding really showing after six to twelve. Competitive national terms take longer. This is why SEO suits businesses that will still be here next year — it is an asset you build, not a tap you turn on.',
+                        'Cost: it ranges from your own time (free but slow, and easy to get wrong) to a monthly retainer with a specialist. The key is that the fundamentals — a fast, well-structured site, genuinely useful pages targeting what people search for, and correct local setup — deliver most of the value. You do not need the biggest budget; you need the right work done consistently.',
+                    ]],
+                    ['heading' => 'Start with local and technical SEO', 'paragraphs' => [
+                        'For a small business, the highest-return SEO is usually the least glamorous. First, claim and fully complete your Google Business Profile — for local searches this alone can transform enquiries, and it is free. Second, make sure your website is technically sound: fast, mobile-friendly, secure, with clear titles and structure that search engines can understand.',
+                        'Then create genuinely useful pages for the specific things people search for in your area and niche — service pages, location pages, and answers to the real questions customers ask. This "boring" foundation beats chasing tricks, and it is exactly what a free on-page audit will tell you to fix first.',
+                    ]],
+                    ['heading' => 'When ads make more sense first', 'paragraphs' => [
+                        'SEO is not always the right first move. If you need customers this week, if you are testing a brand-new offer, or if your margins comfortably support paying per click, Google Ads gives you immediate visibility while SEO builds in the background. The smartest small businesses often run both: ads for immediate demand, SEO for the long-term, lower-cost foundation.',
+                        'So the real answer to "is SEO worth it?" is: yes, as a long-term investment in a durable asset, ideally alongside ads for the short term — provided the fundamentals are done properly. Get a technical and on-page audit first so you know exactly where you stand and what to fix. That is the honest, non-salesy starting point.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Treat SEO as a 6–12 month compounding investment, not a quick win',
+                    'Do the fundamentals properly or do not bother',
+                    'Claim and fully complete your Google Business Profile',
+                    'Make the site fast, mobile-friendly, secure and well-structured',
+                    'Create useful pages for what people actually search in your niche/area',
+                    'Ignore anyone guaranteeing instant number-one rankings',
+                    'Run Google Ads for immediate demand while SEO builds',
+                    'Start with a free technical + on-page audit to know your baseline',
+                ],
+                'faq' => [
+                    ['question' => 'Is SEO worth it for a small business?', 'answer' => 'For most, yes — as a medium-to-long-term investment done properly. It delivers durable, compounding traffic from people actively searching for what you sell, without paying per click. Poor or strategy-free SEO, however, is a waste.'],
+                    ['question' => 'How long does SEO take to work?', 'answer' => 'For a local small business, meaningful results usually take three to six months, with stronger compounding after six to twelve. Competitive national terms take longer. Anyone promising instant top rankings is not credible.'],
+                    ['question' => 'SEO or Google Ads — which should I do first?', 'answer' => 'Ads give immediate visibility and suit urgent needs or new offers; SEO builds a durable, lower-cost foundation over time. Many small businesses run both — ads now, SEO for the long game.'],
+                    ['question' => 'What is the highest-return SEO for a small business?', 'answer' => 'Usually local and technical basics: a complete Google Business Profile, a fast secure well-structured site, and useful pages for what people search in your area — not tricks or chasing volume.'],
+                ],
+            ],
+            [
+                'slug' => 'website-maintenance-checklist',
+                'title' => 'The Website Maintenance Checklist Every Business Should Follow',
+                'meta' => 'A practical website maintenance checklist — weekly, monthly and quarterly tasks for backups, updates, security, speed and SEO — to keep your site fast, safe and earning.',
+                'category' => 'Performance',
+                'focus' => 'website maintenance checklist',
+                'secondary' => ['website maintenance', 'website backups', 'site security', 'website updates'],
+                'excerpt' => 'The weekly, monthly and quarterly website maintenance tasks that keep a business site fast, secure and online — and stop small problems becoming expensive ones.',
+                'date' => '2026-05-08',
+                'views' => 4300,
+                'sections' => [
+                    ['heading' => 'Why maintenance is not optional', 'paragraphs' => [
+                        'A website is software, and like any software it decays without attention. Plugins and platforms release updates (often security fixes), traffic and content slow it down over time, certificates expire, forms silently break, and attackers constantly probe for the sites nobody is watching. Regular maintenance is the difference between a site that keeps earning and one that quietly falls apart — usually at the worst possible moment.',
+                        'The good news is that maintenance is mostly routine. A simple, repeatable schedule catches the vast majority of problems while they are still small and cheap to fix. Below is a practical checklist grouped by how often each task needs doing, so you can either run it yourself or hand it to whoever looks after your site.',
+                    ]],
+                    ['heading' => 'Weekly essentials', 'paragraphs' => [
+                        'Each week, confirm your backups actually ran and are stored off-site — an untested backup is not a backup. Check the site is up and loading correctly on both desktop and mobile, and submit a test enquiry through your contact form to make sure leads are still reaching you (broken forms are a silent, costly failure). Glance at your security or uptime monitoring for anything unusual.',
+                        'These take minutes but cover the failures that hurt most: lost data, downtime, and missed enquiries. If you do nothing else, do these — and automate the monitoring so you are told about problems rather than discovering them by accident.',
+                    ]],
+                    ['heading' => 'Monthly upkeep', 'paragraphs' => [
+                        'Monthly, apply updates to your platform, themes and plugins — after taking a backup and, ideally, testing on a staging copy first. Remove any plugins or themes you are not using, because unused, outdated code is the most common way sites get hacked. Run a security scan, check your SSL certificate is valid and not near expiry, and review site speed on a key page.',
+                        'This is also a good time to check for broken links and to review your forms and any integrations end to end. A monthly rhythm keeps the site current and secure without ever letting a big backlog of updates build up — which is exactly when updates start breaking things.',
+                    ]],
+                    ['heading' => 'Quarterly deep checks', 'paragraphs' => [
+                        'Every quarter, go deeper: run a full performance and Core Web Vitals review and act on the biggest issues, audit your content for anything out of date (prices, offers, team, opening hours), and review your SEO — rankings, top pages, and any technical errors flagged in Search Console. Test your backup by actually restoring it somewhere safe, so you know it works before you ever need it.',
+                        'Quarterly is also the right cadence to review access: who has admin logins, are passwords strong and unique, is two-factor authentication on. People change, and stale accounts are a real risk. These deeper checks catch the slower forms of decay that weekly and monthly tasks miss.',
+                    ]],
+                    ['heading' => 'Do it yourself or put it on autopilot', 'paragraphs' => [
+                        'You can absolutely run this checklist yourself — the key is consistency, because maintenance only works when it actually happens. Put the tasks in your calendar, keep a simple log of what you did and when, and never skip the backup-before-updating step. That discipline alone prevents most website disasters.',
+                        'If it keeps slipping — and for busy owners it usually does — this is exactly what a care plan is for: someone else runs the schedule, keeps the logs, and is accountable if something breaks. However you do it, the principle is the same: small, regular attention is far cheaper than a big emergency. Treat your website like the business asset it is.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Weekly: verify off-site backups ran',
+                    'Weekly: check the site loads on desktop and mobile',
+                    'Weekly: submit a test enquiry to confirm forms work',
+                    'Monthly: back up, then update platform, themes and plugins',
+                    'Monthly: remove unused plugins/themes; run a security scan',
+                    'Monthly: check SSL validity, broken links and page speed',
+                    'Quarterly: full performance, content and SEO review',
+                    'Quarterly: test-restore a backup and review admin access/2FA',
+                ],
+                'faq' => [
+                    ['question' => 'How often should a website be maintained?', 'answer' => 'Use a mix: weekly checks (backups, uptime, forms), monthly upkeep (updates, security scan, SSL, speed) and quarterly deep reviews (performance, content, SEO, access). Consistency matters more than any single task.'],
+                    ['question' => 'What is the most important maintenance task?', 'answer' => 'Reliable, tested, off-site backups — plus taking a backup before every update. They are what let you recover quickly from a bad update, a hack or a server failure.'],
+                    ['question' => 'Why do I need to update plugins and themes?', 'answer' => 'Updates often contain security fixes. Outdated or unused plugins and themes are the single most common way small websites get hacked, so keeping them current (and removing unused ones) is essential.'],
+                    ['question' => 'Should I do maintenance myself or pay for it?', 'answer' => 'Either works if it happens consistently. Doing it yourself is free but easy to let slip; a care plan puts it on autopilot with logs and accountability, which is why busy owners tend to outsource it.'],
+                ],
+            ],
+            [
+                'slug' => 'chatgpt-vs-gemini-vs-claude',
+                'title' => 'ChatGPT vs Gemini vs Claude: Which AI Wins for Which Task in 2026?',
+                'meta' => 'A practical three-way comparison of ChatGPT, Gemini and Claude in 2026 — strengths, weaknesses and the best pick for writing, research, coding, images and everyday use.',
+                'category' => 'AI Tools',
+                'focus' => 'ChatGPT vs Gemini vs Claude',
+                'secondary' => ['Gemini vs ChatGPT', 'Claude vs Gemini', 'best AI assistant 2026', 'AI comparison'],
+                'excerpt' => 'How the big three AI assistants compare in 2026 — and which to reach for depending on whether you are writing, researching, coding or generating images.',
+                'date' => '2026-01-09',
+                'views' => 7200,
+                'sections' => [
+                    ['heading' => 'Three excellent tools with different personalities', 'paragraphs' => [
+                        'ChatGPT, Google Gemini and Anthropic Claude are the three assistants most people compare in 2026, and all three are genuinely capable. The differences are less about raw intelligence — which is close — and more about personality, ecosystem and where each is strongest. The right choice depends far more on what you do than on any benchmark.',
+                        'The practical approach is to know each one\'s sweet spot and route tasks accordingly. All three have capable free tiers, so you can keep accounts on more than one and use whichever suits the job. Here is how they tend to differ in real use.',
+                    ]],
+                    ['heading' => 'For writing and careful reasoning', 'paragraphs' => [
+                        'Claude is widely favoured for natural writing and careful reasoning over long documents — many people find its default tone the most human and least generic, and it follows nuanced instructions about voice closely. ChatGPT is a superb, highly flexible all-rounder with a huge ecosystem of custom versions. Gemini writes well too and is competitive, particularly when you need very long inputs handled at once.',
+                        'If your work is mostly words — drafting, editing, summarising, thinking things through — test Claude and ChatGPT head to head on a real task and keep whichever voice you correct the least. That personal fit matters more than any published comparison.',
+                    ]],
+                    ['heading' => 'For research and the Google ecosystem', 'paragraphs' => [
+                        'Gemini\'s natural advantage is its integration with Google. If you live in Gmail, Docs, Sheets and Search, having AI built into those tools and connected to live Google information is genuinely convenient. For research, all three offer web-connected modes, but you should always insist on clickable sources and verify anything time-sensitive yourself, whichever you use.',
+                        'For pure cited research, dedicated tools also compete strongly, but among the big three, Gemini is the natural pick for anyone already deep in Google\'s ecosystem, while ChatGPT and Claude are excellent general researchers when pointed at the web.',
+                    ]],
+                    ['heading' => 'For coding and images', 'paragraphs' => [
+                        'For programming, Claude and ChatGPT are both strong and popular with developers; many keep both open and pick per task. Paste the real error and relevant code for the fastest help. Gemini is a capable coder too, especially within Google\'s developer tooling. Honestly, for most coding tasks, all three will serve you well.',
+                        'For images, ChatGPT and Gemini both generate images from text on their consumer apps, with quality that shifts every few months, while Claude focuses on text and analysis rather than image generation. If image creation is a priority, ChatGPT or Gemini are the ones to test with your own detailed prompts.',
+                    ]],
+                    ['heading' => 'A simple routing guide', 'paragraphs' => [
+                        'Keep it practical. Reach for Claude when the output is writing or reasoning over long documents and tone matters. Reach for Gemini when you want AI woven into Google apps or connected to live Google data. Reach for ChatGPT when you want the widest set of built-in features — images, voice, data analysis — in one place, or a huge ecosystem of ready-made assistants.',
+                        'The people getting the most from AI are rarely loyal to one brand. Keep a free account on at least two, learn each one\'s strengths, and send every task to whichever does it best. That habit — matching tool to task — beats endlessly debating which single assistant is "the best".',
+                    ]],
+                ],
+                'checklist' => [
+                    'Pick by task and personality, not by leaderboard',
+                    'Use Claude for natural writing and long-document reasoning',
+                    'Use Gemini when you live in Google apps or need live Google data',
+                    'Use ChatGPT for the widest feature set (images, voice, data, custom bots)',
+                    'For coding, try Claude and ChatGPT and pick per task',
+                    'For image generation, test ChatGPT or Gemini with detailed prompts',
+                    'Always verify AI research against clickable sources',
+                    'Keep free accounts on at least two and route tasks to the best fit',
+                ],
+                'faq' => [
+                    ['question' => 'Which is best: ChatGPT, Gemini or Claude?', 'answer' => 'None wins outright. Claude leads for natural writing and long documents, Gemini for Google-ecosystem integration and live data, and ChatGPT for the widest feature set. Choose by the task in front of you.'],
+                    ['question' => 'Which AI is best for writing?', 'answer' => 'Claude is often preferred for a natural, human tone and careful instruction-following, with ChatGPT a close, very flexible second. Test both on a real writing task and keep the voice you edit least.'],
+                    ['question' => 'Which AI is best inside Google apps?', 'answer' => 'Gemini, thanks to its integration with Gmail, Docs, Sheets and Search and its connection to live Google information — a real convenience if you already work in those tools.'],
+                    ['question' => 'Do I need to pay for all three?', 'answer' => 'No. All three have capable free tiers. Keep accounts on at least two, use them for their strengths, and only pay where a specific limit or feature genuinely blocks your work.'],
+                ],
+            ],
+            [
+                'slug' => 'two-factor-authentication-guide',
+                'title' => 'Two-Factor Authentication: The 10-Minute Upgrade That Stops Most Account Hacks',
+                'meta' => 'A plain-English guide to two-factor authentication (2FA): how it works, why authenticator apps beat SMS, which accounts to protect first, and how to avoid getting locked out.',
+                'category' => 'Security',
+                'focus' => 'two-factor authentication',
+                'secondary' => ['2FA guide', 'authenticator app', 'account security', 'protect online accounts'],
+                'excerpt' => 'How two-factor authentication works, why authenticator apps beat SMS, which accounts to secure first, and how to set it up without ever locking yourself out.',
+                'date' => '2026-02-11',
+                'views' => 6100,
+                'sections' => [
+                    ['heading' => 'What 2FA is and why it matters so much', 'paragraphs' => [
+                        'Two-factor authentication (2FA) adds a second step to logging in: after your password, you also confirm with something you have — usually a code from an app on your phone. The point is simple but powerful. Even if an attacker steals or guesses your password, they still cannot get in without that second factor, which is sitting in your pocket.',
+                        'This matters because passwords leak constantly, in breaches far outside your control. 2FA turns a leaked password from a disaster into a non-event. It is genuinely the single highest-impact security step most people can take, it takes about ten minutes to set up on your important accounts, and it is free.',
+                    ]],
+                    ['heading' => 'Authenticator apps beat SMS', 'paragraphs' => [
+                        'There are a few types of 2FA, and they are not equal. Codes sent by SMS text are better than no 2FA, but they are the weakest option because attackers can hijack your phone number through "SIM-swap" scams and intercept the codes. If a service only offers SMS, use it — but prefer something stronger where you can.',
+                        'The sweet spot for most people is an authenticator app, which generates a rotating six-digit code on your phone with no network needed and nothing to intercept. The strongest option of all is a hardware security key or a passkey, which are essentially immune to phishing. For everyday accounts, an authenticator app is the practical, secure choice.',
+                    ]],
+                    ['heading' => 'Protect these accounts first', 'paragraphs' => [
+                        'You do not have to secure everything at once — start where the damage would be greatest. Your email account is number one, always, because it can reset the passwords of almost everything else; if an attacker owns your email, they own your digital life. After email, secure your password manager, your bank and financial accounts, and your main social and business logins.',
+                        'Then work outward to anything with payment details or personal data. Within an evening you can have every account that actually matters protected. The effort is front-loaded and small; the protection is permanent.',
+                    ]],
+                    ['heading' => 'Do not lock yourself out', 'paragraphs' => [
+                        'The one real risk with 2FA is losing access to your second factor — for example, losing or replacing your phone. Plan for it up front. When you enable 2FA, services give you a set of one-time backup codes; save these somewhere safe and offline (printed, or in your password manager). They are your way back in if your phone is gone.',
+                        'It also helps to use an authenticator app that securely backs up or syncs your codes across devices, or to register a second factor (like a spare key or a second device). Set this up when you turn 2FA on, not after something goes wrong. With backups in place, the "what if I lose my phone?" worry disappears.',
+                    ]],
+                    ['heading' => 'Ten minutes well spent', 'paragraphs' => [
+                        'Put simply: turn on 2FA, prefer an authenticator app over SMS, start with your email, and save your backup codes. That is the whole game. It is the rare security measure that is both extremely effective and genuinely quick, and it defends against the most common way ordinary people get hacked — a leaked or guessed password.',
+                        'If you run a business, insist on 2FA for every admin account on your website, hosting and tools, too — a single unprotected admin login is how many small-business sites get compromised. Ten minutes per account, and you close the door that most attacks walk through.',
+                    ]],
+                ],
+                'checklist' => [
+                    'Turn on 2FA for every important account',
+                    'Prefer an authenticator app over SMS codes',
+                    'Use a hardware key or passkey for the highest-value accounts',
+                    'Secure your email account first — it resets everything else',
+                    'Then protect your password manager, bank and main logins',
+                    'Save your one-time backup codes somewhere safe and offline',
+                    'Register a second device or key so you are not locked out',
+                    'Require 2FA on all business admin, hosting and tool logins',
+                ],
+                'faq' => [
+                    ['question' => 'What is two-factor authentication?', 'answer' => 'It adds a second login step after your password — usually a code from an app on your phone — so a stolen or guessed password alone is not enough for an attacker to get into your account.'],
+                    ['question' => 'Is an authenticator app better than SMS?', 'answer' => 'Yes. SMS codes can be intercepted via SIM-swap scams. An authenticator app generates codes on your device with nothing to intercept, and hardware keys or passkeys are stronger still.'],
+                    ['question' => 'Which account should I protect with 2FA first?', 'answer' => 'Your email, always — it can reset the passwords of almost every other account. After email, secure your password manager, bank and main business and social logins.'],
+                    ['question' => 'What if I lose the phone with my 2FA?', 'answer' => 'Save the one-time backup codes each service gives you when you enable 2FA, and register a second device or key. With those in place you can always recover access.'],
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $p
+     * @return array<string, mixed>
+     */
+    private function assembleCustomPost(array $p): array
+    {
+        $sections = $p['sections'];
+        $plain = $p['title'] . ' ' . implode(' ', array_map(
+            static fn (array $s): string => $s['heading'] . ' ' . implode(' ', $s['paragraphs']),
+            $sections
+        ));
+        $wordCount = str_word_count(strip_tags($plain));
+
+        return [
+            'slug' => $p['slug'],
+            'title' => $p['title'],
+            'seo_title' => $p['title'],
+            'meta_description' => $p['meta'],
+            'category' => $p['category'],
+            'focus_keyword' => $p['focus'],
+            'secondary_keywords' => $p['secondary'],
+            'excerpt' => $p['excerpt'],
+            'reading_time' => max(6, (int) ceil($wordCount / 210)) . ' min read',
+            'word_count' => $wordCount,
+            'views' => $p['views'] ?? 1800,
+            'published_at' => $p['date'],
+            'updated_at' => $p['date'],
+            'body_sections' => $sections,
+            'body' => array_merge(...array_map(static fn (array $s): array => $s['paragraphs'], $sections)),
+            'checklist' => $p['checklist'],
+            'faq' => $p['faq'],
+        ];
     }
 
     private function blogTopics(): array
@@ -1255,6 +2332,9 @@ final class ContentRepository
             $sections
         ));
         $wordCount = str_word_count(strip_tags($plainText));
+        // Stagger publish dates ~16 days apart going back from mid-May 2026 so
+        // the archive reads like a real, ongoing blog rather than a single dump.
+        $published = $topic[8] ?? gmdate('Y-m-d', mktime(0, 0, 0, 5, 15, 2026) - $index * 16 * 86400);
 
         return [
             'slug' => $slug,
@@ -1268,8 +2348,8 @@ final class ContentRepository
             'reading_time' => max(12, (int) ceil($wordCount / 210)) . ' min read',
             'word_count' => $wordCount,
             'views' => 2400 + ($index * 615),
-            'published_at' => '2026-07-01',
-            'updated_at' => '2026-07-01',
+            'published_at' => $published,
+            'updated_at' => $published,
             'body_sections' => $sections,
             'body' => array_merge(...array_map(static fn (array $section): array => $section['paragraphs'], $sections)),
             'checklist' => $this->articleChecklist($focusKeyword, $trend, $commercialGoal),

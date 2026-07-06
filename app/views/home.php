@@ -1,4 +1,11 @@
-<section class="hero section-bleed">
+<section class="hero section-bleed" data-hero>
+    <div class="hero-backdrop" aria-hidden="true">
+        <span class="hero-orb orb-a"></span>
+        <span class="hero-orb orb-b"></span>
+        <span class="hero-orb orb-c"></span>
+        <span class="hero-gridlines"></span>
+        <span class="hero-spotlight"></span>
+    </div>
     <div class="vertical-social">
         <span>Let's connect</span>
         <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
@@ -6,10 +13,23 @@
         <a href="#"><i class="fa-brands fa-telegram"></i></a>
         <a href="#"><i class="fa-solid fa-envelope"></i></a>
     </div>
+    <?php
+        $hero = $hero ?? [];
+        $servingList = !empty($hero['serving']) && is_array($hero['serving'])
+            ? $hero['serving']
+            : [
+                ['flag' => '/assets/images/flags/ie.svg', 'label' => 'Ireland'],
+                ['flag' => '/assets/images/flags/gb.svg', 'label' => 'UK'],
+                ['flag' => '/assets/images/flags/us.svg', 'label' => 'USA'],
+                ['flag' => '/assets/images/flags/eu.svg', 'label' => 'Europe'],
+                ['flag' => '/assets/images/flags/in.svg', 'label' => 'India'],
+                ['flag' => '/assets/images/flags/world.svg', 'label' => 'And Beyond'],
+            ];
+    ?>
     <div class="hero-copy">
-        <div class="status-chip"><span></span> Remote. Precise. Built For Growth. <i class="fa-solid fa-mountain"></i></div>
-        <h1>We Build Digital Systems That Work. <span>Scale.</span> And <span>Make Money.</span></h1>
-        <p>Websites, PHP platforms, ecommerce, apps, SEO and AI workflows engineered for fast loading, clearer decisions and qualified demand.</p>
+        <div class="status-chip"><span></span> <?= e($hero['chip_text'] ?? 'Remote. Precise. Built For Growth.') ?> <i class="fa-solid fa-mountain"></i></div>
+        <h1><?= strip_tags((string) ($hero['headline'] ?? 'We Build Digital Systems That Work. <span>Scale.</span> And <span>Make Money.</span>'), '<span>') ?></h1>
+        <p><?= e($hero['subheading'] ?? 'Websites, PHP platforms, ecommerce, apps, SEO and AI workflows engineered for fast loading, clearer decisions and qualified demand.') ?></p>
         <div class="hero-service-grid" aria-label="Core services">
             <a href="/services/website-development"><i class="fa-solid fa-laptop-code"></i><span>Web Platforms</span></a>
             <a href="/services/app-development"><i class="fa-solid fa-mobile-screen-button"></i><span>Apps &amp; Portals</span></a>
@@ -17,34 +37,128 @@
             <a href="/services/performance-optimization"><i class="fa-solid fa-chart-line"></i><span>Conversion UX</span></a>
         </div>
         <div class="button-row">
-            <a class="pill-button" href="/portfolio">View My Work <i class="fa-solid fa-arrow-right"></i></a>
-            <a class="pill-button ghost" href="/free-penetration-testing-tools">Free Security Tools <i class="fa-solid fa-shield-halved"></i></a>
+            <a class="pill-button" href="<?= e($hero['cta_primary_url'] ?? '/portfolio') ?>"><?= e($hero['cta_primary_label'] ?? 'View My Work') ?> <i class="fa-solid fa-arrow-right"></i></a>
+            <a class="pill-button ghost" href="<?= e($hero['cta_secondary_url'] ?? '/free-penetration-testing-tools') ?>"><?= e($hero['cta_secondary_label'] ?? 'Free Security Tools') ?> <i class="fa-solid fa-shield-halved"></i></a>
         </div>
-        <div class="hero-trust-strip" aria-label="Trusted by clients in">
-            <span>Serving Clients In</span>
-            <b>Ireland</b>
-            <b>UK</b>
-            <b>USA</b>
-            <b>Europe</b>
-            <b><i class="fa-solid fa-globe"></i> And Beyond</b>
+        <div class="hero-trust-strip" aria-label="Serving clients worldwide">
+            <span><?= e($hero['serving_label'] ?? 'Serving Clients In') ?></span>
+            <?php foreach ($servingList as $svc): ?>
+            <?php $svcFlag = (string) ($svc['flag'] ?? ''); ?>
+            <b><?php if ($svcFlag !== ''): ?><?php if (str_starts_with($svcFlag, '/') || str_starts_with($svcFlag, 'http')): ?><img class="flag-img" src="<?= e($svcFlag) ?>" alt="" width="24" height="16" loading="lazy"> <?php else: ?><span class="flag" aria-hidden="true"><?= e($svcFlag) ?></span> <?php endif; ?><?php endif; ?><?= e($svc['label'] ?? '') ?></b>
+            <?php endforeach; ?>
         </div>
-    </div>
-    <div class="hero-panels">
-        <a class="email-neon-sign" href="mailto:ank.kalia@gmail.com">
-            <span>DIRECT SIGNAL</span>
-            <strong><i class="fa-solid fa-circle-check"></i> ank.kalia@gmail.com</strong>
-            <small><i class="fa-solid fa-location-dot"></i> Dublin + Shimla</small>
-        </a>
-        <div class="live-card">
-            <span>LOCAL TIME</span>
-            <strong id="localTime">10:30 AM</strong>
-            <em>Online &amp; Available</em>
-            <div class="mountain-hike" aria-hidden="true">
-                <span class="mountain-back"></span>
-                <span class="mountain-front"></span>
-                <span class="hiker"></span>
+        <?php
+            $tickerItems = !empty($hero['ticker']) && is_array($hero['ticker']) ? $hero['ticker'] : [
+                '99.9% uptime architecture',
+                'Core Web Vitals: green',
+                'A+ security headers',
+                'GDPR-ready builds',
+                '300+ projects delivered',
+                '24/7 monitoring & support',
+            ];
+        ?>
+        <div class="hero-ticker" aria-hidden="true">
+            <div class="hero-ticker-track">
+                <?php for ($pass = 0; $pass < 2; $pass++): foreach ($tickerItems as $tick): ?>
+                    <span><i class="fa-solid fa-circle-check"></i> <?= e($tick) ?></span>
+                <?php endforeach; endfor; ?>
             </div>
         </div>
+    </div>
+    <?php
+        $heroContact = $contact ?? [];
+        $signalEmail = $heroContact['email'] ?? 'ank.kalia@gmail.com';
+        $signalLine = $heroContact['signal_line'] ?? 'Dublin + Shimla';
+    ?>
+    <div class="hero-panels">
+        <a class="email-neon-sign" data-tilt href="mailto:<?= e($signalEmail) ?>" aria-label="Email <?= e($signalEmail) ?>">
+            <span class="signal-label"><b class="live-dot"></b> DIRECT SIGNAL</span>
+            <strong><i class="fa-solid fa-circle-check"></i> <?= e($signalEmail) ?></strong>
+            <small><i class="fa-solid fa-location-dot"></i> <?= e($signalLine) ?></small>
+            <span class="signal-scan" aria-hidden="true"></span>
+            <b class="hud-corners" aria-hidden="true"></b>
+            <span class="tilt-glare" aria-hidden="true"></span>
+        </a>
+        <div class="live-card" data-tilt>
+            <span>LOCAL TIME</span>
+            <strong id="localTime">10:30 AM</strong>
+            <em><b class="live-dot online"></b> Online &amp; Available</em>
+            <div class="mountain-hike" aria-hidden="true">
+                <span class="sky-sun"></span>
+                <span class="mountain-back"></span>
+                <span class="mountain-front"></span>
+                <span class="hiker"><b class="hiker-pole"></b></span>
+            </div>
+            <b class="hud-corners" aria-hidden="true"></b>
+            <span class="tilt-glare" aria-hidden="true"></span>
+        </div>
+    </div>
+    <a class="hero-scroll-cue" href="#services" aria-label="Scroll to services">
+        <span class="cue-mouse"><b></b></span>
+        <i class="fa-solid fa-chevron-down"></i>
+    </a>
+</section>
+
+<section class="section reveal growth-cta" id="growth-lab" aria-labelledby="growth-cta-title">
+    <?php $growthCta = $growthCta ?? []; ?>
+    <div class="growth-cta-glow" aria-hidden="true"></div>
+    <div class="growth-cta-head">
+        <span class="status-chip"><span></span> <?= e($growthCta['chip_text'] ?? 'Growth Lab Pro · Tools Membership') ?></span>
+        <h2 id="growth-cta-title"><?= strip_tags((string) ($growthCta['headline'] ?? 'Register Free. Go Pro. <span>Own Your Website\'s Growth.</span>'), '<span>') ?></h2>
+        <p><?= e($growthCta['subheading'] ?? 'Create a free account to unlock the toolkit — then upgrade to the Tools Membership for unlimited audits, white-label reports and always-on monitoring. Built to pay for itself with a single won client.') ?></p>
+    </div>
+
+    <div class="growth-cta-grid">
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-infinity"></i>
+            <h3>Unlimited audits</h3>
+            <p>The deepest free on-page &amp; technical SEO audit in Ireland &mdash; 28+ weighted checks &mdash; plus security headers, TLS, DNS and speed scans. Run them as often as you like.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-file-invoice"></i>
+            <h3>White-label PDF reports</h3>
+            <p>Drop in your own agency name and logo, then export clean, client-ready PDF reports you can send &mdash; or resell &mdash; as your own.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-satellite-dish"></i>
+            <h3>Always-on monitoring</h3>
+            <p>We re-check your sites on a schedule and email you the moment SEO, security or performance regresses &mdash; so you fix it before clients notice.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+            <h3>Search Console import</h3>
+            <p>Connect Google Search Console for real queries, clicks and top pages, with backlink import by CSV &mdash; your true search data in one dashboard.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <h3>AI content assistant</h3>
+            <p>Generate unlimited SEO meta descriptions, title tags, blog outlines, FAQs, product copy, social posts and CTAs from a single keyword.</p>
+        </article>
+        <article class="cyber-card growth-perk">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h3>Ethical hacking toolkit</h3>
+            <p>Scan your own sites for exposed files, weak headers, expiring certificates and spoofable email &mdash; then harden them with a prioritised fix list.</p>
+        </article>
+    </div>
+
+    <div class="growth-cta-foot">
+        <div class="growth-cta-price">
+            <span class="growth-price-tag">&euro;25<b>/mo</b></span>
+            <span class="growth-price-alt">or &euro;200/year &mdash; save &euro;100. Cancel anytime.</span>
+        </div>
+        <div class="growth-cta-actions">
+            <a class="pill-button" href="/tools-pricing">Get Growth Lab Pro <i class="fa-solid fa-crown"></i></a>
+            <?php if (empty($_SESSION['member'])): ?>
+                <button class="pill-button ghost" type="button" data-open-register>Register Free <i class="fa-solid fa-user-plus"></i></button>
+            <?php else: ?>
+                <a class="pill-button ghost" href="/account/dashboard">Open Your Dashboard <i class="fa-solid fa-arrow-right"></i></a>
+            <?php endif; ?>
+        </div>
+        <ul class="growth-cta-trust">
+            <li><i class="fa-solid fa-circle-check"></i> 3 free scans every day, no card needed</li>
+            <li><i class="fa-solid fa-circle-check"></i> Save &amp; track your reports</li>
+            <li><i class="fa-solid fa-circle-check"></i> Secure Stripe &amp; PayPal checkout</li>
+        </ul>
     </div>
 </section>
 
@@ -216,27 +330,27 @@
     </div>
 </section>
 
-<section class="section reveal">
-    <div class="panel-head">
-        <h2>Some Of Our Latest Work</h2>
-        <div class="filters"><button>All</button><button>Websites</button><button>Web Apps</button><button>Mobile Apps</button><button>E-Commerce</button></div>
+<?php $clients = $clients ?? []; ?>
+<?php if (!empty($clients)): ?>
+<section class="section reveal clients-section">
+    <div class="section-heading">
+        <span class="kicker">Trusted By</span>
+        <h2>Brands We've Built, Ranked And Automated</h2>
+        <p>Real websites, SEO audits and business-workflow automation delivered for growing companies across Ireland and beyond.</p>
     </div>
-    <div class="portfolio-grid">
-        <?php foreach ($portfolio as $index => $item): ?>
-            <article class="portfolio-card accent-<?= e($item['accent']) ?>">
-                <div class="portfolio-art <?= !empty($item['image']) ? 'portfolio-shot' : 'art-' . ($index + 1) ?>"<?= !empty($item['image']) ? ' style="--portfolio-image: url(\'' . e(asset('images/portfolio/' . $item['image'])) . '\')"' : '' ?>></div>
-                <h3><?= e($item['title']) ?></h3>
-                <p><?= e($item['summary']) ?></p>
-                <span><i class="fa-solid fa-window-maximize"></i><?= e($item['category']) ?></span>
-                <?php if (!empty($item['url'])): ?>
-                    <a class="small-link portfolio-live-link" href="<?= e($item['url']) ?>" target="_blank" rel="noopener">
-                        Visit site <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    </a>
-                <?php endif; ?>
-            </article>
+    <div class="clients-wall">
+        <?php foreach ($clients as $client): ?>
+            <div class="client-logo-tile" title="<?= e($client['name']) ?> — <?= e($client['industry']) ?>">
+                <img src="<?= e($client['logo']) ?>" alt="<?= e($client['name']) ?> logo" loading="lazy" width="220" height="82">
+            </div>
         <?php endforeach; ?>
     </div>
+    <div class="clients-cta">
+        <a class="pill-button ghost" href="/portfolio">See the case studies <i class="fa-solid fa-arrow-right"></i></a>
+        <small><i class="fa-solid fa-lock"></i> Detailed case studies are private to signed-in clients &amp; partners.</small>
+    </div>
 </section>
+<?php endif; ?>
 
 <section class="section reveal">
     <div class="section-heading left"><h2>What Clients Say</h2></div>
@@ -260,25 +374,6 @@
                 <p><?= e($post['excerpt']) ?></p>
             </article>
         <?php endforeach; ?>
-    </div>
-</section>
-
-<section class="home-tools-cta code-shop-home-cta reveal">
-    <div class="home-tools-cta-copy">
-        <span class="kicker">Digital Code Shop</span>
-        <h2>Launch a camera-first ordering product without starting from zero.</h2>
-        <p>Buy the Photo To Key PHP package: a complete webapp with browser camera upload, backend order flow, VAT and shipping fields, payment hooks and a Core Web Vitals-ready frontend.</p>
-        <div class="button-row">
-            <a class="pill-button" href="/code-shop/photo-to-key-php-website-backend">View Product <i class="fa-solid fa-arrow-right"></i></a>
-            <a class="pill-button ghost" href="/code-shop">Open Code Shop <i class="fa-solid fa-cart-shopping"></i></a>
-        </div>
-    </div>
-    <div class="home-tools-orbit code-shop-orbit" aria-hidden="true">
-        <span><i class="fa-solid fa-camera"></i></span>
-        <span><i class="fa-solid fa-key"></i></span>
-        <span><i class="fa-solid fa-credit-card"></i></span>
-        <span><i class="fa-solid fa-truck"></i></span>
-        <strong>CODE</strong>
     </div>
 </section>
 

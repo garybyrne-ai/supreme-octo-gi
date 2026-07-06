@@ -1,18 +1,4 @@
-@font-face {
-    font-family: "Oxanium";
-    font-style: normal;
-    font-weight: 400 800;
-    font-display: swap;
-    src: url("../fonts/oxanium-latin.woff2") format("woff2");
-}
-
-@font-face {
-    font-family: "Raleway";
-    font-style: normal;
-    font-weight: 400 800;
-    font-display: swap;
-    src: url("../fonts/raleway-latin.woff2") format("woff2");
-}
+/* Oxanium & Raleway are loaded from Google Fonts in the layout <head>. */
 
 :root {
     --bg: #02040c;

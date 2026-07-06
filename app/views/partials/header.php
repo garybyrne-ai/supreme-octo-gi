@@ -5,10 +5,23 @@ $headerContact = $headerRepository->contact();
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $isServicesPath = str_starts_with($currentPath, '/services');
 $isShopPath = str_starts_with($currentPath, '/code-shop');
+$isStorePath = str_starts_with($currentPath, '/code-shop')
+    || str_starts_with($currentPath, '/membership')
+    || str_starts_with($currentPath, '/backlinks')
+    || str_starts_with($currentPath, '/website-care-plans')
+    || str_starts_with($currentPath, '/website-audit')
+    || str_starts_with($currentPath, '/speed-rescue')
+    || $currentPath === '/tools-pricing';
+$isCompanyPath = in_array($currentPath, ['/about', '/portfolio', '/process', '/blog', '/support', '/contact'], true)
+    || str_starts_with($currentPath, '/blog/');
 $isToolsPath = in_array($currentPath, [
     '/tools',
     '/seo-tools',
+    '/site-crawler',
     '/serp-checker',
+    '/ai-content-assistant',
+    '/ethical-hacking-toolkit',
+    '/ethical-hacking-tools',
     '/free-penetration-testing-tools',
     '/ai-website-growth-consultant',
     '/instant-website-quote-calculator',
@@ -47,9 +60,6 @@ $isToolsPath = in_array($currentPath, [
                 </div>
             </div>
         </div>
-        <a class="<?= active_path('/portfolio') ?>" href="/portfolio">Portfolio</a>
-        <a class="<?= $isShopPath ? 'is-active' : '' ?>" href="/code-shop">Code Shop</a>
-        <a class="<?= active_path('/process') ?>" href="/process">Process</a>
         <div class="nav-item has-mega tools-mega">
             <a class="<?= $isToolsPath ? 'is-active' : '' ?>" href="/tools" aria-haspopup="true">Tools <i class="fa-solid fa-chevron-down"></i></a>
             <div class="mega-menu tools-menu" aria-label="Tools menu">
@@ -62,17 +72,59 @@ $isToolsPath = in_array($currentPath, [
                     <a href="/ai-website-growth-consultant"><i class="fa-solid fa-brain"></i><span>AI Growth Consultant<small>Map practical growth opportunities.</small></span></a>
                     <a href="/instant-website-quote-calculator"><i class="fa-solid fa-calculator"></i><span>Quote Calculator<small>Estimate project scope and priority.</small></span></a>
                     <a href="/seo-tools"><i class="fa-solid fa-chart-line"></i><span>SEO Audit<small>Review page-level search signals.</small></span></a>
+                    <a href="/site-crawler"><i class="fa-solid fa-spider"></i><span>Site Crawler<small>Audit every page of your site.</small></span></a>
                     <a href="/serp-checker"><i class="fa-solid fa-ranking-star"></i><span>SERP Checker<small>Compare ranking opportunities.</small></span></a>
+                    <a href="/ai-content-assistant"><i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Content Assistant<small>Generate SEO copy in seconds.</small></span></a>
                     <a href="/ppc-roi-calculator"><i class="fa-solid fa-bullseye"></i><span>PPC ROI<small>Model paid-search return.</small></span></a>
-                    <a href="/free-penetration-testing-tools"><i class="fa-solid fa-shield-halved"></i><span>Security Tools<small>Check headers, DNS and TLS.</small></span></a>
+                    <a href="/ethical-hacking-toolkit"><i class="fa-solid fa-shield-halved"></i><span>Ethical Hacking Toolkit<small>Scan for exposed files &amp; harden.</small></span></a>
+                    <a href="/ethical-hacking-tools"><i class="fa-solid fa-toolbox"></i><span>Hacking Tools Library<small>Pro: download tools &amp; guides.</small></span></a>
+                    <a href="/free-penetration-testing-tools"><i class="fa-solid fa-user-secret"></i><span>Security Tools<small>Check headers, DNS and TLS.</small></span></a>
                     <a href="/ai-automation-finder"><i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Automation Finder<small>Find workflow automation candidates.</small></span></a>
                     <a href="/client-portal-preview"><i class="fa-solid fa-table-columns"></i><span>Client Portal<small>Preview reporting and support UX.</small></span></a>
+                    <a href="/tools-pricing"><i class="fa-solid fa-crown"></i><span>Growth Lab Pro<small>Unlimited scans &amp; white-label reports.</small></span></a>
                 </div>
             </div>
         </div>
-        <a class="<?= active_path('/support') ?>" href="/support">Support</a>
-        <a class="<?= active_path('/blog') ?>" href="/blog">Blog</a>
-        <a class="<?= active_path('/contact') ?>" href="/contact">Contact</a>
+        <div class="nav-item has-mega">
+            <a class="<?= $isStorePath ? 'is-active' : '' ?>" href="/code-shop" aria-haspopup="true">Store <i class="fa-solid fa-chevron-down"></i></a>
+            <div class="mega-menu" aria-label="Store menu">
+                <div class="mega-intro">
+                    <span>Buy &amp; Grow</span>
+                    <strong>Themes, plugins, memberships and Irish link building.</strong>
+                    <p>Everything you can buy from Crest Web Media in one place.</p>
+                </div>
+                <div class="mega-grid">
+                    <a href="/code-shop"><i class="fa-solid fa-cart-shopping"></i><span>Marketplace<small>Themes, plugins, templates &amp; services.</small></span></a>
+                    <a href="/membership"><i class="fa-solid fa-id-card"></i><span>Membership<small>Growth Lab plans for tools &amp; downloads.</small></span></a>
+                    <a href="/backlinks"><i class="fa-solid fa-link"></i><span>Buy Irish Backlinks<small>Rare .ie links — 25 from €59.</small></span></a>
+                    <a href="/tools-pricing"><i class="fa-solid fa-crown"></i><span>Growth Lab Pro<small>€25/mo or €200/yr tools membership.</small></span></a>
+                    <a href="/website-care-plans"><i class="fa-solid fa-heart-pulse"></i><span>Website Care Plans<small>Maintenance from €49/month.</small></span></a>
+                    <a href="/website-audit"><i class="fa-solid fa-file-shield"></i><span>Website Audit — €49<small>One-off white-label PDF report.</small></span></a>
+                    <a href="/speed-rescue"><i class="fa-solid fa-bolt"></i><span>Speed Rescue — €149<small>Under 2s load or you don't pay.</small></span></a>
+                </div>
+            </div>
+        </div>
+        <div class="nav-item has-mega">
+            <a class="<?= $isCompanyPath ? 'is-active' : '' ?>" href="/about" aria-haspopup="true">Company <i class="fa-solid fa-chevron-down"></i></a>
+            <div class="mega-menu" aria-label="Company menu">
+                <div class="mega-intro">
+                    <span>Crest Web Media</span>
+                    <strong>Who we are and how we work.</strong>
+                    <p>Learn about the studio, see proof, and get in touch.</p>
+                </div>
+                <div class="mega-grid">
+                    <a href="/about"><i class="fa-solid fa-circle-info"></i><span>About<small>Studio, approach and values.</small></span></a>
+                    <a href="/portfolio"><i class="fa-solid fa-briefcase"></i><span>Portfolio<small>Selected work &amp; case studies.</small></span></a>
+                    <a href="/process"><i class="fa-solid fa-diagram-project"></i><span>Process<small>How projects are delivered.</small></span></a>
+                    <a href="/blog"><i class="fa-solid fa-newspaper"></i><span>Blog<small>Guides on SEO, security &amp; web.</small></span></a>
+                    <a href="/support"><i class="fa-solid fa-headset"></i><span>Support<small>Open a ticket, get help.</small></span></a>
+                    <a href="/contact"><i class="fa-solid fa-paper-plane"></i><span>Contact<small>Start a project brief.</small></span></a>
+                </div>
+            </div>
+        </div>
+        <?php if (isset($_SESSION) && !empty($_SESSION['member'])): ?>
+            <a class="<?= active_path('/account/dashboard') ?>" href="/account/dashboard">Dashboard</a>
+        <?php endif; ?>
         <button class="mobile-nav-account-link" type="button" data-mobile-account-trigger>
             <span>Login / Register</span><i class="fa-solid fa-user-shield"></i>
         </button>
@@ -83,6 +135,19 @@ $isToolsPath = in_array($currentPath, [
                 <i class="fa-solid fa-user-shield"></i>
             </button>
             <div class="account-popover" hidden>
+                <?php if (!empty($_SESSION['member'])): $hdrMember = $_SESSION['member']; $hdrPro = \App\Models\MemberRepository::isPro($hdrMember); ?>
+                <div class="account-loggedin">
+                    <span class="account-avatar"><?= e(strtoupper(substr((string) ($hdrMember['name'] ?? 'U'), 0, 1))) ?></span>
+                    <h2>Hi, <?= e($hdrMember['name'] ?? 'there') ?></h2>
+                    <p><?= e($hdrMember['email'] ?? '') ?></p>
+                    <span class="account-plan-chip <?= $hdrPro ? 'is-pro' : '' ?>"><?= $hdrPro ? 'Growth Lab Pro' : 'Free account' ?></span>
+                    <a class="pill-button" href="/account/dashboard">Open Dashboard <i class="fa-solid fa-gauge-high"></i></a>
+                    <form method="post" action="/account/logout">
+                        <input type="hidden" name="_csrf" value="<?= e(\App\Core\Security::csrfToken()) ?>">
+                        <button class="pill-button ghost" type="submit">Log out <i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+                    </form>
+                </div>
+                <?php else: ?>
                 <div class="account-tabs" role="tablist" aria-label="Account forms">
                     <button class="is-active" type="button" data-account-tab="login">Login</button>
                     <button type="button" data-account-tab="register">Register</button>
@@ -111,6 +176,7 @@ $isToolsPath = in_array($currentPath, [
                     <button class="pill-button" type="submit">Register <i class="fa-solid fa-user-plus"></i></button>
                 </form>
                 <p class="account-message" role="status" aria-live="polite"></p>
+                <?php endif; ?>
             </div>
         </div>
         <a class="whatsapp-button" href="<?= e($headerContact['whatsapp_url']) ?>" target="_blank" rel="noopener">

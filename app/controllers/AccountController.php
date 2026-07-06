@@ -6,14 +6,249 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Security;
+use App\Models\MembershipPlanRepository;
 use App\Models\MemberRepository;
+use App\Models\MonitorRepository;
 use App\Models\NewsletterOfferRepository;
+use App\Models\SavedReportRepository;
 use App\Models\ToolLeadRepository;
+use App\Models\ToolUsageRepository;
 use App\Services\AuditLogger;
 use App\Services\LeadMailer;
 
 final class AccountController extends Controller
 {
+    public function dashboard(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        // Refresh membership from storage — payment webhooks update the member file.
+        $fresh = (new MemberRepository())->findByEmail((string) $member['email']);
+        if (is_array($fresh)) {
+            $member['membership'] = $fresh['membership'] ?? ($member['membership'] ?? null);
+            $member['forum_verified'] = (bool) ($fresh['forum_verified'] ?? false);
+            $_SESSION['member'] = $member;
+        }
+
+        $isPro = MemberRepository::isPro($member);
+        $email = (string) $member['email'];
+
+        // Keep the member's saved website in sync so the analytics card persists.
+        $member['website'] = (string) ($fresh['website'] ?? ($member['website'] ?? ''));
+        $siteMetrics = new \App\Models\SiteMetricsRepository();
+
+        $this->render('pages/account-dashboard', [
+            'title' => 'Your Dashboard | Crest Web Media Growth Lab',
+            'metaDescription' => 'Your Growth Lab dashboard: tools, membership status, free scans and saved reports.',
+            'member' => $member,
+            'isPro' => $isPro,
+            'siteUrl' => (string) ($member['website'] ?? ''),
+            'siteHistory' => (string) ($member['website'] ?? '') !== '' ? $siteMetrics->history($email) : [],
+            'siteLatest' => $siteMetrics->latest($email),
+            'siteCrawl' => (new \App\Models\SiteCrawlRepository())->get($email),
+            'scanUsage' => (new ToolUsageRepository())->status($email),
+            'savedReports' => $isPro ? (new SavedReportRepository())->forEmail($email) : [],
+            'monitors' => $isPro ? (new MonitorRepository())->forEmail($email) : [],
+            'monitorTypes' => MonitorRepository::TYPES,
+            'plans' => (new MembershipPlanRepository())->activePlans(),
+            'planRepo' => new MembershipPlanRepository(),
+            'referral' => (new \App\Models\ReferralRepository())->statsFor($email, (string) ($member['name'] ?? '')),
+            'portalLog' => (new \App\Models\ClientPortalRepository())->forEmail($email),
+            'csrf' => Security::csrfToken(),
+            'notice' => $_SESSION['account_notice'] ?? null,
+            'error' => $_SESSION['account_error'] ?? null,
+        ]);
+        unset($_SESSION['account_notice'], $_SESSION['account_error']);
+    }
+
+    public function addMonitor(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['account_error'] = 'Session token expired. Please try again.';
+            $this->redirect('/account/dashboard');
+        }
+
+        if (!MemberRepository::isPro($member)) {
+            $_SESSION['account_error'] = 'Scheduled monitoring is a Growth Lab Pro feature.';
+            $this->redirect('/tools-pricing');
+        }
+
+        try {
+            (new MonitorRepository())->add(
+                (string) $member['email'],
+                (string) ($_POST['type'] ?? ''),
+                (string) ($_POST['target'] ?? '')
+            );
+            $_SESSION['account_notice'] = 'Monitor added. We will re-check it weekly and email you if anything regresses.';
+            (new AuditLogger())->log('account.monitor.added', ['email' => $member['email'], 'type' => $_POST['type'] ?? '']);
+        } catch (\Throwable $exception) {
+            $_SESSION['account_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/account/dashboard');
+    }
+
+    public function deleteMonitor(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            (new MonitorRepository())->delete((string) $member['email'], (string) ($_POST['id'] ?? ''));
+            $_SESSION['account_notice'] = 'Monitor removed.';
+        }
+
+        $this->redirect('/account/dashboard');
+    }
+
+    /**
+     * Save (or update) the member's own website — the site the dashboard's
+     * Website Analytics graph tracks.
+     */
+    public function saveSite(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['account_error'] = 'Session token expired. Please try again.';
+            $this->redirect('/account/dashboard');
+        }
+
+        try {
+            $website = (new MemberRepository())->setWebsiteByEmail((string) $member['email'], (string) ($_POST['website'] ?? ''));
+            $_SESSION['member']['website'] = $website;
+            $_SESSION['account_notice'] = $website === ''
+                ? 'Website cleared.'
+                : 'Website saved. Run an analysis to start your live SEO graph.';
+            (new AuditLogger())->log('account.site.saved', ['email' => $member['email'], 'website' => $website]);
+        } catch (\Throwable $exception) {
+            $_SESSION['account_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/account/dashboard');
+    }
+
+    /**
+     * Run an on-page SEO + PageSpeed snapshot of the member's website now and
+     * record it, extending the dashboard trend graph. Rate-limited; the daily
+     * automatic capture is handled by the monitor cron for Pro members.
+     */
+    public function runSiteAnalysis(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['account_error'] = 'Session token expired. Please try again.';
+            $this->redirect('/account/dashboard');
+        }
+
+        $website = (string) ($member['website'] ?? '');
+        if ($website === '') {
+            $fresh = (new MemberRepository())->findByEmail((string) $member['email']);
+            $website = (string) ($fresh['website'] ?? '');
+        }
+        if ($website === '') {
+            $_SESSION['account_error'] = 'Add your website first, then run an analysis.';
+            $this->redirect('/account/dashboard');
+        }
+
+        if (Security::hitRateLimit('site_analysis', 6, 900)) {
+            $_SESSION['account_error'] = 'Please wait a few minutes before running another analysis.';
+            $this->redirect('/account/dashboard');
+        }
+
+        $snapshot = (new ToolsController($this->config))->siteSnapshot($website);
+        if ($snapshot['seo'] === null && $snapshot['psi'] === null) {
+            $_SESSION['account_error'] = 'Could not read that site just now. Check the address and try again.';
+            $this->redirect('/account/dashboard');
+        }
+
+        (new \App\Models\SiteMetricsRepository())->record((string) $member['email'], $snapshot);
+        $_SESSION['account_notice'] = 'Analysis complete — your website graph is updated.';
+        (new AuditLogger())->log('account.site.analyzed', ['email' => $member['email'], 'seo' => $snapshot['seo'], 'psi' => $snapshot['psi']]);
+
+        $this->redirect('/account/dashboard');
+    }
+
+    public function saveReport(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['account_error'] = 'Session token expired. Please try again.';
+            $this->redirect('/account/dashboard');
+        }
+
+        if (!MemberRepository::isPro($member)) {
+            $_SESSION['account_error'] = 'Saving reports is a Growth Lab Pro feature. Free accounts can view and download reports.';
+            $this->redirect('/tools-pricing');
+        }
+
+        try {
+            (new SavedReportRepository())->save((string) $member['email'], [
+                'tool' => $_POST['tool'] ?? 'Report',
+                'target' => $_POST['target'] ?? '',
+                'score' => $_POST['score'] ?? 0,
+                'grade' => $_POST['grade'] ?? '',
+                'summary' => $_POST['summary'] ?? '',
+            ]);
+            $_SESSION['account_notice'] = 'Report saved. Your last three reports are available on your dashboard.';
+            (new AuditLogger())->log('account.report.saved', ['email' => $member['email'], 'tool' => $_POST['tool'] ?? '']);
+        } catch (\Throwable $exception) {
+            $_SESSION['account_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/account/dashboard');
+    }
+
+    public function deleteReport(): void
+    {
+        Security::ensureSession();
+        $member = $_SESSION['member'] ?? null;
+        if (!is_array($member) || empty($member['email'])) {
+            $this->redirect('/');
+        }
+
+        if (Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            (new SavedReportRepository())->delete((string) $member['email'], (string) ($_POST['id'] ?? ''));
+            $_SESSION['account_notice'] = 'Report removed.';
+        }
+
+        $this->redirect('/account/dashboard');
+    }
+
+    public function logout(): void
+    {
+        Security::ensureSession();
+        unset($_SESSION['member']);
+        $this->redirect('/');
+    }
+
     public function forms(): void
     {
         Security::ensureSession();
@@ -41,8 +276,9 @@ final class AccountController extends Controller
         }
 
         $_SESSION['member'] = $member + ['logged_in_at' => time()];
+        $_SESSION['tool_lead'] = ['name' => $member['name'] ?? '', 'email' => $member['email'], 'source' => 'account-login', 'verified_at' => time()];
         (new AuditLogger())->log('account.login.success', ['email' => $member['email']]);
-        $this->json(['ok' => true, 'message' => 'You are signed in. Tools and client features are ready for this browser.']);
+        $this->json(['ok' => true, 'message' => 'You are signed in. Redirecting to your dashboard…', 'redirect' => '/account/dashboard']);
     }
 
     public function register(): void
@@ -78,11 +314,33 @@ final class AccountController extends Controller
         ];
         $_SESSION['tool_lead'] = ['name' => $name, 'email' => $email, 'source' => 'account-register', 'verified_at' => time()];
 
-        (new ToolLeadRepository())->store(['name' => $name, 'email' => $email, 'source' => 'account-register']);
-        (new LeadMailer())->sendOffer($email, $name, (new NewsletterOfferRepository())->current());
+        // The account is already saved and the member is logged in. Lead capture
+        // and the welcome email are best-effort — a missing/broken mail server
+        // (no SMTP) must never fail a registration or lose the member record.
+        try {
+            (new ToolLeadRepository())->store(['name' => $name, 'email' => $email, 'source' => 'account-register']);
+        } catch (\Throwable) {
+            // non-fatal
+        }
+        try {
+            (new LeadMailer())->sendOffer($email, $name, (new NewsletterOfferRepository())->current());
+        } catch (\Throwable) {
+            // non-fatal — no SMTP configured is fine; the member is saved regardless.
+        }
+        // Attribute the referral if this signup arrived via a ref link.
+        $refCode = strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', (string) ($_COOKIE['cwm_ref'] ?? '')));
+        if ($refCode !== '') {
+            try {
+                if ((new \App\Models\ReferralRepository())->record($refCode, $email)) {
+                    (new AuditLogger())->log('referral.recorded', ['code' => $refCode, 'referred' => $email]);
+                }
+            } catch (\Throwable) {
+                // non-fatal
+            }
+        }
         (new AuditLogger())->log('account.registered', ['email' => $email]);
 
-        $this->json(['ok' => true, 'message' => 'Account created. Tool results are unlocked. Forum posting will be available after admin approval.']);
+        $this->json(['ok' => true, 'message' => 'Account created — you\'re signed in. Redirecting to your dashboard…', 'redirect' => '/account/dashboard']);
     }
 
     private function json(array $payload, int $status = 200): never

@@ -52,9 +52,11 @@ $techNews = (new \App\Services\TechNewsService())->items();
             <a href="/services/website-development"><i class="fa-solid fa-code"></i> Website Development</a>
             <a href="/services/app-development"><i class="fa-solid fa-mobile-screen"></i> App Development</a>
             <a href="/services/seo"><i class="fa-solid fa-ranking-star"></i> SEO & Rankings</a>
+            <a href="/backlinks"><i class="fa-solid fa-link"></i> Buy Irish Backlinks</a>
             <a href="/services/pay-per-click-advertising"><i class="fa-solid fa-bullseye"></i> Pay Per Click</a>
             <a href="/services/ai-integration-services"><i class="fa-solid fa-robot"></i> AI Integration</a>
             <a href="/services/penetration-testing"><i class="fa-solid fa-shield-halved"></i> Penetration Testing</a>
+            <a href="/locations"><i class="fa-solid fa-map-location-dot"></i> Areas We Cover</a>
         </nav>
         <nav class="footer-nav-panel" aria-label="Footer growth tools">
             <h3>Growth Tools</h3>
@@ -90,7 +92,9 @@ $techNews = (new \App\Services\TechNewsService())->items();
     <section class="footer-statusbar">
         <span>&copy; <?= date('Y') ?> Crest Web Media</span>
         <a href="/privacy-policy">Privacy</a>
+        <a href="/cookie-policy">Cookies</a>
         <a href="/terms-and-conditions">Terms</a>
+        <a href="#" data-open-consent>Cookie settings</a>
         <span>Remote studio. Global delivery. Written-first support.</span>
     </section>
 </footer>

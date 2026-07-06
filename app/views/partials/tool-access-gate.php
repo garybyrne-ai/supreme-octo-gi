@@ -5,12 +5,18 @@ $paypalSettings = $paypalSettings ?? [];
 $creditsUrl = $paypalSettings['credits_checkout_url'] ?? '';
 $pass19Url = $paypalSettings['growth_lab_19_url'] ?? '';
 $pass49Url = $paypalSettings['growth_lab_49_url'] ?? '';
+
+// Signed-in members are already verified — the access/sign-in block is just
+// noise for them, so hide it entirely (their status lives on the dashboard).
+if (!empty($member) && is_array($member) && !empty($member['email'])) {
+    return;
+}
 ?>
 <section class="tool-access-gate reveal" id="tool-access">
     <div class="cyber-card glass-feature">
         <span class="kicker"><?= $toolLead ? 'Access Verified' : 'Unlock Results' ?></span>
         <h2><?= $toolLead ? 'Your Growth Lab tools are active.' : 'Enter your name and email to reveal tool results.' ?></h2>
-        <p><?= $toolLead ? 'You are signed in as ' . e($toolLead['email']) . '. You get 3 free server-side scans per day; deeper data, white-label PDF reports and background monitoring unlock with credits or a Growth Lab Pass.' : 'We send a one-time code to your email. Verified users get 3 free scans per day before credits or Growth Lab Pass upgrades.' ?></p>
+        <p><?= $toolLead ? 'You are signed in as ' . e($toolLead['email']) . '. You get 3 free server-side scans per day; unlimited scans, white-label PDF reports and background monitoring unlock with Growth Lab Pro (€25/month or €200/year).' : 'We send a one-time code to your email. Verified users get 3 free scans per day, then upgrade to Growth Lab Pro for unlimited access.' ?></p>
         <?php if ($toolLead && is_array($scanUsage)): ?>
             <div class="scan-meter" aria-label="Daily free scan usage">
                 <strong><?= e((string) $scanUsage['remaining']) ?></strong>
@@ -36,16 +42,4 @@ $pass49Url = $paypalSettings['growth_lab_49_url'] ?? '';
             <button class="pill-button ghost" type="submit">Verify and Unlock <i class="fa-solid fa-unlock"></i></button>
         </form>
     <?php endif; ?>
-</section>
-
-<section class="growth-lab-upgrade reveal">
-    <article class="cyber-card growth-lab-card">
-        <span class="kicker">Growth Lab Pass</span>
-        <h2>Need deeper scans, exportable reports or monitoring?</h2>
-        <p>Free users get 3 scans per day. Credits and the $19-$49/month Growth Lab Pass are built for agencies, SEO teams and business owners who need deeper data, white-label PDF reports and continuous background monitoring.</p>
-        <div class="growth-lab-actions">
-            <a class="pill-button" href="<?= e($creditsUrl ?: '/contact') ?>"<?= $creditsUrl ? ' target="_blank" rel="noopener"' : '' ?>>Buy Credits <i class="fa-solid fa-credit-card"></i></a>
-            <a class="pill-button ghost" href="<?= e($pass19Url ?: $pass49Url ?: '/contact') ?>"<?= ($pass19Url || $pass49Url) ? ' target="_blank" rel="noopener"' : '' ?>>Get Growth Lab Pass <i class="fa-solid fa-bolt"></i></a>
-        </div>
-    </article>
 </section>

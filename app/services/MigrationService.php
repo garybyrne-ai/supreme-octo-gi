@@ -39,7 +39,89 @@ final class MigrationService
             $this->recordMigration($pdo, basename($file), hash_file('sha256', $file) ?: '');
         }
 
+        $addedColumns = $this->ensureProductCatalogColumns($pdo);
+        if ($addedColumns !== []) {
+            $summary['columns'] = $addedColumns;
+            $summary['statements'] += count($addedColumns);
+        }
+
         return $summary;
+    }
+
+    /**
+     * Add digital-catalog columns to the existing products table without
+     * failing when they are already present (MySQL 8 has no ADD COLUMN IF NOT
+     * EXISTS). Returns the list of columns that were actually created.
+     *
+     * @return list<string>
+     */
+    private function ensureProductCatalogColumns(PDO $pdo): array
+    {
+        $definitions = [
+            'catalog_category' => "VARCHAR(40) NOT NULL DEFAULT 'file'",
+            'service_delivery' => 'VARCHAR(60) NULL',
+            'subtitle' => 'VARCHAR(190) NULL',
+            'demo_url' => 'VARCHAR(500) NULL',
+            'thumbnail_url' => 'VARCHAR(500) NULL',
+            'is_featured' => 'TINYINT(1) NOT NULL DEFAULT 0',
+            'extended_price_cents' => 'INT UNSIGNED NULL',
+        ];
+
+        try {
+            $existing = $this->existingColumns($pdo, 'products');
+        } catch (PDOException) {
+            return [];
+        }
+
+        if ($existing === []) {
+            // products table not present yet on this install; nothing to alter.
+            return [];
+        }
+
+        $added = [];
+        foreach ($definitions as $column => $definition) {
+            if (in_array($column, $existing, true)) {
+                continue;
+            }
+
+            $pdo->exec(sprintf('ALTER TABLE products ADD COLUMN `%s` %s', $column, $definition));
+            $added[] = $column;
+        }
+
+        if ($added !== [] && !$this->indexExists($pdo, 'products', 'products_catalog_category')) {
+            try {
+                $pdo->exec('ALTER TABLE products ADD INDEX products_catalog_category (catalog_category, is_active)');
+            } catch (PDOException) {
+                // Index is a performance nicety only; ignore if it cannot be added.
+            }
+        }
+
+        return $added;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function existingColumns(PDO $pdo, string $table): array
+    {
+        $stmt = $pdo->prepare(
+            'SELECT COLUMN_NAME FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table'
+        );
+        $stmt->execute(['table' => $table]);
+
+        return array_map('strval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+
+    private function indexExists(PDO $pdo, string $table, string $index): bool
+    {
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM information_schema.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND INDEX_NAME = :index'
+        );
+        $stmt->execute(['table' => $table, 'index' => $index]);
+
+        return (int) $stmt->fetchColumn() > 0;
     }
 
     private function ensureMigrationLog(PDO $pdo): void

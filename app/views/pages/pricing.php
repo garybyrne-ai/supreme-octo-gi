@@ -1,6 +1,6 @@
 <section class="subhero">
-    <span class="status-chip"><span></span> Investment</span>
-    <h1>Pricing</h1>
+    <span class="status-chip"><span></span> <?= e($pageIntro['kicker'] ?? 'Investment') ?></span>
+    <h1><?= e($pageIntro['heading'] ?? 'Pricing') ?></h1>
     <p>Clear starting points for websites, CMS builds and platform work.</p>
 </section>
 <section class="split-section reveal">

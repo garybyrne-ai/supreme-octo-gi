@@ -8,11 +8,20 @@ use App\Core\Controller;
 use App\Core\Database;
 use App\Core\Security;
 use App\Models\AdminModuleDraftRepository;
+use App\Models\AdsSettingsRepository;
+use App\Models\BacklinkPlanRepository;
+use App\Models\CarePlanRepository;
+use App\Models\ClientRepository;
+use App\Models\CommerceRepository;
+use App\Models\CouponRepository;
 use App\Models\ContentRepository;
+use App\Models\SiteContentRepository;
 use App\Models\MailSettingsRepository;
 use App\Models\MemberRepository;
+use App\Models\MembershipPlanRepository;
 use App\Models\NewsletterOfferRepository;
 use App\Models\PayPalSettingsRepository;
+use App\Models\SearchConsoleSettingsRepository;
 use App\Models\SupportTicketRepository;
 use App\Models\ToolLeadRepository;
 use App\Services\AuditLogger;
@@ -154,10 +163,21 @@ final class AdminController extends Controller
             ['slug' => 'services', 'title' => 'Services Manager', 'icon' => 'fa-screwdriver-wrench', 'summary' => 'Tune service pages, FAQs, benefits, tags and conversion copy.'],
             ['slug' => 'testimonials', 'title' => 'Testimonials', 'icon' => 'fa-comment-dots', 'summary' => 'Curate client quotes, proof points and trust-building snippets.'],
             ['slug' => 'tickets', 'title' => 'Support Tickets', 'icon' => 'fa-ticket', 'summary' => 'Review customer support tickets, priorities and request references.'],
+            ['slug' => 'content', 'title' => 'Site Content', 'icon' => 'fa-pen-ruler', 'summary' => 'Edit the home hero, contact / DIRECT SIGNAL block, backlink plans and page intro headings — no code needed.'],
             ['slug' => 'newsletter-offer', 'title' => 'Newsletter Offer', 'icon' => 'fa-envelope-open-text', 'summary' => 'Edit the automated SEO, PPC, website and app development offer sent to tool leads.'],
             ['slug' => 'mail-settings', 'title' => 'Mail Settings', 'icon' => 'fa-paper-plane', 'summary' => 'Choose PHP mail or Gmail SMTP for tool sign-in codes and automated offer emails.'],
             ['slug' => 'paypal-settings', 'title' => 'Payment Settings', 'icon' => 'fa-credit-card', 'summary' => 'Configure PayPal links, Stripe checkout keys and Growth Lab Pass subscriptions.'],
-            ['slug' => 'commerce', 'title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'summary' => 'Manage digital products, private ZIP packages, licenses, orders, invoices and download grants.'],
+            ['slug' => 'commerce', 'title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'summary' => 'Sell themes, plugins, templates and services marketplace-style with private ZIP packages, licenses, orders and download grants.'],
+            ['slug' => 'membership', 'title' => 'Membership Plans', 'icon' => 'fa-id-card', 'summary' => 'Control every membership tier: price, billing interval, trial, Stripe and PayPal wiring, features and availability.'],
+            ['slug' => 'members', 'title' => 'Member Manager', 'icon' => 'fa-users-gear', 'summary' => 'Edit members, upgrade or downgrade Pro access with a calendar expiry date, manage forum posting and remove accounts.'],
+            ['slug' => 'clients', 'title' => 'Clients', 'icon' => 'fa-handshake', 'summary' => 'Manage the client logo wall and case studies: name, logo image, industry, services, results — shown on the home page and gated portfolio.'],
+            ['slug' => 'referrals', 'title' => 'Referrals', 'icon' => 'fa-share-nodes', 'summary' => 'See who referred whom through the 20% referral program, so you can track and pay commissions.'],
+            ['slug' => 'work-log', 'title' => 'Client Work Log', 'icon' => 'fa-clipboard-list', 'summary' => 'Post work updates, reports, backups and notes for a client — they see them in their logged-in client portal.'],
+            ['slug' => 'abandoned-orders', 'title' => 'Abandoned Orders', 'icon' => 'fa-cart-arrow-down', 'summary' => 'See code-shop checkouts that were started but never paid, and the recovery emails sent to win them back.'],
+            ['slug' => 'coupons', 'title' => 'Coupons', 'icon' => 'fa-tags', 'summary' => 'Create discount codes for backlinks, care plans, audits and Speed Rescue — percent or fixed, usage caps and expiry dates.'],
+            ['slug' => 'ads', 'title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'summary' => 'Paste your Google AdSense ID, edit ads.txt and the GDPR cookie-consent message. Ads only load after visitors consent.'],
+            ['slug' => 'search-console', 'title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart', 'summary' => 'Set the Google OAuth Client ID & Secret so Pro members can connect Search Console and import queries, clicks and backlinks.'],
+            ['slug' => 'ai-settings', 'title' => 'AI Assistant', 'icon' => 'fa-robot', 'summary' => 'Optionally connect an OpenAI or Anthropic API key so the AI content assistant generates live copy. Without a key it uses built-in templates.'],
             ['slug' => 'faq', 'title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'summary' => 'Edit answers for common sales, delivery and support questions.'],
             ['slug' => 'seo', 'title' => 'SEO Center', 'icon' => 'fa-chart-line', 'summary' => 'Review titles, descriptions, schema signals and crawl priorities.'],
             ['slug' => 'redirects', 'title' => 'Redirect Manager', 'icon' => 'fa-route', 'summary' => 'Plan redirects, campaign URLs and migration-safe route changes.'],
@@ -196,16 +216,29 @@ final class AdminController extends Controller
             $this->redirect('/admin');
         }
 
+        $content = new ContentRepository();
+
         $modules = [
             'blog' => ['title' => 'Blog Manager', 'icon' => 'fa-newspaper', 'actions' => ['Create SEO article', 'Edit post metadata', 'Review categories']],
             'portfolio' => ['title' => 'Portfolio Manager', 'icon' => 'fa-layer-group', 'actions' => ['Add project', 'Update case study', 'Tune category filters']],
             'services' => ['title' => 'Services Manager', 'icon' => 'fa-screwdriver-wrench', 'actions' => ['Edit service copy', 'Manage FAQs', 'Update deliverables']],
             'testimonials' => ['title' => 'Testimonials', 'icon' => 'fa-comment-dots', 'actions' => ['Add quote', 'Update client role', 'Feature proof card']],
             'tickets' => ['title' => 'Support Tickets', 'icon' => 'fa-ticket', 'actions' => ['Review new tickets', 'Assign priority', 'Reply to customer']],
+            'content' => ['title' => 'Site Content', 'icon' => 'fa-pen-ruler', 'actions' => ['Edit home hero', 'Edit contact block', 'Manage backlink plans']],
             'newsletter-offer' => ['title' => 'Newsletter Offer', 'icon' => 'fa-envelope-open-text', 'actions' => ['Edit offer copy', 'Review tool leads', 'Update CTA']],
             'mail-settings' => ['title' => 'Mail Settings', 'icon' => 'fa-paper-plane', 'actions' => ['Choose mail driver', 'Configure Gmail SMTP', 'Review delivery logs']],
             'paypal-settings' => ['title' => 'Payment Settings', 'icon' => 'fa-credit-card', 'actions' => ['Set gateway keys', 'Add checkout links', 'Configure Growth Lab Pass']],
-            'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'actions' => ['Create digital product', 'Attach private ZIP package', 'Review order lifecycle']],
+            'commerce' => ['title' => 'Commerce Engine', 'icon' => 'fa-cart-shopping', 'actions' => ['Create marketplace item', 'Attach private ZIP package', 'Review order lifecycle']],
+            'membership' => ['title' => 'Membership Plans', 'icon' => 'fa-id-card', 'actions' => ['Create plan', 'Edit pricing and gateways', 'Pause or feature a plan']],
+            'members' => ['title' => 'Member Manager', 'icon' => 'fa-users-gear', 'actions' => ['Edit member', 'Upgrade or downgrade Pro', 'Set access expiry']],
+            'clients' => ['title' => 'Clients', 'icon' => 'fa-handshake', 'actions' => ['Add client logo', 'Edit case study', 'Reorder or hide']],
+            'referrals' => ['title' => 'Referrals', 'icon' => 'fa-share-nodes', 'actions' => ['Review referrals', 'Track commissions']],
+            'work-log' => ['title' => 'Client Work Log', 'icon' => 'fa-clipboard-list', 'actions' => ['Post an update', 'Attach a report', 'Log a backup']],
+            'abandoned-orders' => ['title' => 'Abandoned Orders', 'icon' => 'fa-cart-arrow-down', 'actions' => ['Review abandoned checkouts', 'Track recovery emails']],
+            'coupons' => ['title' => 'Coupons', 'icon' => 'fa-tags', 'actions' => ['Create coupon', 'Set usage cap & expiry', 'Pause or delete codes']],
+            'ads' => ['title' => 'Ads & Consent', 'icon' => 'fa-rectangle-ad', 'actions' => ['Set AdSense ID', 'Edit ads.txt', 'Edit consent message']],
+            'search-console' => ['title' => 'Search Console', 'icon' => 'fa-magnifying-glass-chart', 'actions' => ['Set OAuth Client ID', 'Set Client Secret', 'Copy redirect URI']],
+            'ai-settings' => ['title' => 'AI Assistant', 'icon' => 'fa-robot', 'actions' => ['Choose provider', 'Set API key', 'Enable live output']],
             'faq' => ['title' => 'FAQ Manager', 'icon' => 'fa-circle-question', 'actions' => ['Add answer', 'Update schema FAQ', 'Review sales objections']],
             'seo' => ['title' => 'SEO Center', 'icon' => 'fa-chart-line', 'actions' => ['Audit metadata', 'Preview schema', 'Map internal links']],
             'redirects' => ['title' => 'Redirect Manager', 'icon' => 'fa-route', 'actions' => ['Add redirect', 'Import route map', 'Test status codes']],
@@ -233,6 +266,40 @@ final class AdminController extends Controller
             'toolLeads' => $slug === 'newsletter-offer' ? (new ToolLeadRepository())->recent(30) : [],
             'mediaItems' => $slug === 'media' ? (new MediaLibrary())->items(120) : [],
             'forumMembers' => $slug === 'forum-members' ? (new MemberRepository())->recent(120) : [],
+            'siteMembers' => $slug === 'members' ? (new MemberRepository())->recent(200) : [],
+            'membershipPlans' => $slug === 'membership' ? (new MembershipPlanRepository())->all() : [],
+            'siteContent' => $slug === 'content' ? (new SiteContentRepository())->all() : [],
+            'servicesList' => $slug === 'services' ? (new \App\Models\ServiceContentRepository())->ensureSeeded($content->services()) : [],
+            'testimonialsList' => $slug === 'testimonials' ? (new \App\Models\TestimonialRepository())->ensureSeeded($content->testimonials()) : [],
+            'faqList' => $slug === 'faq' ? (new \App\Models\FaqContentRepository())->ensureSeeded($content->faqs()) : [],
+            'blogList' => $slug === 'blog' ? (new \App\Models\BlogPostRepository())->ensureSeeded($content->posts()) : [],
+            'portfolioList' => $slug === 'portfolio' ? (new \App\Models\PortfolioRepository())->ensureSeeded($content->portfolio()) : [],
+            'seoSettings' => $slug === 'seo' ? (new \App\Models\SeoSettingsRepository())->current() : [],
+            'redirectsList' => $slug === 'redirects' ? (new \App\Models\RedirectRepository())->saved() : [],
+            'activityLog' => $slug === 'activity' ? (new \App\Services\ActivityLogReader())->recent(150) : [],
+            'backupInventory' => $slug === 'backups' ? (new \App\Services\BackupService())->inventory() : [],
+            'backupTotal' => $slug === 'backups' ? (new \App\Services\BackupService())->totalBytes() : 0,
+            'analytics' => $slug === 'analytics' ? $this->analyticsSnapshot() : [],
+            'backlinkPlans' => $slug === 'content' ? (new BacklinkPlanRepository())->all() : [],
+            'carePlans' => $slug === 'content' ? (new CarePlanRepository())->all() : [],
+            'coupons' => $slug === 'coupons' ? (new CouponRepository())->all() : [],
+            'couponContexts' => CouponRepository::CONTEXTS,
+            'adsSettings' => $slug === 'ads' ? (new AdsSettingsRepository())->current() : [],
+            'gscSettings' => $slug === 'search-console' ? (new SearchConsoleSettingsRepository())->current() : [],
+            'gscRedirectUri' => $slug === 'search-console' ? (new \App\Services\SearchConsoleService())->redirectUri() : '',
+            'clientList' => $slug === 'clients' ? (new ClientRepository())->all() : [],
+            'referralEvents' => $slug === 'referrals' ? (new \App\Models\ReferralRepository())->allEvents() : [],
+            'workLog' => $slug === 'work-log' ? (new \App\Models\ClientPortalRepository())->recent(60) : [],
+            'workLogTypes' => \App\Models\ClientPortalRepository::TYPES,
+            'abandonedOrders' => $slug === 'abandoned-orders' ? (new \App\Models\PendingOrderRepository())->recent(80) : [],
+            'abandonedStats' => $slug === 'abandoned-orders' ? (new \App\Models\PendingOrderRepository())->stats() : [],
+            'aiSettings' => $slug === 'ai-settings' ? (new \App\Models\AiSettingsRepository())->current() : [],
+            'aiProviders' => \App\Models\AiSettingsRepository::PROVIDERS,
+            'pageIntroDefs' => $slug === 'content' ? (new SiteContentRepository())->pageIntroDefinitions() : [],
+            'catalogProducts' => $slug === 'commerce' ? (new CommerceRepository())->allProducts() : [],
+            'intervals' => MembershipPlanRepository::INTERVALS,
+            'catalogCategories' => CommerceRepository::CATALOG_CATEGORIES,
+            'serviceDeliveries' => CommerceRepository::SERVICE_DELIVERIES,
             'newsletterOffer' => (new NewsletterOfferRepository())->current(),
             'mailSettings' => (new MailSettingsRepository())->current(),
             'paypalSettings' => (new PayPalSettingsRepository())->current(),
@@ -267,6 +334,511 @@ final class AdminController extends Controller
         }
 
         $this->redirect('/admin/modules/' . $slug);
+    }
+
+    public function updateSiteContent(string $section): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Site content token expired. Please try again.';
+            $this->redirect('/admin/modules/content');
+        }
+
+        try {
+            $repo = new SiteContentRepository();
+            match ($section) {
+                'hero' => $repo->saveHero($_POST),
+                'growth-cta' => $repo->saveGrowthCta($_POST),
+                'contact' => $repo->saveContact($_POST),
+                'page-intros' => $repo->savePageIntros($_POST),
+                default => throw new \RuntimeException('Unknown content section.'),
+            };
+            $_SESSION['admin_notice'] = 'Site content updated.';
+            (new AuditLogger())->log('admin.site_content.updated', ['section' => $section]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
+    }
+
+    public function saveBacklinkPlan(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Backlink plan token expired. Please try again.';
+            $this->redirect('/admin/modules/content');
+        }
+
+        try {
+            $slug = (new BacklinkPlanRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Backlink plan saved.';
+            (new AuditLogger())->log('admin.backlink_plan.saved', ['slug' => $slug]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
+    }
+
+    public function deleteBacklinkPlan(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Backlink plan token expired. Please try again.';
+            $this->redirect('/admin/modules/content');
+        }
+
+        try {
+            $slug = (string) ($_POST['slug'] ?? '');
+            if (($_POST['state'] ?? '') === 'delete') {
+                (new BacklinkPlanRepository())->delete($slug);
+                $_SESSION['admin_notice'] = 'Backlink plan deleted.';
+                (new AuditLogger())->log('admin.backlink_plan.deleted', ['slug' => $slug]);
+            } else {
+                $active = ($_POST['state'] ?? '') === 'activate';
+                (new BacklinkPlanRepository())->setActive($slug, $active);
+                $_SESSION['admin_notice'] = $active ? 'Backlink plan activated.' : 'Backlink plan paused.';
+                (new AuditLogger())->log('admin.backlink_plan.toggled', ['slug' => $slug, 'active' => $active]);
+            }
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
+    }
+
+    public function saveClient(): void
+    {
+        $this->guardAdminPost('/admin/modules/clients', 'Client token expired. Please try again.');
+
+        try {
+            $slug = (new ClientRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Client saved.';
+            (new AuditLogger())->log('admin.client.saved', ['slug' => $slug]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/clients');
+    }
+
+    public function clientState(): void
+    {
+        $this->guardAdminPost('/admin/modules/clients', 'Client token expired. Please try again.');
+
+        try {
+            $slug = (string) ($_POST['slug'] ?? '');
+            if (($_POST['state'] ?? '') === 'delete') {
+                (new ClientRepository())->delete($slug);
+                $_SESSION['admin_notice'] = 'Client deleted.';
+                (new AuditLogger())->log('admin.client.deleted', ['slug' => $slug]);
+            } else {
+                $active = ($_POST['state'] ?? '') === 'activate';
+                (new ClientRepository())->setActive($slug, $active);
+                $_SESSION['admin_notice'] = $active ? 'Client shown.' : 'Client hidden.';
+                (new AuditLogger())->log('admin.client.toggled', ['slug' => $slug, 'active' => $active]);
+            }
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/clients');
+    }
+
+    public function saveWorkLog(): void
+    {
+        $this->guardAdminPost('/admin/modules/work-log', 'Work log token expired. Please try again.');
+
+        try {
+            (new \App\Models\ClientPortalRepository())->add($_POST);
+            $_SESSION['admin_notice'] = 'Work log entry posted — the client sees it in their portal.';
+            (new AuditLogger())->log('admin.work_log.added', ['email' => $_POST['email'] ?? '']);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/work-log');
+    }
+
+    public function deleteWorkLog(): void
+    {
+        $this->guardAdminPost('/admin/modules/work-log', 'Work log token expired. Please try again.');
+
+        try {
+            (new \App\Models\ClientPortalRepository())->delete((string) ($_POST['email'] ?? ''), (string) ($_POST['id'] ?? ''));
+            $_SESSION['admin_notice'] = 'Work log entry removed.';
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/work-log');
+    }
+
+    public function updateSearchConsoleSettings(): void
+    {
+        $this->guardAdminPost('/admin/modules/search-console', 'Search Console settings token expired. Please try again.');
+
+        try {
+            (new SearchConsoleSettingsRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Search Console OAuth settings saved.';
+            (new AuditLogger())->log('admin.search_console.updated', ['enabled' => !empty($_POST['enabled'])]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/search-console');
+    }
+
+    /**
+     * WordPress-style CRUD for the editable content collections (services,
+     * testimonials, FAQs). One handler, dispatched by a `type` field.
+     */
+    public function saveContentItem(): void
+    {
+        [$type, $repo, $module] = $this->resolveContentType((string) ($_POST['type'] ?? ''));
+        $this->guardAdminPost('/admin/modules/' . $module, ucfirst($type) . ' token expired. Please try again.');
+
+        try {
+            $repo->upsert($_POST);
+            $_SESSION['admin_notice'] = ucfirst($type) . ' saved.';
+            (new AuditLogger())->log('admin.content.saved', ['type' => $type]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/' . $module);
+    }
+
+    public function deleteContentItem(): void
+    {
+        [$type, $repo, $module] = $this->resolveContentType((string) ($_POST['type'] ?? ''));
+        $this->guardAdminPost('/admin/modules/' . $module, ucfirst($type) . ' token expired. Please try again.');
+
+        $repo->delete((string) ($_POST['id'] ?? ''));
+        $_SESSION['admin_notice'] = ucfirst($type) . ' removed.';
+        (new AuditLogger())->log('admin.content.deleted', ['type' => $type]);
+
+        $this->redirect('/admin/modules/' . $module);
+    }
+
+    public function moveContentItem(): void
+    {
+        [$type, $repo, $module] = $this->resolveContentType((string) ($_POST['type'] ?? ''));
+        $this->guardAdminPost('/admin/modules/' . $module, ucfirst($type) . ' token expired. Please try again.');
+
+        $repo->move((string) ($_POST['id'] ?? ''), (string) ($_POST['dir'] ?? 'up') === 'down' ? 'down' : 'up');
+
+        $this->redirect('/admin/modules/' . $module);
+    }
+
+    /**
+     * Real, available site metrics for the Analytics module (no fake charts).
+     *
+     * @return array<string, mixed>
+     */
+    private function analyticsSnapshot(): array
+    {
+        $members = (new MemberRepository())->recent(1000);
+        $proCount = 0;
+        foreach ($members as $m) {
+            if (MemberRepository::isPro($m)) {
+                $proCount++;
+            }
+        }
+        $orders = (new \App\Models\PendingOrderRepository())->stats();
+
+        return [
+            'members_total' => count($members),
+            'members_pro' => $proCount,
+            'members_free' => count($members) - $proCount,
+            'tool_leads' => count((new ToolLeadRepository())->recent(2000)),
+            'referrals' => count((new \App\Models\ReferralRepository())->allEvents()),
+            'open_tickets' => count((new SupportTicketRepository())->recent(500)),
+            'orders_started' => (int) ($orders['started'] ?? 0),
+            'orders_recovered' => (int) ($orders['recovered'] ?? 0),
+            'orders_paid' => (int) ($orders['completed'] ?? 0),
+            'activity_events' => count((new \App\Services\ActivityLogReader())->recent(500)),
+            'blog_posts' => count((new ContentRepository())->posts()),
+            'ga4_configured' => (new AdsSettingsRepository())->analyticsId() !== '',
+        ];
+    }
+
+    /**
+     * @return array{0: string, 1: \App\Models\EditableContentRepository, 2: string}
+     */
+    private function resolveContentType(string $type): array
+    {
+        return match ($type) {
+            'testimonial' => ['testimonial', new \App\Models\TestimonialRepository(), 'testimonials'],
+            'faq' => ['faq', new \App\Models\FaqContentRepository(), 'faq'],
+            'blog' => ['blog post', new \App\Models\BlogPostRepository(), 'blog'],
+            'portfolio' => ['portfolio item', new \App\Models\PortfolioRepository(), 'portfolio'],
+            'redirect' => ['redirect', new \App\Models\RedirectRepository(), 'redirects'],
+            default => ['service', new \App\Models\ServiceContentRepository(), 'services'],
+        };
+    }
+
+    public function updateSeoSettings(): void
+    {
+        $this->guardAdminPost('/admin/modules/seo', 'SEO settings token expired. Please try again.');
+
+        try {
+            (new \App\Models\SeoSettingsRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'SEO settings saved.';
+            (new AuditLogger())->log('admin.seo.updated', []);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/seo');
+    }
+
+    public function downloadBackup(): void
+    {
+        Security::ensureSession();
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Backup token expired. Please try again.';
+            $this->redirect('/admin/modules/backups');
+        }
+
+        $service = new \App\Services\BackupService();
+        (new AuditLogger())->log('admin.backup.downloaded', []);
+
+        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $service->snapshotFilename() . '"');
+        header('Cache-Control: no-store');
+        echo $service->buildSnapshot();
+        exit;
+    }
+
+    public function updateAiSettings(): void
+    {
+        $this->guardAdminPost('/admin/modules/ai-settings', 'AI settings token expired. Please try again.');
+
+        try {
+            $saved = (new \App\Models\AiSettingsRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'AI content assistant settings saved.';
+            (new AuditLogger())->log('admin.ai_settings.updated', ['provider' => $saved['provider'], 'enabled' => $saved['enabled']]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/ai-settings');
+    }
+
+    public function updateAdsSettings(): void
+    {
+        $this->guardAdminPost('/admin/modules/ads', 'Ads settings token expired. Please try again.');
+
+        try {
+            (new AdsSettingsRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Ads & consent settings saved.';
+            (new AuditLogger())->log('admin.ads_settings.updated', ['enabled' => !empty($_POST['ads_enabled'])]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/ads');
+    }
+
+    public function saveCarePlan(): void
+    {
+        $this->guardAdminPost('/admin/modules/content', 'Care plan token expired. Please try again.');
+
+        try {
+            $slug = (new CarePlanRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Care plan saved.';
+            (new AuditLogger())->log('admin.care_plan.saved', ['slug' => $slug]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
+    }
+
+    public function carePlanState(): void
+    {
+        $this->guardAdminPost('/admin/modules/content', 'Care plan token expired. Please try again.');
+
+        try {
+            $slug = (string) ($_POST['slug'] ?? '');
+            if (($_POST['state'] ?? '') === 'delete') {
+                (new CarePlanRepository())->delete($slug);
+                $_SESSION['admin_notice'] = 'Care plan deleted.';
+                (new AuditLogger())->log('admin.care_plan.deleted', ['slug' => $slug]);
+            } else {
+                $active = ($_POST['state'] ?? '') === 'activate';
+                (new CarePlanRepository())->setActive($slug, $active);
+                $_SESSION['admin_notice'] = $active ? 'Care plan activated.' : 'Care plan paused.';
+                (new AuditLogger())->log('admin.care_plan.toggled', ['slug' => $slug, 'active' => $active]);
+            }
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/content');
+    }
+
+    public function saveCoupon(): void
+    {
+        $this->guardAdminPost('/admin/modules/coupons', 'Coupon token expired. Please try again.');
+
+        try {
+            $code = (new CouponRepository())->save($_POST);
+            $_SESSION['admin_notice'] = 'Coupon “' . $code . '” saved.';
+            (new AuditLogger())->log('admin.coupon.saved', ['code' => $code]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/coupons');
+    }
+
+    public function couponState(): void
+    {
+        $this->guardAdminPost('/admin/modules/coupons', 'Coupon token expired. Please try again.');
+
+        try {
+            $code = (string) ($_POST['code'] ?? '');
+            if (($_POST['state'] ?? '') === 'delete') {
+                (new CouponRepository())->delete($code);
+                $_SESSION['admin_notice'] = 'Coupon deleted.';
+                (new AuditLogger())->log('admin.coupon.deleted', ['code' => $code]);
+            } else {
+                $active = ($_POST['state'] ?? '') === 'activate';
+                (new CouponRepository())->setActive($code, $active);
+                $_SESSION['admin_notice'] = $active ? 'Coupon activated.' : 'Coupon paused.';
+                (new AuditLogger())->log('admin.coupon.toggled', ['code' => $code, 'active' => $active]);
+            }
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/coupons');
+    }
+
+    /**
+     * Shared guard for admin POST endpoints: session + CSRF, redirecting back
+     * to the module page with a friendly error when the token has expired.
+     */
+    private function guardAdminPost(string $redirect, string $expiredMessage): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = $expiredMessage;
+            $this->redirect($redirect);
+        }
+    }
+
+    public function saveMember(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Member session token expired. Please try again.';
+            $this->redirect('/admin/modules/members');
+        }
+
+        try {
+            $id = (string) ($_POST['member_id'] ?? '');
+            if ($id === '') {
+                throw new \RuntimeException('A member id is required.');
+            }
+            $passwordReset = trim((string) ($_POST['password'] ?? '')) !== '';
+            $member = (new MemberRepository())->adminUpdate($id, $_POST);
+            $tier = MemberRepository::isPro($member) ? 'Pro' : 'Free';
+            $_SESSION['admin_notice'] = 'Member “' . ($member['email'] ?? '') . '” saved (' . $tier . ')'
+                . ($passwordReset ? ' — password reset. Share the new password with the member.' : '.');
+            (new AuditLogger())->log('admin.member.updated', ['id' => $id, 'plan' => $_POST['plan'] ?? '', 'password_reset' => $passwordReset]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/members');
+    }
+
+    public function deleteMember(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Member session token expired. Please try again.';
+            $this->redirect('/admin/modules/members');
+        }
+
+        try {
+            $id = (string) ($_POST['member_id'] ?? '');
+            if ($id === '') {
+                throw new \RuntimeException('A member id is required.');
+            }
+            (new MemberRepository())->deleteMember($id);
+            $_SESSION['admin_notice'] = 'Member deleted.';
+            (new AuditLogger())->log('admin.member.deleted', ['id' => $id]);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/members');
+    }
+
+    public function createTestMember(): void
+    {
+        Security::ensureSession();
+
+        if (empty($_SESSION['admin'])) {
+            $this->redirect('/admin');
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $_SESSION['admin_error'] = 'Test account token expired. Please try again.';
+            $this->redirect('/admin/modules/membership');
+        }
+
+        try {
+            $member = (new MemberRepository())->upsertProMember(
+                (string) ($_POST['name'] ?? 'Pro Tester'),
+                (string) ($_POST['email'] ?? ''),
+                (string) ($_POST['password'] ?? '')
+            );
+            $_SESSION['admin_notice'] = 'Pro test account ready: ' . ($member['email'] ?? '') . '. Sign in at /account with the password you just set to test every tool as a paid member. Delete this account before launch.';
+            (new AuditLogger())->log('admin.test_member.created', ['email' => $member['email'] ?? '']);
+        } catch (\Throwable $exception) {
+            $_SESSION['admin_error'] = $exception->getMessage();
+        }
+
+        $this->redirect('/admin/modules/membership');
     }
 
     public function updateNewsletterOffer(): void

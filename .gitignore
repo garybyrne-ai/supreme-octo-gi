@@ -8,6 +8,8 @@
 /public/uploads/theme/*
 /uploads/*
 storage/data/paypal-settings.json
+storage/data/scheduler-state.json
+storage/data/scheduler.lock
 
 # Keep directory placeholders
 !**/.gitkeep

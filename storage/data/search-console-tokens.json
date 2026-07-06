@@ -1,0 +1,24 @@
+{
+    "a@b.com": {
+        "refresh_token": "rt",
+        "access_token": "at",
+        "expires_at": 1783249179,
+        "site": "sc-domain:example.com",
+        "backlinks": [
+            {
+                "site": "example.org",
+                "links": 1240
+            },
+            {
+                "site": "news.ie",
+                "links": 320
+            },
+            {
+                "site": "blog.com",
+                "links": 45
+            }
+        ],
+        "backlinks_imported_at": "2026-07-05T09:59:39+00:00",
+        "backlinks_source": "links.csv"
+    }
+}

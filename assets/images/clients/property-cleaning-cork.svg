@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120" role="img" aria-label="PropertyCleaningCork.ie">
+  <rect width="360" height="120" rx="14" fill="#ffffff"/>
+  <path d="M40 24 l26 8 v22 c0 20 -13 30 -26 36 c-13 -6 -26 -16 -26 -36 v-22 z" fill="#1f6fb2"/>
+  <path d="M28 52 l9 9 l16 -18" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="82" y="60" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#14406b">PropertyCleaning<tspan fill="#2aa9e0">Cork.ie</tspan></text>
+  <text x="82" y="86" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" letter-spacing="2" fill="#8aa0b4">EXTERIOR CLEANING SPECIALISTS</text>
+</svg>

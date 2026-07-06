@@ -23,107 +23,51 @@
     <article class="cyber-card"><i class="fa-solid fa-cookie-bite"></i><h2>Cookie Audit</h2><p>Review Set-Cookie flags for session safety.</p></article>
 </section>
 
-<section class="tool-workbench reveal" id="server-checks">
-    <form class="cyber-form glass-tool" method="post" action="/free-penetration-testing-tools/headers">
-        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-        <h2>Security Header Analyzer</h2>
-        <p>Checks HSTS, CSP, frame protection, MIME sniffing, referrer and permissions policy.</p>
-        <?php if (!empty($toolError)): ?><div class="notice error"><?= e($toolError) ?></div><?php endif; ?>
-        <label>Website URL
-            <input name="target_url" type="url" inputmode="url" placeholder="https://example.com" value="<?= e($targetUrl ?? '') ?>" required>
-        </label>
-        <button class="pill-button" type="submit">Run Header Check <i class="fa-solid fa-arrow-right"></i></button>
-    </form>
-
-    <form class="cyber-form glass-tool" method="post" action="/free-penetration-testing-tools/dns">
-        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-        <h2>DNS + Email Security</h2>
-        <p>Checks public DNS records plus SPF, DMARC and CAA signals.</p>
-        <?php if (!empty($dnsError)): ?><div class="notice error"><?= e($dnsError) ?></div><?php endif; ?>
-        <label>Domain
-            <input name="domain" inputmode="url" placeholder="example.com" value="<?= e($dnsHost ?? '') ?>" required>
-        </label>
-        <button class="pill-button" type="submit">Check DNS <i class="fa-solid fa-magnifying-glass"></i></button>
-    </form>
-
-    <form class="cyber-form glass-tool" method="post" action="/free-penetration-testing-tools/tls">
-        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-        <h2>TLS Certificate Health</h2>
-        <p>Reads the HTTPS certificate on port 443 and checks expiry timing.</p>
-        <?php if (!empty($tlsError)): ?><div class="notice error"><?= e($tlsError) ?></div><?php endif; ?>
-        <label>Domain
-            <input name="domain" inputmode="url" placeholder="example.com" value="<?= e($tlsHost ?? '') ?>" required>
-        </label>
-        <button class="pill-button" type="submit">Check TLS <i class="fa-solid fa-certificate"></i></button>
-    </form>
-
-    <form class="cyber-form glass-tool" method="post" action="/free-penetration-testing-tools/well-known">
-        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-        <h2>Security.txt + Robots</h2>
-        <p>Checks common disclosure files over HTTPS without crawling the site.</p>
-        <?php if (!empty($wellKnownError)): ?><div class="notice error"><?= e($wellKnownError) ?></div><?php endif; ?>
-        <label>Domain
-            <input name="domain" inputmode="url" placeholder="example.com" value="<?= e($wellKnownHost ?? '') ?>" required>
-        </label>
-        <button class="pill-button" type="submit">Discover Files <i class="fa-solid fa-file-shield"></i></button>
-    </form>
+<section class="section reveal" id="server-checks">
+    <div class="section-heading">
+        <span class="kicker">Server-side scanners</span>
+        <h2>Each scanner has its own page &amp; premium report</h2>
+        <p>Open a dedicated tool, run a live scan and download a white-label PDF report.</p>
+    </div>
+    <div class="local-service-grid">
+        <a class="local-service-card" href="/tools/security-headers">
+            <i class="fa-solid fa-lock"></i>
+            <h3>Security Headers</h3>
+            <p>Score HSTS, CSP, COOP, CORP, frame &amp; MIME protection, cookie flags and stack disclosure.</p>
+            <span class="local-service-cta">Open scanner <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+        <a class="local-service-card" href="/tools/dns-email">
+            <i class="fa-solid fa-envelope-circle-check"></i>
+            <h3>DNS &amp; Email Security</h3>
+            <p>Check MX, SPF, DMARC, CAA and nameservers for deliverability and anti-spoofing.</p>
+            <span class="local-service-cta">Open scanner <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+        <a class="local-service-card" href="/tools/tls-ssl">
+            <i class="fa-solid fa-certificate"></i>
+            <h3>TLS / SSL Certificate</h3>
+            <p>Read certificate issuer, subject, validity window and days to expiry.</p>
+            <span class="local-service-cta">Open scanner <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+        <a class="local-service-card" href="/tools/security-txt">
+            <i class="fa-solid fa-file-shield"></i>
+            <h3>security.txt &amp; Discovery</h3>
+            <p>Discover responsible-disclosure and crawler files exposed over HTTPS.</p>
+            <span class="local-service-cta">Open scanner <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+        <a class="local-service-card" href="/tools/tech-stack">
+            <i class="fa-solid fa-microchip"></i>
+            <h3>Technology Stack</h3>
+            <p>Detect the CMS, frameworks, libraries, analytics, CDN and server behind a site.</p>
+            <span class="local-service-cta">Open scanner <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+        <a class="local-service-card" href="/seo-tools">
+            <i class="fa-solid fa-chart-line"></i>
+            <h3>On-Page SEO Audit</h3>
+            <p>Titles, meta, headings, schema, Open Graph, keyword density and indexability.</p>
+            <span class="local-service-cta">Open scanner <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+    </div>
 </section>
-
-<?php if (!empty($headerResult) || !empty($dnsResult) || !empty($tlsResult) || !empty($wellKnownResult)): ?>
-    <section class="tool-results reveal">
-        <?php if (!empty($headerResult)): ?>
-            <article class="cyber-card tool-result-card">
-                <span class="kicker"><?= e($headerResult['status']) ?></span>
-                <h2><?= e((string) $headerResult['score']) ?>/100</h2>
-                <p>Header readiness score for <?= e($targetUrl ?? '') ?>.</p>
-                <div class="tool-check-list">
-                    <?php foreach ($headerResult['checks'] as $check): ?>
-                        <div class="<?= $check['present'] ? 'is-good' : 'is-missing' ?>"><i class="fa-solid <?= $check['present'] ? 'fa-circle-check' : 'fa-triangle-exclamation' ?>"></i><span><strong><?= e($check['label']) ?></strong><small><?= e(excerpt($check['value'], 110)) ?></small></span></div>
-                    <?php endforeach; ?>
-                </div>
-            </article>
-        <?php endif; ?>
-
-        <?php if (!empty($dnsResult)): ?>
-            <article class="cyber-card tool-result-card">
-                <span class="kicker"><?= e($dnsHost ?? '') ?></span>
-                <h2><?= e((string) $dnsResult['score']) ?>/100</h2>
-                <p>DNS and email security readiness score.</p>
-                <div class="tool-check-list">
-                    <?php foreach ($dnsResult['checks'] as $check): ?>
-                        <div class="<?= $check['present'] ? 'is-good' : 'is-missing' ?>"><i class="fa-solid <?= $check['present'] ? 'fa-circle-check' : 'fa-triangle-exclamation' ?>"></i><span><strong><?= e($check['label']) ?></strong><small><?= e(excerpt($check['value'], 130)) ?></small></span></div>
-                    <?php endforeach; ?>
-                </div>
-            </article>
-        <?php endif; ?>
-
-        <?php if (!empty($tlsResult)): ?>
-            <article class="cyber-card tool-result-card tls-result">
-                <span class="kicker"><?= e($tlsHost ?? '') ?></span>
-                <h2><?= e((string) $tlsResult['score']) ?>/100</h2>
-                <p>TLS certificate health score.</p>
-                <div class="tool-check-list">
-                    <div class="is-good"><i class="fa-solid fa-certificate"></i><span><strong>Subject</strong><small><?= e($tlsResult['subject']) ?></small></span></div>
-                    <div class="is-good"><i class="fa-solid fa-building-shield"></i><span><strong>Issuer</strong><small><?= e($tlsResult['issuer']) ?></small></span></div>
-                    <div class="<?= (int) $tlsResult['days_remaining'] > 14 ? 'is-good' : 'is-missing' ?>"><i class="fa-solid fa-clock"></i><span><strong>Validity</strong><small><?= e($tlsResult['valid_from']) ?> to <?= e($tlsResult['valid_to']) ?>, <?= e((string) $tlsResult['days_remaining']) ?> days remaining</small></span></div>
-                </div>
-            </article>
-        <?php endif; ?>
-
-        <?php if (!empty($wellKnownResult)): ?>
-            <article class="cyber-card tool-result-card">
-                <span class="kicker"><?= e($wellKnownHost ?? '') ?></span>
-                <h2><?= e((string) $wellKnownResult['score']) ?>/100</h2>
-                <p>Well-known file discovery score.</p>
-                <div class="tool-check-list">
-                    <?php foreach ($wellKnownResult['checks'] as $check): ?>
-                        <div class="<?= $check['present'] ? 'is-good' : 'is-missing' ?>"><i class="fa-solid <?= $check['present'] ? 'fa-circle-check' : 'fa-triangle-exclamation' ?>"></i><span><strong><?= e($check['label']) ?></strong><small><?= e(excerpt($check['value'], 130)) ?></small></span></div>
-                    <?php endforeach; ?>
-                </div>
-            </article>
-        <?php endif; ?>
-    </section>
-<?php endif; ?>
 
 <section class="tool-workbench reveal" id="local-tools" data-tools-locked="<?= empty($toolLead) ? 'true' : 'false' ?>">
     <div class="cyber-form glass-tool" data-password-tool>
@@ -197,3 +141,17 @@
         <output class="hash-output">Cookie audit output</output>
     </div>
 </section>
+
+<section class="home-tools-cta reveal">
+    <div class="home-tools-cta-copy">
+        <span class="kicker">Growth Lab Pro</span>
+        <h2>Unlimited scans, white-label PDF reports and monitoring — from €25/month.</h2>
+        <p>Run every scanner without the 3-per-day free limit, add your own agency branding and download client-ready PDF reports.</p>
+        <div class="button-row">
+            <a class="pill-button" href="/tools-pricing">See Pro Pricing <i class="fa-solid fa-arrow-right"></i></a>
+            <a class="pill-button ghost" href="/tools">All Tools <i class="fa-solid fa-grip"></i></a>
+        </div>
+    </div>
+</section>
+
+<?php require base_path('app/views/partials/tool-pro-cta.php'); ?>

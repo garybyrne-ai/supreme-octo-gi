@@ -99,11 +99,56 @@ final class Router
 
     private function sendSecurityHeaders(): void
     {
+        if (headers_sent()) {
+            return;
+        }
+
+        header_remove('X-Powered-By');
         header('X-Frame-Options: DENY');
         header('X-Content-Type-Options: nosniff');
         header('Referrer-Policy: strict-origin-when-cross-origin');
-        header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
-        header('Content-Security-Policy: ' . ($this->config['security']['csp'] ?? "default-src 'self'"));
+        header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(self), usb=(), interest-cohort=()');
+        header('Cross-Origin-Opener-Policy: same-origin');
+        header('Cross-Origin-Resource-Policy: same-origin');
+        header('X-Permitted-Cross-Domain-Policies: none');
+        header('Content-Security-Policy: ' . $this->contentSecurityPolicy());
+
+        $isHttps = ($_SERVER['HTTPS'] ?? '') === 'on'
+            || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
+            || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443;
+        if ($isHttps) {
+            header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+        }
+    }
+
+    /**
+     * Base CSP from config, widened for Google AdSense / Analytics hosts only
+     * when advertising or analytics is actually switched on — so the policy
+     * stays tight for every site that hasn't enabled ads.
+     */
+    private function contentSecurityPolicy(): string
+    {
+        $csp = (string) ($this->config['security']['csp'] ?? "default-src 'self'");
+
+        try {
+            $ads = new \App\Models\AdsSettingsRepository();
+            if (!$ads->adsActive() && $ads->analyticsId() === '') {
+                return $csp;
+            }
+        } catch (\Throwable) {
+            return $csp;
+        }
+
+        $script = 'https://pagead2.googlesyndication.com https://www.googletagmanager.com https://adservice.google.com https://*.googlesyndication.com https://tpc.googlesyndication.com';
+        $frame = 'https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.googlesyndication.com https://www.google.com';
+        $connect = 'https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google-analytics.com https://region1.google-analytics.com https://*.doubleclick.net https://www.googletagmanager.com';
+
+        $csp = preg_replace('/script-src ([^;]+)/', 'script-src $1 ' . $script, $csp);
+        $csp = preg_replace('/connect-src ([^;]+)/', 'connect-src $1 ' . $connect, $csp);
+        // No frame-src in the base policy — add one (frame-ancestors is separate).
+        $csp .= "; frame-src 'self' " . $frame;
+
+        return $csp;
     }
 }
 

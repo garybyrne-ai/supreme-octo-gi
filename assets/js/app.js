@@ -3,11 +3,16 @@ const nav = document.querySelector('#siteNav');
 
 if (navToggle && nav) {
     const icon = navToggle.querySelector('i');
+    const collapseGroups = () => {
+        nav.querySelectorAll('.nav-item.is-expanded').forEach((item) => item.classList.remove('is-expanded'));
+    };
+
     const closeNav = () => {
         nav.classList.remove('is-open');
         document.body.classList.remove('nav-open');
         navToggle.setAttribute('aria-expanded', 'false');
         if (icon) icon.className = 'fa-solid fa-bars';
+        collapseGroups();
     };
 
     navToggle.addEventListener('click', () => {
@@ -15,10 +20,34 @@ if (navToggle && nav) {
         document.body.classList.toggle('nav-open', open);
         navToggle.setAttribute('aria-expanded', String(open));
         if (icon) icon.className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+        if (!open) collapseGroups();
     });
 
     nav.querySelectorAll('a').forEach((link) => {
+        // Group headers (Services/Tools/Store/Company) toggle a mobile accordion
+        // instead of closing the menu; only real destination links close it.
+        if (link.parentElement && link.parentElement.classList.contains('nav-item')) {
+            return;
+        }
         link.addEventListener('click', closeNav);
+    });
+
+    // Mobile accordion: tap a group header to reveal its sub-links.
+    nav.querySelectorAll('.has-mega > a').forEach((headerLink) => {
+        headerLink.addEventListener('click', (event) => {
+            if (!window.matchMedia('(max-width: 900px)').matches) {
+                return; // desktop uses hover; let the link navigate
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            const item = headerLink.closest('.nav-item');
+            if (!item) return;
+            const willOpen = !item.classList.contains('is-expanded');
+            nav.querySelectorAll('.nav-item.is-expanded').forEach((other) => {
+                if (other !== item) other.classList.remove('is-expanded');
+            });
+            item.classList.toggle('is-expanded', willOpen);
+        });
     });
 
     window.addEventListener('keydown', (event) => {
@@ -211,6 +240,9 @@ document.querySelectorAll('[data-account-widget]').forEach((widget) => {
                     document.querySelectorAll('[data-tools-locked="true"]').forEach((element) => {
                         element.dataset.toolsLocked = 'false';
                     });
+                    if (payload.redirect) {
+                        window.setTimeout(() => { window.location.href = payload.redirect; }, 600);
+                    }
                 } else {
                     loaded = false;
                     await loadForms(true);
@@ -530,7 +562,20 @@ if (keywordDensity) {
             }
         }
         const density = words.length ? ((hits * Math.max(phrase.length, 1)) / words.length) * 100 : 0;
-        output.textContent = `${words.length} words\n${hits} exact keyword matches\n${density.toFixed(2)}% density\n${density > 3 ? 'Reduce repetition and use related terms.' : density > 0.4 ? 'Healthy range for focused copy.' : 'Add the keyword naturally in headings and body copy.'}`;
+        const verdict = density > 3
+            ? { label: 'Over-optimised', tone: 'bad', note: 'Reduce repetition and use related terms.' }
+            : density > 0.4
+                ? { label: 'Healthy', tone: 'good', note: 'Good range for focused copy.' }
+                : { label: 'Too thin', tone: 'warn', note: 'Add the keyword naturally in headings and body.' };
+        const barWidth = Math.min(100, Math.round((density / 4) * 100));
+        output.innerHTML = `
+            <div class="seo-metric-grid">
+                <div class="seo-metric"><b>${words.length}</b><span>Total words</span></div>
+                <div class="seo-metric"><b>${hits}</b><span>Exact matches</span></div>
+                <div class="seo-metric"><b>${density.toFixed(2)}%</b><span>Keyword density</span></div>
+            </div>
+            <div class="seo-density-bar"><i style="width:${barWidth}%"></i></div>
+            <p class="seo-verdict is-${verdict.tone}"><b>${verdict.label}.</b> ${verdict.note}</p>`;
     });
 }
 
@@ -550,9 +595,14 @@ if (schemaValidator) {
             if (!schema['@context']) warnings.push('Add @context.');
             if (!schema['@type']) warnings.push('Add @type.');
             if (!schema.name && !schema.headline) warnings.push('Add name or headline.');
-            output.textContent = warnings.length ? `Valid JSON, but improve schema:\n${warnings.join('\n')}` : 'Valid JSON-LD with core schema fields present.';
+            const type = escapeHtml(String(schema['@type'] || 'Unknown'));
+            if (warnings.length) {
+                output.innerHTML = `<p class="seo-verdict is-warn"><b>Valid JSON — schema needs work.</b> Type: <code>${type}</code></p><ul class="seo-check-list">${warnings.map((w) => `<li class="is-warn"><i class="fa-solid fa-triangle-exclamation"></i>${escapeHtml(w)}</li>`).join('')}</ul>`;
+            } else {
+                output.innerHTML = `<p class="seo-verdict is-good"><b>Valid JSON-LD.</b> Core fields present for <code>${type}</code>.</p><ul class="seo-check-list"><li class="is-good"><i class="fa-solid fa-circle-check"></i>@context present</li><li class="is-good"><i class="fa-solid fa-circle-check"></i>@type present</li><li class="is-good"><i class="fa-solid fa-circle-check"></i>Name / headline present</li></ul>`;
+            }
         } catch (error) {
-            output.textContent = `Invalid JSON: ${error.message}`;
+            output.innerHTML = `<p class="seo-verdict is-bad"><b>Invalid JSON.</b> ${escapeHtml(error.message)}</p>`;
         }
     });
 }
@@ -573,7 +623,33 @@ if (robotsBuilder) {
         ];
         if (checked('archive')) directives.push('noarchive');
         if (checked('snippet')) directives.push('nosnippet');
-        output.textContent = `<meta name="robots" content="${directives.join(', ')}">`;
+        const tag = `<meta name="robots" content="${directives.join(', ')}">`;
+        output.innerHTML = `<pre class="seo-code"><code>${escapeHtml(tag)}</code></pre><button class="pill-button ghost seo-copy-btn" type="button">Copy tag <i class="fa-solid fa-copy"></i></button>`;
+        const copyBtn = output.querySelector('.seo-copy-btn');
+        copyBtn?.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(tag);
+                copyBtn.innerHTML = 'Copied <i class="fa-solid fa-check"></i>';
+                setTimeout(() => { copyBtn.innerHTML = 'Copy tag <i class="fa-solid fa-copy"></i>'; }, 1600);
+            } catch (error) { /* clipboard unavailable */ }
+        });
+    });
+}
+
+// SERP checker: client-side "search these results" filter (whatsmyserp-style).
+const serpFilter = document.querySelector('[data-serp-filter]');
+if (serpFilter) {
+    const rows = Array.from(document.querySelectorAll('[data-serp-list] .serp-row'));
+    const empty = document.querySelector('[data-serp-empty]');
+    serpFilter.addEventListener('input', () => {
+        const query = serpFilter.value.trim().toLowerCase();
+        let shown = 0;
+        rows.forEach((row) => {
+            const match = query === '' || (row.getAttribute('data-serp-text') || '').includes(query);
+            row.hidden = !match;
+            if (match) shown += 1;
+        });
+        if (empty) empty.hidden = shown !== 0;
     });
 }
 
@@ -802,3 +878,247 @@ document.querySelectorAll('[data-chatbot]').forEach((chatbot) => {
         }
     });
 });
+
+/* Tool report: white-label branding (persisted) + print-to-PDF. */
+document.querySelectorAll('[data-tool-report]').forEach(function (report) {
+    var nameInput = report.querySelector('[data-wl-input-name]');
+    var logoInput = report.querySelector('[data-wl-input-logo]');
+    var wlName = report.querySelector('[data-wl-name]');
+    var wlLogo = report.querySelector('[data-wl-logo]');
+    var wlFooter = report.querySelector('[data-wl-footer]');
+    var dateEl = report.querySelector('[data-report-date]');
+    var printBtn = report.querySelector('[data-report-print]');
+    var store = {};
+    try { store = JSON.parse(localStorage.getItem('cwm_whitelabel') || '{}'); } catch (e) { store = {}; }
+
+    function apply() {
+        var name = (nameInput && nameInput.value.trim()) || store.name || '';
+        var logo = (logoInput && logoInput.value.trim()) || store.logo || '';
+        var brand = name || 'Crest Web Media';
+        if (wlName) { wlName.textContent = brand; }
+        if (wlFooter) { wlFooter.textContent = 'Generated by ' + brand + ' Growth Lab'; }
+        if (wlLogo) {
+            if (logo) { wlLogo.src = logo; wlLogo.hidden = false; }
+            else { wlLogo.removeAttribute('src'); wlLogo.hidden = true; }
+        }
+    }
+
+    if (nameInput && store.name) { nameInput.value = store.name; }
+    if (logoInput && store.logo) { logoInput.value = store.logo; }
+    if (dateEl) { dateEl.textContent = new Date().toISOString().slice(0, 10); }
+
+    [nameInput, logoInput].forEach(function (inp) {
+        if (!inp) { return; }
+        inp.addEventListener('input', function () {
+            store.name = nameInput ? nameInput.value.trim() : '';
+            store.logo = logoInput ? logoInput.value.trim() : '';
+            try { localStorage.setItem('cwm_whitelabel', JSON.stringify(store)); } catch (e) {}
+            apply();
+        });
+    });
+
+    apply();
+    if (printBtn) { printBtn.addEventListener('click', function () { apply(); window.print(); }); }
+});
+
+// --- Enterprise hero interactions: cursor spotlight, tile glow, 3D tilt ---
+(function () {
+    const hero = document.querySelector('[data-hero]');
+    if (!hero) return;
+
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!finePointer) return;
+
+    // Backdrop spotlight follows the cursor across the hero.
+    hero.addEventListener('pointermove', (event) => {
+        const rect = hero.getBoundingClientRect();
+        hero.style.setProperty('--mx', (((event.clientX - rect.left) / rect.width) * 100).toFixed(2) + '%');
+        hero.style.setProperty('--my', (((event.clientY - rect.top) / rect.height) * 100).toFixed(2) + '%');
+        hero.classList.add('is-spotlit');
+    }, { passive: true });
+    hero.addEventListener('pointerleave', () => hero.classList.remove('is-spotlit'));
+
+    // Service tiles: glow tracks the cursor inside each tile.
+    hero.querySelectorAll('.hero-service-grid a').forEach((tile) => {
+        tile.addEventListener('pointermove', (event) => {
+            const rect = tile.getBoundingClientRect();
+            tile.style.setProperty('--px', (event.clientX - rect.left) + 'px');
+            tile.style.setProperty('--py', (event.clientY - rect.top) + 'px');
+        }, { passive: true });
+    });
+
+    // 3D tilt + glare on the DIRECT SIGNAL / LOCAL TIME panels.
+    if (!reducedMotion) {
+        hero.querySelectorAll('[data-tilt]').forEach((card) => {
+            let raf = 0;
+            card.addEventListener('pointermove', (event) => {
+                const rect = card.getBoundingClientRect();
+                const px = (event.clientX - rect.left) / rect.width;
+                const py = (event.clientY - rect.top) / rect.height;
+                cancelAnimationFrame(raf);
+                raf = requestAnimationFrame(() => {
+                    card.classList.add('is-tilting');
+                    card.style.transform =
+                        'perspective(720px) rotateX(' + ((0.5 - py) * 9).toFixed(2) + 'deg)' +
+                        ' rotateY(' + ((px - 0.5) * 11).toFixed(2) + 'deg) translateY(-2px)';
+                    card.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+                    card.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+                });
+            }, { passive: true });
+            card.addEventListener('pointerleave', () => {
+                cancelAnimationFrame(raf);
+                card.classList.remove('is-tilting');
+                card.style.transform = '';
+            });
+        });
+    }
+})();
+
+// --- GDPR cookie consent (Google Consent Mode v2) ---
+(function () {
+    var banner = document.getElementById('cookieConsent');
+    var reopen = document.getElementById('cookieReopen');
+    if (!banner) { return; }
+
+    var readCookie = function (name) {
+        return document.cookie.split('; ').reduce(function (acc, c) {
+            var parts = c.split('=');
+            return parts[0] === name ? decodeURIComponent(parts[1] || '') : acc;
+        }, '');
+    };
+    var setCookie = function (name, value) {
+        var oneYear = 60 * 60 * 24 * 365;
+        var secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = name + '=' + encodeURIComponent(value) + '; Max-Age=' + oneYear + '; Path=/; SameSite=Lax' + secure;
+    };
+
+    var gtagSafe = function () {
+        if (typeof window.gtag === 'function') { window.gtag.apply(window, arguments); }
+    };
+
+    var injectAdsense = function () {
+        var client = banner.getAttribute('data-adsense');
+        if (!client || document.querySelector('script[data-adsense-loader]')) { return; }
+        var s = document.createElement('script');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        s.setAttribute('data-adsense-loader', '1');
+        s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(client);
+        document.head.appendChild(s);
+    };
+
+    var showBanner = function () { banner.hidden = false; if (reopen) { reopen.hidden = true; } };
+    var hideBanner = function () { banner.hidden = true; if (reopen) { reopen.hidden = false; } };
+
+    var accept = function () {
+        setCookie('cwm_consent', 'granted');
+        gtagSafe('consent', 'update', {
+            ad_storage: 'granted', ad_user_data: 'granted',
+            ad_personalization: 'granted', analytics_storage: 'granted'
+        });
+        injectAdsense();
+        hideBanner();
+    };
+    var reject = function () {
+        setCookie('cwm_consent', 'denied');
+        gtagSafe('consent', 'update', {
+            ad_storage: 'denied', ad_user_data: 'denied',
+            ad_personalization: 'denied', analytics_storage: 'denied'
+        });
+        hideBanner();
+    };
+
+    banner.querySelectorAll('[data-consent]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            btn.getAttribute('data-consent') === 'accept' ? accept() : reject();
+        });
+    });
+    if (reopen) { reopen.addEventListener('click', showBanner); }
+    // Let a link anywhere (e.g. cookie policy page) reopen the chooser.
+    document.querySelectorAll('[data-open-consent]').forEach(function (el) {
+        el.addEventListener('click', function (e) { e.preventDefault(); showBanner(); });
+    });
+
+    var choice = readCookie('cwm_consent');
+    if (choice === 'granted' || choice === 'denied') {
+        hideBanner();
+    } else {
+        showBanner();
+    }
+})();
+
+// --- External openers for the header account popover (login/register gate) ---
+(function () {
+    var widget = document.querySelector('[data-account-widget]');
+    if (!widget) { return; }
+    document.querySelectorAll('[data-open-account]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            e.preventDefault();
+            var tab = el.getAttribute('data-open-account');
+            if (tab === 'register' || tab === 'login') {
+                var tabBtn = widget.querySelector('[data-account-tab="' + tab + '"]');
+                if (tabBtn) { tabBtn.click(); }
+            }
+            widget.dispatchEvent(new CustomEvent('account:open'));
+            widget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+})();
+
+// --- Referral capture: store ?ref=CODE in a 30-day cookie for attribution ---
+(function () {
+    try {
+        var ref = new URLSearchParams(window.location.search).get('ref');
+        if (!ref) { return; }
+        ref = ref.replace(/[^A-Za-z0-9]/g, '').slice(0, 20);
+        if (!ref) { return; }
+        var secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = 'cwm_ref=' + ref + '; Max-Age=' + (60 * 60 * 24 * 30) + '; Path=/; SameSite=Lax' + secure;
+    } catch (e) {}
+})();
+
+// --- Generic copy-to-clipboard for [data-copy-target] buttons ---
+(function () {
+    document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var el = document.querySelector(btn.getAttribute('data-copy-target'));
+            if (!el) { return; }
+            el.select && el.select();
+            try { navigator.clipboard.writeText(el.value || el.textContent); } catch (e) { try { document.execCommand('copy'); } catch (e2) {} }
+            var original = btn.innerHTML;
+            btn.innerHTML = 'Copied! <i class="fa-solid fa-check"></i>';
+            window.setTimeout(function () { btn.innerHTML = original; }, 1800);
+        });
+    });
+})();
+
+// --- Open the header account popover on the Register tab from any CTA ---
+(function () {
+    document.querySelectorAll('[data-open-register]').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+            event.preventDefault();
+            var widget = document.querySelector('[data-account-widget]');
+            if (!widget) { window.location.href = '/tools-pricing'; return; }
+            var registerTab = widget.querySelector('[data-account-tab="register"]');
+            if (registerTab) { registerTab.click(); }
+            widget.dispatchEvent(new CustomEvent('account:open'));
+            widget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+})();
+
+// --- AI content assistant: copy the preceding [data-copy-source] text ---
+(function () {
+    document.querySelectorAll('[data-copy-prev]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var source = btn.parentElement && btn.parentElement.querySelector('[data-copy-source]');
+            if (!source) { return; }
+            var text = source.textContent || '';
+            try { navigator.clipboard.writeText(text); } catch (e) { try { document.execCommand('copy'); } catch (e2) {} }
+            var original = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+            window.setTimeout(function () { btn.innerHTML = original; }, 1500);
+        });
+    });
+})();

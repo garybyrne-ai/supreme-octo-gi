@@ -1,6 +1,6 @@
 <section class="subhero">
-    <span class="status-chip"><span></span> Workflow</span>
-    <h1>Our Proven Process</h1>
+    <span class="status-chip"><span></span> <?= e($pageIntro['kicker'] ?? 'Workflow') ?></span>
+    <h1><?= e($pageIntro['heading'] ?? 'Our Proven Process') ?></h1>
     <p>A structured path from discovery to launch and continuous optimization.</p>
 </section>
 <section class="split-section reveal">

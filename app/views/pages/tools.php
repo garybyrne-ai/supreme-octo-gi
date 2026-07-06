@@ -1,10 +1,10 @@
 <section class="subhero tools-hub-hero">
     <span class="status-chip"><span></span> Growth Tool Suite</span>
     <h1>Free Tools for Smarter Websites, SEO, Security and Growth</h1>
-    <p>Explore practical tools for audits, rankings, PPC returns, AI automation ideas, speed improvements, security checks and project planning. Register once for 3 free scans per day, then upgrade with credits or a Growth Lab Pass when you need deeper data.</p>
+    <p>Explore practical tools for audits, rankings, PPC returns, AI automation ideas, speed improvements, security checks and project planning. Register once for 3 free scans per day, then upgrade to Growth Lab Pro (€25/mo or €200/yr) for unlimited scans and white-label reports.</p>
     <div class="button-row">
         <a class="pill-button" href="#tool-suite">Explore Tools <i class="fa-solid fa-arrow-right"></i></a>
-        <a class="pill-button ghost" href="/contact">Turn Results Into a Project <i class="fa-solid fa-paper-plane"></i></a>
+        <a class="pill-button ghost" href="/tools-pricing">See Pro Pricing <i class="fa-solid fa-crown"></i></a>
     </div>
 </section>
 
@@ -12,7 +12,7 @@
     <article><i class="fa-solid fa-fingerprint"></i><strong>3 free scans/day</strong><span>Email-verified users can run useful checks before upgrading.</span></article>
     <article><i class="fa-solid fa-chart-line"></i><strong>Growth focused</strong><span>SEO, SERP, PPC, speed and conversion signals.</span></article>
     <article><i class="fa-solid fa-file-shield"></i><strong>Paid reports</strong><span>Credits unlock deeper data and white-label PDF reports.</span></article>
-    <article><i class="fa-solid fa-robot"></i><strong>Monitoring pass</strong><span>$19-$49/month Growth Lab Pass for background monitoring.</span></article>
+    <article><i class="fa-solid fa-robot"></i><strong>Growth Lab Pro</strong><span>€25/mo or €200/yr for unlimited scans &amp; monitoring.</span></article>
 </section>
 
 <section class="section reveal" id="tool-suite">

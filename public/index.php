@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 define('BASE_PATH', dirname(__DIR__));
 
+// Never leak stack traces, file paths or SQL to visitors — errors go to the log.
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+
 require BASE_PATH . '/app/helpers/functions.php';
 
 spl_autoload_register(static function (string $class): void {
@@ -37,6 +41,21 @@ use App\Core\Router;
 
 $config = require BASE_PATH . '/config/app.php';
 $requestPath = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+
+// Admin-managed URL redirects run before routing (skip admin + asset paths).
+if (!str_starts_with($requestPath, '/admin') && !str_starts_with($requestPath, '/assets')) {
+    try {
+        $redirect = (new App\Models\RedirectRepository())->match($requestPath);
+        if ($redirect !== null) {
+            $status = in_array($redirect['status'], [301, 302, 307, 308], true) ? $redirect['status'] : 301;
+            header('Location: ' . $redirect['to'], true, $status);
+            exit;
+        }
+    } catch (Throwable) {
+        // never let redirect lookup break the site
+    }
+}
+
 $isInstalled = is_file(BASE_PATH . '/config/installed.php');
 $isGet = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET';
 $statefulPrefixes = [
@@ -46,11 +65,20 @@ $statefulPrefixes = [
     '/contact',
     '/support',
     '/code-shop',
+    '/membership',
+    '/backlinks',
+    '/website-care-plans',
+    '/website-audit',
+    '/speed-rescue',
     '/download.php',
     '/webhooks',
     '/tools',
     '/seo-tools',
+    '/site-crawler',
     '/serp-checker',
+    '/ai-content-assistant',
+    '/ethical-hacking-toolkit',
+    '/ethical-hacking-tools',
     '/free-penetration-testing-tools',
     '/forum',
     '/ai-website-growth-consultant',
@@ -82,7 +110,11 @@ if ($isGet) {
     }
 }
 
-if (!$isInstalled && !str_starts_with($requestPath, '/install') && !str_starts_with($requestPath, '/assets')) {
+// Full security response headers (CSP, HSTS, COOP, anti-clickjacking, etc.) are
+// centralised in Router::sendSecurityHeaders() so every routed response — the
+// only responses PHP controls — is hardened from one place.
+
+if (!$isInstalled && !str_starts_with($requestPath, '/install') && !str_starts_with($requestPath, '/assets') && $requestPath !== '/ads.txt') {
     header('Location: /install', true, 302);
     exit;
 }
@@ -114,4 +146,38 @@ try {
 
     http_response_code(500);
     echo 'Application error. Please check storage/logs for details.';
+}
+
+// --- Traffic-driven scheduler heartbeat --------------------------------------
+// Runs due background jobs (monitoring, rank tracking, daily site metrics,
+// weekly full-site crawls, abandoned-order recovery) with NO server crontab
+// required. These jobs make outbound HTTP and can take several seconds, so we
+// only run them once the response is fully DETACHED from the visitor — via
+// fastcgi_finish_request, which is available on virtually all managed PHP-FPM
+// hosting. Scheduler::tick() is itself throttled (every ~15 min) and
+// lock-guarded, so this is cheap. Hosts without FPM (or that prefer it) can
+// drive the same work by pointing real cron at the /cron/* endpoints.
+// Skipped for the cron endpoints themselves, assets, webhooks and the installer.
+if ($isInstalled
+    && function_exists('fastcgi_finish_request')
+    && !str_starts_with($requestPath, '/cron')
+    && !str_starts_with($requestPath, '/assets')
+    && !str_starts_with($requestPath, '/webhooks')
+    && !str_starts_with($requestPath, '/install')
+) {
+    // Release the session lock and flush the response, then keep running
+    // detached so background work never delays or is aborted by the visitor.
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
+    ignore_user_abort(true);
+    @fastcgi_finish_request();
+    @set_time_limit(120);
+
+    try {
+        (new \App\Services\Scheduler($config))->tick();
+    } catch (Throwable $exception) {
+        // Background work must never affect the delivered response.
+        error_log('[' . date('c') . '] scheduler tick: ' . $exception->getMessage() . PHP_EOL, 3, BASE_PATH . '/storage/logs/php-error-' . date('Y-m-d') . '.log');
+    }
 }
