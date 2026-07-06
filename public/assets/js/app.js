@@ -636,6 +636,23 @@ if (robotsBuilder) {
     });
 }
 
+// SERP checker: client-side "search these results" filter (whatsmyserp-style).
+const serpFilter = document.querySelector('[data-serp-filter]');
+if (serpFilter) {
+    const rows = Array.from(document.querySelectorAll('[data-serp-list] .serp-row'));
+    const empty = document.querySelector('[data-serp-empty]');
+    serpFilter.addEventListener('input', () => {
+        const query = serpFilter.value.trim().toLowerCase();
+        let shown = 0;
+        rows.forEach((row) => {
+            const match = query === '' || (row.getAttribute('data-serp-text') || '').includes(query);
+            row.hidden = !match;
+            if (match) shown += 1;
+        });
+        if (empty) empty.hidden = shown !== 0;
+    });
+}
+
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, (char) => ({
         '&': '&amp;',

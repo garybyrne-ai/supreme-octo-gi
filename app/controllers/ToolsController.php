@@ -758,12 +758,21 @@ final class ToolsController extends Controller
         }
 
         $keyword = trim((string) ($_POST['keyword'] ?? ''));
-        $target = $this->normalizePublicHost((string) ($_POST['domain'] ?? ''));
+        $rawDomain = trim((string) ($_POST['domain'] ?? ''));
+        // Domain is optional: leave it blank to just look up the live SERP for a
+        // keyword (like a plain rank-explorer); fill it to also see your position.
+        $target = $rawDomain === '' ? null : $this->normalizePublicHost($rawDomain);
         $location = trim((string) ($_POST['location'] ?? 'Ireland'));
 
-        if (strlen($keyword) < 2 || strlen($keyword) > 120 || $target === null) {
+        if (strlen($keyword) < 2 || strlen($keyword) > 120) {
             http_response_code(422);
-            $this->serpChecker(['error' => 'Enter a keyword and a valid public domain.']);
+            $this->serpChecker(['error' => 'Enter a keyword to look up (2–120 characters).']);
+            return;
+        }
+
+        if ($rawDomain !== '' && $target === null) {
+            http_response_code(422);
+            $this->serpChecker(['error' => 'That domain looks invalid. Leave it blank to just view the SERP, or enter a public domain like example.com.']);
             return;
         }
 
@@ -773,14 +782,17 @@ final class ToolsController extends Controller
             return;
         }
 
-        $report = $this->serpReport($keyword, $target, $location);
-        $analysis = $this->serpAnalysis($report['position'] ?? null, $report['results'] ?? [], $target);
-        (new AuditLogger())->log('tools.serp_checked', ['keyword' => $keyword, 'target' => $target, 'location' => $location]);
+        $report = $this->serpReport($keyword, $target ?? '', $location);
+        // Only produce the "your rank / competitors" analysis when a domain was given.
+        $analysis = $target === null
+            ? null
+            : $this->serpAnalysis($report['position'] ?? null, $report['results'] ?? [], $target);
+        (new AuditLogger())->log('tools.serp_checked', ['keyword' => $keyword, 'target' => $target ?? '(serp-only)', 'location' => $location]);
 
         // If a Pro member already tracks this exact keyword+domain, fold this
         // reading straight into their history so the checker doubles as a tracker.
         $email = (string) ($_SESSION['tool_lead']['email'] ?? $_SESSION['member']['email'] ?? '');
-        if (MemberRepository::isPro($_SESSION['member'] ?? null) && $email !== '') {
+        if ($target !== null && MemberRepository::isPro($_SESSION['member'] ?? null) && $email !== '') {
             $repo = new \App\Models\RankTrackerRepository();
             foreach ($repo->forEmail($email) as $entry) {
                 if (strcasecmp((string) $entry['keyword'], $keyword) === 0
@@ -793,7 +805,7 @@ final class ToolsController extends Controller
 
         $this->serpChecker([
             'keyword' => $keyword,
-            'domain' => $target,
+            'domain' => $target ?? '',
             'location' => $location,
             'serpResult' => $report,
             'serpAnalysis' => $analysis,

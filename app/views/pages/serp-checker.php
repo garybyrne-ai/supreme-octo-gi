@@ -24,7 +24,7 @@ $sparkline = static function (array $positions): string {
 <section class="subhero tools-hero">
     <span class="status-chip"><span></span> Enterprise SERP Checker &amp; Rank Tracker</span>
     <h1>SERP Checker &amp; Rank Tracker for Keywords, Domains and Competitors</h1>
-    <p>Check live organic position with a visibility tier, estimated click-through rate and the competitors ranking above you &mdash; then track any keyword and watch its position move over time.</p>
+    <p>Type any keyword to see the live top 10 for your country &mdash; or add your domain to get your exact position, a visibility tier, estimated click-through rate and the competitors ranking above you, then track it over time.</p>
 </section>
 
 <?php require base_path('app/views/partials/tool-access-gate.php'); ?>
@@ -35,29 +35,33 @@ $sparkline = static function (array $positions): string {
 <section class="split-section reveal">
     <form class="cyber-form glass-tool" method="post" action="/serp-checker/check">
         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-        <h2>Check SERP</h2>
+        <h2>Look up the SERP</h2>
         <?php if (!empty($error)): ?><div class="notice error"><?= e($error) ?></div><?php endif; ?>
         <label>Keyword
             <input name="keyword" placeholder="web design ireland" value="<?= e($keyword ?? '') ?>" required>
         </label>
-        <label>Target Domain
-            <input name="domain" placeholder="crestwebmedia.com" value="<?= e($domain ?? '') ?>" required>
+        <label>Target Domain <span class="serp-optional">optional — to see your rank</span>
+            <input name="domain" placeholder="leave blank to just view results" value="<?= e($domain ?? '') ?>">
         </label>
-        <label>Location Modifier
+        <label>Country / Location
             <input name="location" placeholder="Ireland" value="<?= e($location ?? 'Ireland') ?>">
         </label>
-        <button class="pill-button" type="submit">Check Position <i class="fa-solid fa-ranking-star"></i></button>
+        <button class="pill-button" type="submit">Look Up <i class="fa-solid fa-magnifying-glass"></i></button>
     </form>
 
     <aside class="cyber-card tool-result-card">
         <?php if (!empty($serpResult)): ?>
             <span class="kicker"><?= e($serpResult['engine']) ?></span>
-            <h2><?= $serpResult['position'] ? '#' . e((string) $serpResult['position']) : 'Not Top 10' ?></h2>
+            <?php if (!empty($domain)): ?>
+                <h2><?= $serpResult['position'] ? '#' . e((string) $serpResult['position']) : 'Not Top 10' ?></h2>
+            <?php else: ?>
+                <h2><?= e((string) count($serpResult['results'] ?? [])) ?> results</h2>
+            <?php endif; ?>
             <p>Query checked: <?= e($serpResult['query']) ?></p>
         <?php else: ?>
             <span class="kicker">Rank Signal</span>
             <h2>Find what already ranks.</h2>
-            <p>Use this before building city, country, service and AI automation pages.</p>
+            <p>Type a keyword to see the live top results — add your domain to also see where you rank.</p>
         <?php endif; ?>
     </aside>
 </section>
@@ -128,16 +132,22 @@ $sparkline = static function (array $positions): string {
                     <h2>Live SERP &mdash; Top 10</h2>
                     <p><span class="serp-engine-chip"><i class="fa-solid fa-globe"></i> <?= e($serpResult['engine']) ?></span> for <strong><?= e($serpResult['query']) ?></strong></p>
                 </div>
-                <?php if (!empty($serpResult['position'])): ?>
-                    <div class="serp-board-rank"><span>Your rank</span><strong>#<?= e((string) $serpResult['position']) ?></strong></div>
-                <?php else: ?>
-                    <div class="serp-board-rank is-out"><span>Your rank</span><strong>Not in top 10</strong></div>
+                <?php if (!empty($targetHost)): ?>
+                    <?php if (!empty($serpResult['position'])): ?>
+                        <div class="serp-board-rank"><span>Your rank</span><strong>#<?= e((string) $serpResult['position']) ?></strong></div>
+                    <?php else: ?>
+                        <div class="serp-board-rank is-out"><span>Your rank</span><strong>Not in top 10</strong></div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </header>
-            <ol class="serp-board-list">
+            <div class="serp-filter">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" class="serp-filter-input" placeholder="Search these results by URL or title&hellip;" aria-label="Filter results" data-serp-filter>
+            </div>
+            <ol class="serp-board-list" data-serp-list>
                 <?php foreach ($serpResult['results'] as $index => $result): ?>
                     <?php $isYou = $targetHost !== '' && ($result['host'] === $targetHost || str_ends_with((string) $result['host'], '.' . $targetHost)); ?>
-                    <li class="serp-row<?= $isYou ? ' is-you' : '' ?>">
+                    <li class="serp-row<?= $isYou ? ' is-you' : '' ?>" data-serp-text="<?= e(strtolower($result['host'] . ' ' . $result['title'])) ?>">
                         <span class="serp-pos"><?= $index + 1 ?></span>
                         <img class="serp-fav" src="https://www.google.com/s2/favicons?sz=64&amp;domain=<?= e($result['host']) ?>" alt="" width="20" height="20" loading="lazy">
                         <span class="serp-row-body">
@@ -147,6 +157,7 @@ $sparkline = static function (array $positions): string {
                     </li>
                 <?php endforeach; ?>
             </ol>
+            <p class="serp-filter-empty" data-serp-empty hidden>No results match your filter.</p>
         </div>
         <?php if (!empty($serpResult['opportunities'])): ?>
         <div class="cyber-card serp-opps">
