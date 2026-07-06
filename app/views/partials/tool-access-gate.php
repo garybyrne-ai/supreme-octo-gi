@@ -5,6 +5,12 @@ $paypalSettings = $paypalSettings ?? [];
 $creditsUrl = $paypalSettings['credits_checkout_url'] ?? '';
 $pass19Url = $paypalSettings['growth_lab_19_url'] ?? '';
 $pass49Url = $paypalSettings['growth_lab_49_url'] ?? '';
+
+// Signed-in members are already verified — the access/sign-in block is just
+// noise for them, so hide it entirely (their status lives on the dashboard).
+if (!empty($member) && is_array($member) && !empty($member['email'])) {
+    return;
+}
 ?>
 <section class="tool-access-gate reveal" id="tool-access">
     <div class="cyber-card glass-feature">

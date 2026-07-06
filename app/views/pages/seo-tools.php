@@ -80,7 +80,17 @@
             <p class="seo-analysis-note">The highest-impact issues first — fix these in order.</p>
             <ol class="seo-priority-list">
                 <?php foreach ($seoResult['priority_fixes'] as $fix): ?>
-                    <li><strong><?= e($fix['label']) ?></strong><span><?= e($fix['advice']) ?></span></li>
+                    <li>
+                        <strong><?= e($fix['label']) ?><?php if (!empty($fix['value'])): ?> <b class="seo-fix-status"><?= e(excerpt((string) $fix['value'], 80)) ?></b><?php endif; ?></strong>
+                        <span><?= e($fix['advice']) ?></span>
+                        <?php if (!empty($fix['details'])): ?>
+                            <ul class="seo-fix-where">
+                                <?php foreach (array_slice($fix['details'], 0, 8) as $d): ?>
+                                    <li><?= e((string) $d) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </li>
                 <?php endforeach; ?>
             </ol>
         </article>

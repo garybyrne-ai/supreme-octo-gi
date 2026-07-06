@@ -102,12 +102,22 @@ $reportId = 'report-' . substr(md5($tool . $target), 0, 8);
     <?php if (!empty($checks)): ?>
         <div class="report-checks">
             <?php foreach ($checks as $check): ?>
-                <?php $ok = !empty($check['present']); ?>
+                <?php $ok = !empty($check['present']); $details = $check['details'] ?? []; ?>
                 <div class="report-check <?= $ok ? 'is-pass' : 'is-fail' ?>">
                     <i class="fa-solid <?= $ok ? 'fa-circle-check' : 'fa-triangle-exclamation' ?>"></i>
                     <div>
                         <strong><?= e($check['label'] ?? '') ?></strong>
                         <small><?= e(excerpt((string) ($check['value'] ?? ''), 160)) ?></small>
+                        <?php if (!$ok && !empty($check['advice'])): ?>
+                            <span class="report-check-fix"><b>How to fix:</b> <?= e((string) $check['advice']) ?></span>
+                        <?php endif; ?>
+                        <?php if (!$ok && !empty($details)): ?>
+                            <ul class="report-check-where">
+                                <?php foreach (array_slice($details, 0, 8) as $d): ?>
+                                    <li><?= e((string) $d) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
                     </div>
                     <em class="report-check-tag"><?= $ok ? 'Pass' : 'Fix' ?></em>
                 </div>

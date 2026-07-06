@@ -1569,3 +1569,28 @@
     .site-analytics-run { width: 100%; }
     .site-analytics-run .pill-button { width: 100%; justify-content: center; }
 }
+
+/* ===== Detailed audit fixes: what to fix and exactly where ===== */
+.report-check-fix { display: block; margin-top: 5px; font-size: 12.5px; color: #cdd9ec; line-height: 1.5; }
+.report-check-fix b { color: #ffd76a; }
+.report-check-where,
+.seo-fix-where {
+    list-style: none; margin: 8px 0 0; padding: 10px 12px;
+    border-left: 2px solid rgba(255, 176, 32, .5);
+    background: rgba(255, 176, 32, .06); border-radius: 0 8px 8px 0;
+    display: grid; gap: 5px;
+}
+.report-check-where li,
+.seo-fix-where li {
+    font-size: 12px; color: #b9c7de; line-height: 1.45; padding: 0;
+    border: none; background: none; word-break: break-word;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+.report-check-where li::before,
+.seo-fix-where li::before { content: "→ "; color: #ffb020; }
+.seo-priority-list .seo-fix-status { font-weight: 600; font-size: 11.5px; color: #fca5a5; }
+@media print {
+    .report-check-where { border-left-color: #b8860b; background: #fff8e6; }
+    .report-check-where li, .report-check-fix { color: #333; }
+    .report-check-fix b { color: #b8860b; }
+}

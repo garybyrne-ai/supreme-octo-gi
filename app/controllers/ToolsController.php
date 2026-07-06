@@ -1668,14 +1668,24 @@ final class ToolsController extends Controller
         $error = $_SESSION['tool_access_error'] ?? null;
         unset($_SESSION['tool_access_message'], $_SESSION['tool_access_error']);
 
+        // A logged-in member is already a verified user, so treat them as a
+        // tool lead — this unlocks the tools and lets the access-gate block hide
+        // itself for signed-in members.
+        $member = $_SESSION['member'] ?? null;
+        $toolLead = $_SESSION['tool_lead'] ?? null;
+        if ($toolLead === null && is_array($member) && !empty($member['email'])) {
+            $toolLead = ['email' => (string) $member['email'], 'name' => (string) ($member['name'] ?? ''), 'from_member' => true];
+        }
+        $leadEmail = (string) ($toolLead['email'] ?? '');
+
         return [
             'csrf' => Security::csrfToken(),
-            'toolLead' => $_SESSION['tool_lead'] ?? null,
+            'toolLead' => $toolLead,
             'pendingToolLead' => $_SESSION['pending_tool_lead'] ?? [],
-            'scanUsage' => !empty($_SESSION['tool_lead']['email']) ? (new ToolUsageRepository())->status((string) $_SESSION['tool_lead']['email']) : null,
+            'scanUsage' => $leadEmail !== '' ? (new ToolUsageRepository())->status($leadEmail) : null,
             'paypalSettings' => (new PayPalSettingsRepository())->current(),
-            'member' => $_SESSION['member'] ?? null,
-            'memberIsPro' => MemberRepository::isPro($_SESSION['member'] ?? null),
+            'member' => $member,
+            'memberIsPro' => MemberRepository::isPro($member),
             'accessMessage' => $message,
             'accessError' => $error,
         ];
@@ -1685,7 +1695,7 @@ final class ToolsController extends Controller
     {
         Security::ensureSession();
 
-        return !empty($_SESSION['tool_lead']['email']);
+        return !empty($_SESSION['tool_lead']['email']) || !empty($_SESSION['member']['email']);
     }
 
     private function consumeFreeScan(string $tool): bool
@@ -1697,7 +1707,7 @@ final class ToolsController extends Controller
             return true;
         }
 
-        $email = (string) ($_SESSION['tool_lead']['email'] ?? '');
+        $email = (string) ($_SESSION['tool_lead']['email'] ?? $_SESSION['member']['email'] ?? '');
         if ($email === '') {
             return false;
         }
@@ -2180,12 +2190,26 @@ final class ToolsController extends Controller
         $missingAlt = 0;
         $missingDims = 0;
         $lazyImages = 0;
+        $missingAltSrcs = [];
+        $missingDimSrcs = [];
+        $srcOf = static function (string $img): string {
+            if (preg_match('/\bsrc=["\']([^"\']+)["\']/i', $img, $m)) {
+                return trim($m[1]);
+            }
+            return '(inline/background image)';
+        };
         foreach ($images as $img) {
             if (!preg_match('/\salt=["\'][^"\']*[^"\'\s][^"\']*["\']/i', $img)) {
                 $missingAlt++;
+                if (count($missingAltSrcs) < 8) {
+                    $missingAltSrcs[] = $srcOf($img);
+                }
             }
             if (!preg_match('/\swidth=/i', $img) || !preg_match('/\sheight=/i', $img)) {
                 $missingDims++;
+                if (count($missingDimSrcs) < 8) {
+                    $missingDimSrcs[] = $srcOf($img);
+                }
             }
             if (preg_match('/\sloading=["\']lazy["\']/i', $img)) {
                 $lazyImages++;
@@ -2199,6 +2223,7 @@ final class ToolsController extends Controller
         $nofollow = 0;
         $genericAnchors = 0;
         $emptyAnchors = 0;
+        $weakAnchorExamples = [];
         $generic = ['click here', 'read more', 'here', 'more', 'link', 'this', 'learn more'];
         if (preg_match_all('/<a\b([^>]*)>(.*?)<\/a>/is', $html, $am, PREG_SET_ORDER)) {
             foreach ($am as $a) {
@@ -2222,8 +2247,14 @@ final class ToolsController extends Controller
                 $anchor = strtolower(trim((string) preg_replace('/\s+/', ' ', strip_tags($a[2]))));
                 if ($anchor === '') {
                     $emptyAnchors++;
+                    if (count($weakAnchorExamples) < 6) {
+                        $weakAnchorExamples[] = '(empty anchor) → ' . $href;
+                    }
                 } elseif (in_array($anchor, $generic, true)) {
                     $genericAnchors++;
+                    if (count($weakAnchorExamples) < 6) {
+                        $weakAnchorExamples[] = '“' . $anchor . '” → ' . $href;
+                    }
                 }
             }
         }
@@ -2259,8 +2290,10 @@ final class ToolsController extends Controller
         // Mixed content on HTTPS pages.
         $isHttps = str_starts_with(strtolower($url), 'https://');
         $mixed = 0;
-        if ($isHttps && preg_match_all('/(?:src|href)=["\']http:\/\/[^"\']+["\']/i', $html, $mixM)) {
-            $mixed = count($mixM[0]);
+        $mixedUrls = [];
+        if ($isHttps && preg_match_all('/(?:src|href)=["\'](http:\/\/[^"\']+)["\']/i', $html, $mixM)) {
+            $mixed = count($mixM[1]);
+            $mixedUrls = array_slice(array_values(array_unique($mixM[1])), 0, 8);
         }
 
         // Content metrics.
@@ -2303,23 +2336,23 @@ final class ToolsController extends Controller
         $c = [];
         $c[] = ['label' => 'Title tag', 'weight' => 3, 'present' => $title !== '' && $titleLen >= 15 && $titleLen <= 65, 'value' => $title !== '' ? $title . ' (' . $titleLen . ' chars)' : 'Missing', 'advice' => 'Write a unique 15–65 character title with the primary keyword near the front.'];
         $c[] = ['label' => 'Meta description', 'weight' => 3, 'present' => $description !== '' && $descLen >= 70 && $descLen <= 165, 'value' => $description !== '' ? $descLen . ' chars' : 'Missing', 'advice' => 'Add a compelling 120–160 character meta description with a call to action.'];
-        $c[] = ['label' => 'Exactly one H1', 'weight' => 3, 'present' => count($h1s) === 1, 'value' => count($h1s) . ' H1(s)' . (count($h1s) ? ': ' . implode(' | ', array_slice($h1s, 0, 2)) : ''), 'advice' => 'Use exactly one H1 that states the page topic.'];
-        $c[] = ['label' => 'Heading hierarchy', 'weight' => 2, 'present' => $this->headingHierarchyOk($headingSeq), 'value' => count($headingSeq) . ' headings, ' . (count($h2s)) . ' H2 / ' . count($h3s) . ' H3', 'advice' => 'Start with H1, do not skip levels (H1→H2→H3), and use headings to structure content.'];
+        $c[] = ['label' => 'Exactly one H1', 'weight' => 3, 'present' => count($h1s) === 1, 'value' => count($h1s) . ' H1(s)' . (count($h1s) ? ': ' . implode(' | ', array_slice($h1s, 0, 2)) : ''), 'advice' => 'Use exactly one H1 that states the page topic.', 'details' => count($h1s) === 1 ? [] : (count($h1s) === 0 ? ['This page has no H1 heading — add one primary H1.'] : array_map(static fn (string $h): string => 'H1: “' . $h . '”', array_slice($h1s, 0, 8)))];
+        $c[] = ['label' => 'Heading hierarchy', 'weight' => 2, 'present' => $this->headingHierarchyOk($headingSeq), 'value' => count($headingSeq) . ' headings, ' . (count($h2s)) . ' H2 / ' . count($h3s) . ' H3', 'advice' => 'Start with H1, do not skip levels (H1→H2→H3), and use headings to structure content.', 'details' => $this->headingIssues($headingSeq)];
         $c[] = ['label' => 'Content depth', 'weight' => 2, 'present' => $words >= 600, 'value' => $words . ' words', 'advice' => 'Aim for 600+ words of genuinely useful content for competitive terms.'];
         $c[] = ['label' => 'Readability', 'weight' => 1, 'present' => $flesch >= 45, 'value' => $flesch . ' (' . $readLabel . ')', 'advice' => 'Aim for a Flesch reading ease of 50–70: shorter sentences and simpler words read better and convert better.'];
         $c[] = ['label' => 'Canonical URL', 'weight' => 2, 'present' => $canonical !== '', 'value' => $canonical ?: 'Missing', 'advice' => 'Add a self-referencing canonical link to avoid duplicate-content dilution.'];
         $c[] = ['label' => 'Indexable (no noindex)', 'weight' => 3, 'present' => !str_contains(strtolower($robots), 'noindex'), 'value' => $robots !== '' ? $robots : 'No noindex directive', 'advice' => 'Remove any noindex directive if this page should rank.'];
         $c[] = ['label' => 'Structured data (schema)', 'weight' => 2, 'present' => $schemaCount > 0, 'value' => $schemaCount > 0 ? implode(', ', array_slice($schemaTypes, 0, 6)) : 'None', 'advice' => 'Add JSON-LD schema (Organization, Service, FAQ, Breadcrumb, Article) for rich results.'];
-        $c[] = ['label' => 'Image alt text', 'weight' => 2, 'present' => $missingAlt === 0, 'value' => count($images) . ' images, ' . $missingAlt . ' missing alt', 'advice' => 'Add descriptive alt text to every meaningful image.'];
-        $c[] = ['label' => 'Image dimensions set (CLS)', 'weight' => 1, 'present' => $missingDims === 0, 'value' => $missingDims . ' of ' . count($images) . ' missing width/height', 'advice' => 'Set explicit width and height on images to prevent layout shift (a Core Web Vital).'];
-        $c[] = ['label' => 'HTTPS (no mixed content)', 'weight' => 3, 'present' => $isHttps && $mixed === 0, 'value' => !$isHttps ? 'Not HTTPS' : ($mixed === 0 ? 'Secure, no mixed content' : $mixed . ' insecure http:// resources'), 'advice' => 'Serve over HTTPS and load every asset over https:// to avoid mixed-content warnings.'];
+        $c[] = ['label' => 'Image alt text', 'weight' => 2, 'present' => $missingAlt === 0, 'value' => count($images) . ' images, ' . $missingAlt . ' missing alt', 'advice' => 'Add descriptive alt text to every meaningful image.', 'details' => $missingAlt === 0 ? [] : array_merge(array_map(static fn (string $s): string => 'Missing alt: ' . $s, $missingAltSrcs), $missingAlt > count($missingAltSrcs) ? ['…and ' . ($missingAlt - count($missingAltSrcs)) . ' more'] : [])];
+        $c[] = ['label' => 'Image dimensions set (CLS)', 'weight' => 1, 'present' => $missingDims === 0, 'value' => $missingDims . ' of ' . count($images) . ' missing width/height', 'advice' => 'Set explicit width and height on images to prevent layout shift (a Core Web Vital).', 'details' => $missingDims === 0 ? [] : array_merge(array_map(static fn (string $s): string => 'No width/height: ' . $s, $missingDimSrcs), $missingDims > count($missingDimSrcs) ? ['…and ' . ($missingDims - count($missingDimSrcs)) . ' more'] : [])];
+        $c[] = ['label' => 'HTTPS (no mixed content)', 'weight' => 3, 'present' => $isHttps && $mixed === 0, 'value' => !$isHttps ? 'Not HTTPS' : ($mixed === 0 ? 'Secure, no mixed content' : $mixed . ' insecure http:// resources'), 'advice' => 'Serve over HTTPS and load every asset over https:// to avoid mixed-content warnings.', 'details' => !$isHttps ? ['This page is served over http:// — install an SSL certificate and redirect all traffic to https://.'] : ($mixed === 0 ? [] : array_merge(array_map(static fn (string $u): string => 'Insecure resource: ' . $u, $mixedUrls), $mixed > count($mixedUrls) ? ['…and ' . ($mixed - count($mixedUrls)) . ' more'] : []))];
         $c[] = ['label' => 'Mobile viewport', 'weight' => 3, 'present' => $hasViewport, 'value' => $hasViewport ? 'Set' : 'Missing', 'advice' => 'Add <meta name="viewport" content="width=device-width, initial-scale=1">.'];
         $c[] = ['label' => 'Charset declared', 'weight' => 1, 'present' => $hasCharset, 'value' => $hasCharset ? 'Set' : 'Missing', 'advice' => 'Declare <meta charset="utf-8"> early in the head.'];
         $c[] = ['label' => 'Language declared', 'weight' => 1, 'present' => $hasLang, 'value' => $hasLang ? 'html lang set' : 'Missing', 'advice' => 'Set a lang attribute on <html> (e.g. lang="en").'];
         $c[] = ['label' => 'Favicon', 'weight' => 1, 'present' => $hasFavicon, 'value' => $hasFavicon ? 'Present' : 'Missing', 'advice' => 'Add a favicon / site icon link for brand and trust signals.'];
         $c[] = ['label' => 'Open Graph (social)', 'weight' => 1, 'present' => $ogTitle !== '' && $ogImage !== '' && $ogDesc !== '', 'value' => $ogTitle !== '' ? 'og:title + image' . ($ogDesc !== '' ? ' + description' : '') : 'Missing', 'advice' => 'Add og:title, og:description and og:image for rich social sharing.'];
         $c[] = ['label' => 'Twitter card', 'weight' => 1, 'present' => $twitterCard !== '', 'value' => $twitterCard !== '' ? $twitterCard : 'Missing', 'advice' => 'Add a twitter:card meta tag (summary_large_image).'];
-        $c[] = ['label' => 'Descriptive link anchors', 'weight' => 1, 'present' => $genericAnchors === 0 && $emptyAnchors === 0, 'value' => $genericAnchors . ' generic, ' . $emptyAnchors . ' empty of ' . ($internal + $external) . ' links', 'advice' => 'Replace "click here"/"read more" and empty anchors with descriptive, keyword-relevant text.'];
+        $c[] = ['label' => 'Descriptive link anchors', 'weight' => 1, 'present' => $genericAnchors === 0 && $emptyAnchors === 0, 'value' => $genericAnchors . ' generic, ' . $emptyAnchors . ' empty of ' . ($internal + $external) . ' links', 'advice' => 'Replace "click here"/"read more" and empty anchors with descriptive, keyword-relevant text.', 'details' => $weakAnchorExamples];
         $c[] = ['label' => 'Internal linking', 'weight' => 2, 'present' => $internal >= 3, 'value' => $internal . ' internal, ' . $external . ' external', 'advice' => 'Link to at least 3–5 relevant internal pages to spread authority and help crawling.'];
         $c[] = ['label' => 'Clean URL', 'weight' => 1, 'present' => $urlClean, 'value' => strlen($url) . ' chars' . (preg_match('/[A-Z_]/', $path) ? ', has uppercase/underscore' : '') . (parse_url($url, PHP_URL_QUERY) !== null ? ', has query string' : ''), 'advice' => 'Use short, lowercase, hyphenated URLs without query parameters where possible.'];
 
@@ -2362,7 +2395,7 @@ final class ToolsController extends Controller
             'content_ratio' => $contentRatio,
             'image_count' => count($images),
             'nofollow_links' => $nofollow,
-            'priority_fixes' => array_slice(array_map(static fn (array $x): array => ['label' => $x['label'], 'advice' => $x['advice']], $failed), 0, 6),
+            'priority_fixes' => array_slice(array_map(static fn (array $x): array => ['label' => $x['label'], 'advice' => $x['advice'], 'value' => $x['value'] ?? '', 'details' => $x['details'] ?? []], $failed), 0, 8),
         ];
     }
 
@@ -2450,6 +2483,38 @@ final class ToolsController extends Controller
         }
 
         return true;
+    }
+
+    /**
+     * Human-readable specifics for a broken heading outline — the "what &
+     * where" behind a failing Heading hierarchy check.
+     *
+     * @param array<int, array{level: int, text: string}> $seq
+     * @return array<int, string>
+     */
+    private function headingIssues(array $seq): array
+    {
+        if ($seq === []) {
+            return ['No headings found — add an H1 and structure content with H2/H3.'];
+        }
+
+        $issues = [];
+        if ($seq[0]['level'] !== 1) {
+            $issues[] = 'First heading is H' . $seq[0]['level'] . ' (“' . $seq[0]['text'] . '”) — the page should open with an H1.';
+        }
+
+        $prev = $seq[0]['level'];
+        foreach ($seq as $i => $h) {
+            if ($i > 0 && $h['level'] - $prev > 1) {
+                $issues[] = 'Level jumps from H' . $prev . ' to H' . $h['level'] . ' at “' . ($h['text'] !== '' ? $h['text'] : '(empty heading)') . '” — don’t skip levels.';
+            }
+            if (count($issues) >= 6) {
+                break;
+            }
+            $prev = $h['level'];
+        }
+
+        return $issues;
     }
 
     /**
