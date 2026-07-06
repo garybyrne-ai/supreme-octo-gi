@@ -74,6 +74,7 @@ $statefulPrefixes = [
     '/webhooks',
     '/tools',
     '/seo-tools',
+    '/site-crawler',
     '/serp-checker',
     '/ai-content-assistant',
     '/ethical-hacking-toolkit',

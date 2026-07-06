@@ -41,6 +41,73 @@ final class ToolsController extends Controller
         ], $this->toolAccessData(), $data));
     }
 
+    public function siteCrawler(array $data = []): void
+    {
+        $this->render('pages/site-crawler', array_replace([
+            'title' => 'Full Site SEO Crawler & Audit | Crest Web Media',
+            'metaDescription' => 'Crawl every internal page of your website and run the deep on-page SEO audit across all of them — one site-wide score plus an aggregated, prioritised issue list showing what to fix and on which pages.',
+        ], $this->toolAccessData(), $data));
+    }
+
+    public function runSiteCrawl(): void
+    {
+        if (!$this->hasToolAccess()) {
+            $this->siteCrawler(['accessError' => 'Register or sign in to run a full-site crawl.']);
+            return;
+        }
+
+        // Crawling is heavier than a single-page audit, so rate-limit tightly.
+        if (Security::hitRateLimit('site_crawler', 4, 1800)) {
+            http_response_code(429);
+            $this->siteCrawler(['error' => 'Site crawls are limited to a few per 30 minutes. Please wait and try again.']);
+            return;
+        }
+
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            http_response_code(419);
+            $this->siteCrawler(['error' => 'Your secure form token expired. Please try again.']);
+            return;
+        }
+
+        $start = $this->normalizePublicUrl((string) ($_POST['target_url'] ?? ''));
+        if ($start === null) {
+            http_response_code(422);
+            $this->siteCrawler(['error' => 'Enter a public HTTPS or HTTP URL to crawl (e.g. https://example.com).']);
+            return;
+        }
+
+        if (!$this->consumeFreeScan('site_crawler')) {
+            http_response_code(402);
+            $this->siteCrawler(['error' => $this->growthLabLimitMessage()]);
+            return;
+        }
+
+        // Pro members get a deeper crawl; free/lead users get a taster.
+        $isPro = MemberRepository::isPro($_SESSION['member'] ?? null);
+        $maxPages = $isPro ? 30 : 8;
+
+        $crawl = (new \App\Services\SiteCrawler())->crawl(
+            $start,
+            $maxPages,
+            fn (string $url): string => $this->fetchHtml($url),
+            fn (string $url, string $html): array => $this->seoAudit($url, $html, '')
+        );
+
+        (new AuditLogger())->log('tools.site_crawled', ['host' => $crawl['host'] ?? '', 'pages' => $crawl['crawled'] ?? 0]);
+
+        if (($crawl['crawled'] ?? 0) === 0) {
+            $this->siteCrawler(['error' => 'Could not read that site. Check the address (start at the homepage) and try again.']);
+            return;
+        }
+
+        $this->siteCrawler([
+            'targetUrl' => $start,
+            'crawl' => $crawl,
+            'crawlIsPro' => $isPro,
+            'crawlMaxPages' => $maxPages,
+        ]);
+    }
+
     public function serpChecker(array $data = []): void
     {
         Security::ensureSession();

@@ -17,6 +17,7 @@ $isCompanyPath = in_array($currentPath, ['/about', '/portfolio', '/process', '/b
 $isToolsPath = in_array($currentPath, [
     '/tools',
     '/seo-tools',
+    '/site-crawler',
     '/serp-checker',
     '/ai-content-assistant',
     '/ethical-hacking-toolkit',
@@ -71,6 +72,7 @@ $isToolsPath = in_array($currentPath, [
                     <a href="/ai-website-growth-consultant"><i class="fa-solid fa-brain"></i><span>AI Growth Consultant<small>Map practical growth opportunities.</small></span></a>
                     <a href="/instant-website-quote-calculator"><i class="fa-solid fa-calculator"></i><span>Quote Calculator<small>Estimate project scope and priority.</small></span></a>
                     <a href="/seo-tools"><i class="fa-solid fa-chart-line"></i><span>SEO Audit<small>Review page-level search signals.</small></span></a>
+                    <a href="/site-crawler"><i class="fa-solid fa-spider"></i><span>Site Crawler<small>Audit every page of your site.</small></span></a>
                     <a href="/serp-checker"><i class="fa-solid fa-ranking-star"></i><span>SERP Checker<small>Compare ranking opportunities.</small></span></a>
                     <a href="/ai-content-assistant"><i class="fa-solid fa-wand-magic-sparkles"></i><span>AI Content Assistant<small>Generate SEO copy in seconds.</small></span></a>
                     <a href="/ppc-roi-calculator"><i class="fa-solid fa-bullseye"></i><span>PPC ROI<small>Model paid-search return.</small></span></a>

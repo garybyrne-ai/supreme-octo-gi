@@ -16,6 +16,7 @@ $toolMenu = [
     ]],
     ['group' => 'SEO & Rankings', 'items' => [
         ['/seo-tools', 'fa-chart-line', 'SEO Audit'],
+        ['/site-crawler', 'fa-spider', 'Site Crawler'],
         ['/serp-checker', 'fa-ranking-star', 'SERP Checker'],
         ['/account/search-console', 'fa-magnifying-glass-chart', 'Search Console'],
     ]],

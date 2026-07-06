@@ -102,6 +102,8 @@ $router->post('/tools/pagespeed', [ToolsController::class, 'analyzePagespeed']);
 $router->get('/tools-pricing', [ToolsController::class, 'toolsPricing']);
 $router->get('/seo-tools', [ToolsController::class, 'seoTools']);
 $router->post('/seo-tools/audit', [ToolsController::class, 'auditSeo']);
+$router->get('/site-crawler', [ToolsController::class, 'siteCrawler']);
+$router->post('/site-crawler/run', [ToolsController::class, 'runSiteCrawl']);
 $router->get('/serp-checker', [ToolsController::class, 'serpChecker']);
 $router->post('/serp-checker/check', [ToolsController::class, 'checkSerp']);
 $router->post('/serp-checker/track', [ToolsController::class, 'trackKeyword']);
