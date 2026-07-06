@@ -147,3 +147,37 @@ try {
     http_response_code(500);
     echo 'Application error. Please check storage/logs for details.';
 }
+
+// --- Traffic-driven scheduler heartbeat --------------------------------------
+// Runs due background jobs (monitoring, rank tracking, daily site metrics,
+// weekly full-site crawls, abandoned-order recovery) with NO server crontab
+// required. These jobs make outbound HTTP and can take several seconds, so we
+// only run them once the response is fully DETACHED from the visitor — via
+// fastcgi_finish_request, which is available on virtually all managed PHP-FPM
+// hosting. Scheduler::tick() is itself throttled (every ~15 min) and
+// lock-guarded, so this is cheap. Hosts without FPM (or that prefer it) can
+// drive the same work by pointing real cron at the /cron/* endpoints.
+// Skipped for the cron endpoints themselves, assets, webhooks and the installer.
+if ($isInstalled
+    && function_exists('fastcgi_finish_request')
+    && !str_starts_with($requestPath, '/cron')
+    && !str_starts_with($requestPath, '/assets')
+    && !str_starts_with($requestPath, '/webhooks')
+    && !str_starts_with($requestPath, '/install')
+) {
+    // Release the session lock and flush the response, then keep running
+    // detached so background work never delays or is aborted by the visitor.
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
+    ignore_user_abort(true);
+    @fastcgi_finish_request();
+    @set_time_limit(120);
+
+    try {
+        (new \App\Services\Scheduler($config))->tick();
+    } catch (Throwable $exception) {
+        // Background work must never affect the delivered response.
+        error_log('[' . date('c') . '] scheduler tick: ' . $exception->getMessage() . PHP_EOL, 3, BASE_PATH . '/storage/logs/php-error-' . date('Y-m-d') . '.log');
+    }
+}

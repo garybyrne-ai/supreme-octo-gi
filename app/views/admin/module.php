@@ -1007,7 +1007,7 @@ $hasRealUi = in_array($module['title'] ?? '', $modulesWithRealUi, true);
                     <span class="status-chip"><span></span> Recovery</span>
                     <h2>Abandoned Checkouts</h2>
                 </div>
-                <p>Every row is a code-shop checkout that was started. Buyers who don't pay within the grace period get one recovery email. Schedule <code>/cron/run-abandoned-orders?key=YOUR_KEY</code> (same key as monitoring) to send them automatically.</p>
+                <p>Every row is a code-shop checkout that was started. Buyers who don't pay within the grace period get one recovery email. This — and monitoring, rank tracking, daily site metrics and weekly full-site crawls — now runs <strong>automatically</strong> in the background as your site gets traffic; no crontab required. If your host has cron, you can also schedule <code>/cron/run-abandoned-orders?key=YOUR_KEY</code> for extra reliability.</p>
                 <div class="stat-inline-row">
                     <span><strong><?= (int) ($abandonedStats['started'] ?? 0) ?></strong> open</span>
                     <span><strong><?= (int) ($abandonedStats['recovered'] ?? 0) ?></strong> emailed</span>
